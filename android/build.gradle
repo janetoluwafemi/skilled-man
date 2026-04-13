@@ -1,0 +1,44 @@
+
+buildscript {
+    ext {
+        buildToolsVersion = "35.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 35
+        targetSdkVersion = 35
+        ndkVersion = "28.0.12433566"
+        kotlinVersion = "2.0.21"
+
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.0.2")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath 'com.google.gms:google-services:4.4.0'
+    }
+}
+plugins {
+    id 'org.jetbrains.kotlin.android' version '1.9.0' apply false // Ensure Kotlin is loaded once
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://maven.google.com' }
+    }
+    subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android") && project.android.hasProperty("buildFeatures")) {
+            project.android.buildFeatures.buildConfig = true
+        }
+    }
+}
+
+}
+
+ 
+apply plugin: "com.facebook.react.rootproject"

@@ -1,0 +1,43 @@
+diff --git a/node_modules/react-native-button/Button.js b/node_modules/react-native-button/Button.js
+index fb7cf46..58b0890 100644
+--- a/node_modules/react-native-button/Button.js
++++ b/node_modules/react-native-button/Button.js
+@@ -5,7 +5,6 @@ import {
+   Text,
+   TouchableOpacity,
+   View,
+-  ViewPropTypes,
+ } from 'react-native';
+ 
+ import coalesceNonElementChildren from './coalesceNonElementChildren';
+@@ -14,15 +13,23 @@ const systemButtonOpacity = 0.2;
+ 
+ export default class Button extends Component {
+   static propTypes = {
+-    ...TouchableOpacity.propTypes,
+     accessibilityLabel: PropTypes.string,
+-    allowFontScaling: Text.propTypes.allowFontScaling,
+-    containerStyle: ViewPropTypes.style,
+-    disabledContainerStyle: ViewPropTypes.style,
++    allowFontScaling: PropTypes.bool,
++    containerStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
++    disabledContainerStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+     disabled: PropTypes.bool,
+-    style: Text.propTypes.style,
+-    styleDisabled: Text.propTypes.style,
+-    childGroupStyle: ViewPropTypes.style,
++    style: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
++    styleDisabled: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
++    childGroupStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
++    onPress: PropTypes.func,
++    onPressIn: PropTypes.func,
++    onPressOut: PropTypes.func,
++    onLongPress: PropTypes.func,
++    delayPressIn: PropTypes.number,
++    delayPressOut: PropTypes.number,
++    delayLongPress: PropTypes.number,
++    activeOpacity: PropTypes.number,
++    testID: PropTypes.string,
+   };
+ 
+   render() {

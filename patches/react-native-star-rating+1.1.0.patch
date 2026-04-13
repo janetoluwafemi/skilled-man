@@ -1,0 +1,62 @@
+diff --git a/node_modules/react-native-star-rating/StarButton.js b/node_modules/react-native-star-rating/StarButton.js
+index b6db613..50e4281 100644
+--- a/node_modules/react-native-star-rating/StarButton.js
++++ b/node_modules/react-native-star-rating/StarButton.js
+@@ -1,6 +1,6 @@
+ // React and react native imports
+ import React, { Component } from 'react';
+-import { Image, StyleSheet, ViewPropTypes } from 'react-native';
++import { Image, StyleSheet } from 'react-native';
+ import PropTypes from 'prop-types';
+ import { createIconSetFromIcoMoon } from 'react-native-vector-icons';
+ 
+@@ -33,7 +33,7 @@ const iconSets = {
+ };
+ 
+ const propTypes = {
+-  buttonStyle: ViewPropTypes.style,
++  buttonStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+   disabled: PropTypes.bool.isRequired,
+   halfStarEnabled: PropTypes.bool.isRequired,
+   icoMoonJson: PropTypes.string,
+@@ -48,7 +48,7 @@ const propTypes = {
+   ]).isRequired,
+   starSize: PropTypes.number.isRequired,
+   activeOpacity: PropTypes.number.isRequired,
+-  starStyle: ViewPropTypes.style,
++  starStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+   onStarButtonPress: PropTypes.func.isRequired,
+ };
+ 
+diff --git a/node_modules/react-native-star-rating/StarRating.js b/node_modules/react-native-star-rating/StarRating.js
+index 7aecc95..41fa9d5 100644
+--- a/node_modules/react-native-star-rating/StarRating.js
++++ b/node_modules/react-native-star-rating/StarRating.js
+@@ -1,6 +1,6 @@
+ // React and react native imports
+ import React, { Component } from 'react';
+-import { View, ViewPropTypes, StyleSheet } from 'react-native';
++import { View, StyleSheet } from 'react-native';
+ import PropTypes from 'prop-types';
+ import { View as AnimatableView } from 'react-native-animatable';
+ 
+@@ -23,8 +23,8 @@ const ANIMATION_TYPES = [
+ const propTypes = {
+   activeOpacity: PropTypes.number,
+   animation: PropTypes.oneOf(ANIMATION_TYPES),
+-  buttonStyle: ViewPropTypes.style,
+-  containerStyle: ViewPropTypes.style,
++  buttonStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
++  containerStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+   disabled: PropTypes.bool,
+   emptyStar: PropTypes.oneOfType([
+     PropTypes.string,
+@@ -52,7 +52,7 @@ const propTypes = {
+   rating: PropTypes.number,
+   reversed: PropTypes.bool,
+   starSize: PropTypes.number,
+-  starStyle: ViewPropTypes.style,
++  starStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+   selectedStar: PropTypes.func,
+ };
+ 
