@@ -1,24 +1,21 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const metroResolver = require('metro-resolver');
 
 const config = getDefaultConfig(__dirname);
 
-config.resolver = config.resolver || {};
-
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  const currentPlatform = platform || context.platform || 'web';
-
+  // Stub missing packages and native-only modules
   if (
     moduleName === 'normalize-css-color' ||
-    (currentPlatform === 'web' &&
+    (platform === 'web' &&
       (moduleName === 'react-native-maps' ||
         moduleName.startsWith('react-native-maps/')))
   ) {
     return { type: 'empty' };
   }
 
-  return context.resolveRequest
-    ? context.resolveRequest(context, moduleName, currentPlatform)
-    : context.resolve(context, moduleName, currentPlatform);
+  // Standard Metro resolution
+  return metroResolver.resolve(context, moduleName, platform);
 };
 
 module.exports = config;
