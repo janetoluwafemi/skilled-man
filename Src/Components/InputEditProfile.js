@@ -1,44 +1,52 @@
-import React, {useState} from 'react';
+import React, {useState, forwardRef} from 'react';
 import {Dimensions, StyleSheet, TextInput, View} from 'react-native';
 import Icon, {Icons} from './Icons';
 import color from '../Assets/colors/colors';
-const InputEdtProfil = props => {
+const InputEdtProfil = forwardRef((props, ref) => {
   const {mode = 'outlined'} = props;
-  const [text, setText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 
+  const handleFocus = (e) => {
+    setIsFocused(true);
+    if (props.onFocus) props.onFocus(e);
+  };
+
+  const handleBlur = (e) => {
+    setIsFocused(false);
+    if (props.onBlur) props.onBlur(e);
+  };
+
   return (
-    <View style={TextInputStyle.inputView}>
+    <View style={[
+      TextInputStyle.inputView,
+      isFocused && {borderColor: color.defalt, borderWidth: 1.5}
+    ]}>
       <Icons.Feather name={props.icon} style={TextInputStyle.iconStyle} />
       <TextInput
-        ref={props.ref}
+        {...props}
+        ref={ref}
         placeholder={props.placeholder}
         mode={mode}
-        color={color.defalt}
-        disabled={props.disabled}
-        value={props.value}
         placeholderTextColor={props.placeholderTextColor}
-        // editable={false}
         textAlign={props.textAlign}
         keyboardType={props.keyboardType}
         scrollEnabled={false}
         multiline={props.multiline}
         numberOfLines={props.numberOfLines}
-        // onChangeText={props.onChangeText}
         onChange={props.onChange}
         secureTextEntry={props.secureTextEntry}
         maxLength={props.maxLength}
-        // theme={{color: {primary: color.Green, underlineColor: color.red}}}
         outlineColor={props.outlineColor}
         underlineColor={props.underlineColor}
         editable={props?.editable}
-        // onTouchMove
-        style={[TextInputStyle.inputstyle]}
+        style={[TextInputStyle.inputstyle, props.styles]}
         onChangeText={props.onChangeText}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
       />
     </View>
   );
-};
+});
 
 const TextInputStyle = StyleSheet.create({
   inputstyle: {

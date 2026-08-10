@@ -1,52 +1,36 @@
-import * as React from 'react';
-import {Text, View, Dimensions, StyleSheet, Image, Platform} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import React from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Platform,
+} from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import color from '../../Assets/colors/colors';
-import {ScrollView} from 'native-base';
 import CstmHeader from '../../Components/CustomHeader';
-
-const {height: SCREEN_HEIGHT, width: SCREEN_WIDTH} = Dimensions.get('window');
-const isSmallDevice = SCREEN_HEIGHT < 700;
-const isMediumDevice = SCREEN_HEIGHT >= 700 && SCREEN_HEIGHT < 900;
-const isLargeDevice = SCREEN_HEIGHT >= 900;
-
-const getResponsiveSize = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
-
-const getResponsiveSpacing = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
 
 const Term_Condition = props => {
   const insets = useSafeAreaInsets();
-  
+
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 20;
+
   return (
-    <SafeAreaView style={{flex: 1}} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <CstmHeader
         title="Terms & Conditions"
-        onPressBack={() => {
-          props.navigation.goBack();
-        }}
+        onPressBack={() => props.navigation.goBack()}
       />
-      <ScrollView 
+      <ScrollView
         style={styles.containerStyle}
         contentContainerStyle={[
           styles.scrollContent,
-          {paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 20}
+          { paddingBottom: bottomPadding },
         ]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.headCont}>
-          {/* <Text style={styles.mainTitle}>SKILLEDMAN.COM - Terms and Conditions and Privacy Policy</Text> */}
-          {/* <View style={styles.separatorLine} /> */}
           <Text style={styles.lastUpdated}>Last Updated: April 22, 2025</Text>
-
-          {/* <Text style={styles.sectionTitle}>Terms and Conditions</Text> */}
 
           <Text style={styles.subTitle}>1. Use of the Platform</Text>
           <Text style={styles.bodyText}>
@@ -114,49 +98,40 @@ const Term_Condition = props => {
 export default Term_Condition;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   containerStyle: {
     backgroundColor: color.wite,
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingTop: getResponsiveSpacing(15, 18, 20),
+    paddingTop: 18,
   },
   headCont: {
-    paddingHorizontal: getResponsiveSpacing(15, 18, 20),
-    paddingBottom: getResponsiveSpacing(25, 30, 35),
-  },
-  mainTitle: {
-    fontSize: getResponsiveSize(20, 21, 22),
-    fontWeight: '500',
-    color: color.gry,
-    marginBottom: getResponsiveSpacing(8, 10, 12),
+    paddingHorizontal: 18,
+    paddingBottom: 30,
   },
   lastUpdated: {
-    fontSize: getResponsiveSize(12, 13, 14),
+    fontSize: 13,
     fontWeight: '600',
     color: color.gry,
-    marginBottom: getResponsiveSpacing(8, 10, 12),
-  },
-  sectionTitle: {
-    fontSize: getResponsiveSize(16, 17, 18),
-    fontWeight: 'bold',
-    color: color.gry,
-    marginTop: getResponsiveSpacing(15, 18, 20),
+    marginBottom: 12,
   },
   subTitle: {
     color: color.gry,
-    fontSize: getResponsiveSize(15, 16, 17),
-    lineHeight: getResponsiveSize(22, 24, 26),
+    fontSize: 16,
+    lineHeight: 24,
     fontWeight: '700',
-    marginTop: getResponsiveSpacing(12, 15, 18),
-    marginBottom: getResponsiveSpacing(6, 8, 10),
+    marginTop: 15,
+    marginBottom: 8,
   },
   bodyText: {
     color: color.gry,
-    fontSize: getResponsiveSize(14, 15, 16),
-    lineHeight: getResponsiveSize(20, 21, 22),
-    marginBottom: getResponsiveSpacing(8, 10, 12),
-    paddingHorizontal: getResponsiveSpacing(0, 2, 4),
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 10,
   },
 });

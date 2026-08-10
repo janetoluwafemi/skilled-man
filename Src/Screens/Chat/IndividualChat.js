@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,10 @@ import {
   Modal,
   Pressable,
   Dimensions,
+  SafeAreaView,
 } from 'react-native';
-import color from '../../Assets/colors/colors';
-import {Icons} from '../../Components/Icons';
-import ChatUsrHeader from '../../Components/ChatUserHeader';
-import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 import {
   Bubble,
   Composer,
@@ -23,20 +21,17 @@ import {
   InputToolbar,
   Send,
 } from 'react-native-gifted-chat';
-import {launchCamera} from 'react-native-image-picker';
-import storage from '@react-native-firebase/storage';
-import {BASIC_URL} from '../Signin/Signin';
+import { launchCamera } from 'react-native-image-picker';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 
-// -------------------------------------------------------------
+import color from '../../Assets/colors/colors';
+import { Icons } from '../../Components/Icons';
+import ChatUsrHeader from '../../Components/ChatUserHeader';
+import { BASIC_URL } from '../Signin/Signin';
 
-const NewMessage = ({userId, providerId, onChatUpdate}) => {
+const NewMessage = ({ userId, providerId }) => {
   const [messages, setMessages] = useState([]);
-  const [imageData, setImageData] = useState(null);
-  const [imageUrl, setImageUrl] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-
-  // 🔹 Image modal states (ADDED)
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -63,7 +58,7 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
             _id: data._id || doc.id,
             text: data.text || '',
             createdAt: data.createdAt?.toDate?.() || new Date(),
-            user: data.user || {_id: data.senderId},
+            user: data.user || { _id: data.senderId },
             image: data.image || '',
           };
         });
@@ -74,18 +69,37 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
     return () => unsubscribe();
   }, [chatId]);
 
-  const clearImagePreview = () => {
-    setImageUrl('');
-    setShowPreview(false);
-    setImageData(null);
+  const triggerParallelAPIs = async (textMessage) => {
+    try {
+      const chatForm = new FormData();
+      chatForm.append('own_id', userId);
+      chatForm.append('chat_user_id', providerId);
+
+      const notifyMessage = textMessage?.trim() ? textMessage : '📷 Sent an image';
+      const notifyForm = new FormData();
+      notifyForm.append('sender_id', userId);
+      notifyForm.append('receiver_id', providerId);
+      notifyForm.append('message', notifyMessage);
+
+      await Promise.all([
+        fetch(`${BASIC_URL}firebase/chat.php`, {
+          method: 'POST',
+          body: chatForm,
+        }),
+        fetch(`${BASIC_URL}firebase/send_notification.php`, {
+          method: 'POST',
+          body: notifyForm,
+        }),
+      ]);
+    } catch (error) {
+      console.log('Error hitting chat notification APIs:', error);
+    }
   };
 
-  const onSend = async (messages = []) => {
+  const onSend = async (messagesList = []) => {
     try {
-      const msg = messages[0];
+      const msg = messagesList[0];
       if (!msg?.text?.trim() && !msg?.image) return;
-
-      const imageToSend = showPreview ? imageUrl : msg.image || '';
 
       const newMessage = {
         _id: msg._id,
@@ -93,127 +107,20 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
         createdAt: new Date(),
         senderId: userId.toString(),
         receiverId: peerId.toString(),
-        user: {_id: userId.toString()},
-        image: imageToSend,
+        user: { _id: userId.toString() },
+        image: msg.image || '',
       };
 
       const chatRef = firestore().collection('chats').doc(chatId);
-      await chatRef.set({participants: [userId, peerId]}, {merge: true});
+      await chatRef.set({ participants: [userId, peerId] }, { merge: true });
       await chatRef.collection('messages').doc(newMessage._id).set(newMessage);
 
-      clearImagePreview();
-      // ********************** Sending Notification ******************
-      //   const formdata = new FormData();
-      //   formdata.append('own_id', userId);
-      //   formdata.append('chat_user_id', providerId);
-
-      //   await fetch('https://theskilledman.com/api/firebase/chat.php', {
-      //     method: 'POST',
-      //     body: formdata,
-      //   });
-      //   console.log(
-      //     'Ids of user and provider sent for notification:',
-      //     userId,
-      //     providerId,
-      //   );
-      // } catch (error) {
-      //   Alert.alert('Error', 'Failed to send message');
-      // }
-      // ********************** Sending Notification (2 APIs Parallel) ******************
-
-      console.log('🚀 Starting Parallel API Calls...');
-
-      // ---------- CHAT.PHP FORM DATA ----------
-      const chatForm = new FormData();
-      chatForm.append('own_id', userId);
-      chatForm.append('chat_user_id', providerId);
-
-      console.log('📤 Data Sent to chat.php:');
-      console.log({
-        own_id: userId,
-        chat_user_id: providerId,
-      });
-
-      // ---------- NOTIFICATION FORM DATA ----------
-      const notifyMessage = msg.text?.trim() ? msg.text : '📷 Sent an image';
-
-      const notifyForm = new FormData();
-      notifyForm.append('sender_id', userId);
-      notifyForm.append('receiver_id', providerId);
-      notifyForm.append('message', notifyMessage);
-
-      console.log('📤 Data Sent to send_notification.php:');
-      console.log({
-        sender_id: userId,
-        receiver_id: providerId,
-        message: notifyMessage,
-      });
-
-      // ---------- HIT BOTH APIS TOGETHER ----------
-      try {
-        const [chatRes, notifyRes] = await Promise.all([
-          fetch('https://theskilledman.com/api/firebase/chat.php', {
-            method: 'POST',
-            body: chatForm,
-          }),
-
-          fetch(
-            'https://theskilledman.com/api/firebase/send_notification.php',
-            {
-              method: 'POST',
-              body: notifyForm,
-            },
-          ),
-        ]);
-
-        console.log('✅ Both API Requests Completed!');
-
-        // ---------- CHAT.PHP RESPONSE ----------
-        console.log('📥 chat.php Response Status:', chatRes.status);
-
-        const chatText = await chatRes.text();
-        console.log('📥 chat.php Raw Response Text:', chatText);
-
-        let chatJson = null;
-        try {
-          chatJson = JSON.parse(chatText);
-          console.log('📥 chat.php Parsed JSON Response:', chatJson);
-        } catch {
-          console.log('⚠️ chat.php Response is NOT JSON');
-        }
-
-        // ---------- SEND_NOTIFICATION.PHP RESPONSE ----------
-        console.log(
-          '📥 send_notification.php Response Status:',
-          notifyRes.status,
-        );
-
-        const notifyText = await notifyRes.text();
-        console.log('📥 send_notification.php Raw Response Text:', notifyText);
-
-        let notifyJson = null;
-        try {
-          notifyJson = JSON.parse(notifyText);
-          console.log(
-            '📥 send_notification.php Parsed JSON Response:',
-            notifyJson,
-          );
-        } catch {
-          console.log('⚠️ send_notification.php Response is NOT JSON');
-        }
-
-        // ---------- FINAL SUCCESS LOG ----------
-        console.log('🎉 Parallel APIs Hit Successfully!');
-        console.log('➡️ Sender:', userId);
-        console.log('➡️ Receiver:', providerId);
-        console.log('➡️ Message Sent:', notifyMessage);
-      } catch (error) {
-        console.log('❌ Error While Calling Parallel APIs:', error);
-      }
+      await triggerParallelAPIs(msg.text);
     } catch (error) {
       Alert.alert('Error', 'Failed to send message');
     }
   };
+
   const openCamera = async () => {
     try {
       const result = await launchCamera({
@@ -224,10 +131,7 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
       });
 
       if (!result.didCancel && result.assets?.length > 0) {
-        setImageData(result.assets[0]);
-        setShowPreview(true);
         setUploading(true);
-        setImageUrl(result.assets[0].uri);
         await uploadImage(result.assets[0]);
       }
     } catch {
@@ -237,16 +141,13 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
 
   const uploadImage = async asset => {
     try {
-      const filename = `chat_images/${Date.now()}_${
-        asset.fileName || 'image.jpg'
-      }`;
+      const filename = `chat_images/${Date.now()}_${asset.fileName || 'image.jpg'}`;
       const reference = storage().ref(filename);
       const response = await fetch(asset.uri);
       const blob = await response.blob();
 
       await reference.put(blob);
       const url = await reference.getDownloadURL();
-      setImageUrl(url);
       setUploading(false);
       await sendImageMessage(url);
     } catch {
@@ -263,26 +164,20 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
         createdAt: new Date(),
         senderId: userId.toString(),
         receiverId: peerId.toString(),
-        user: {_id: userId.toString()},
+        user: { _id: userId.toString() },
         image: url,
       };
 
       const chatRef = firestore().collection('chats').doc(chatId);
-      await chatRef.set({participants: [userId, peerId]}, {merge: true});
+      await chatRef.set({ participants: [userId, peerId] }, { merge: true });
       await chatRef.collection('messages').doc(messageId).set(imageMessage);
 
-      clearImagePreview();
-
-      const formdata = new FormData();
-      formdata.append('own_id', userId);
-      await fetch('https://theskilledman.com/api/firebase/chat.php', {
-        method: 'POST',
-        body: formdata,
-      });
-    } catch {}
+      await triggerParallelAPIs('');
+    } catch (error) {
+      console.log('Error sending image message:', error);
+    }
   };
 
-  // 🔹 Image modal handlers (ADDED)
   const openImageModal = image => {
     setSelectedImage(image);
     setImageModalVisible(true);
@@ -294,8 +189,7 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: '#fff'}}>
-      {/* 🔹 Image Modal */}
+    <View style={styles.chatWrapper}>
       <Modal
         visible={imageModalVisible}
         transparent
@@ -303,7 +197,7 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
         onRequestClose={closeImageModal}>
         <Pressable style={styles.modalContainer} onPress={closeImageModal}>
           <Image
-            source={{uri: selectedImage}}
+            source={{ uri: selectedImage }}
             style={styles.fullImage}
             resizeMode="contain"
           />
@@ -312,12 +206,11 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
 
       <GiftedChat
         messages={messages}
-        onSend={messages => onSend(messages)}
-        user={{_id: userId}}
+        onSend={messagesList => onSend(messagesList)}
+        user={{ _id: userId }}
         alwaysShowSend
-        // 🔹 IMAGE CLICK FIX (KEY PART)
         renderMessageImage={props => {
-          const {currentMessage} = props;
+          const { currentMessage } = props;
           if (!currentMessage?.image) return null;
 
           return (
@@ -325,13 +218,8 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
               activeOpacity={0.9}
               onPress={() => openImageModal(currentMessage.image)}>
               <Image
-                source={{uri: currentMessage.image}}
-                style={{
-                  width: 150,
-                  height: 100,
-                  borderRadius: 12,
-                  margin: 5,
-                }}
+                source={{ uri: currentMessage.image }}
+                style={styles.chatMsgImage}
               />
             </TouchableOpacity>
           );
@@ -340,9 +228,9 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
           <View style={styles.sendContainer}>
             {!uploading && (
               <TouchableOpacity
-                style={{marginHorizontal: 10}}
+                style={styles.cameraIconBtn}
                 onPress={openCamera}>
-                <Icons.AntDesign name="camera" size={28} color={color.defalt} />
+                <Icons.AntDesign name="camera" size={26} color={color.defalt} />
               </TouchableOpacity>
             )}
 
@@ -351,7 +239,7 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
             ) : (
               <Send {...props}>
                 <View style={styles.sendButton}>
-                  <Icons.FontAwesome name="send" size={22} color={color.wite} />
+                  <Icons.FontAwesome name="send" size={18} color={color.wite} />
                 </View>
               </Send>
             )}
@@ -360,27 +248,22 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
         renderInputToolbar={props => (
           <InputToolbar
             {...props}
-            containerStyle={{
-              marginHorizontal: 5,
-              marginBottom: 5,
-              backgroundColor: '#e4e4e4',
-              borderTopWidth: 0,
-            }}
+            containerStyle={styles.inputToolbar}
           />
         )}
         renderComposer={props => (
           <Composer
             {...props}
             placeholder="Type a message..."
-            textInputStyle={{color: 'black', fontSize: 16}}
+            textInputStyle={styles.composerInput}
           />
         )}
         renderBubble={props => (
           <Bubble
             {...props}
             wrapperStyle={{
-              left: {backgroundColor: '#f1f1f1'},
-              right: {backgroundColor: color.defalt},
+              left: { backgroundColor: '#F1F5F9' },
+              right: { backgroundColor: color.defalt },
             }}
           />
         )}
@@ -389,69 +272,43 @@ const NewMessage = ({userId, providerId, onChatUpdate}) => {
   );
 };
 
-// -------------------------------------------------------------
-
 const IndvidualCht = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const currentprovider = route.params?.currentuser;
-  //  const route = useRoute();
-  const {chatId} = route.params || {};
-
-  useEffect(() => {
-    if (chatId) {
-      console.log('Opening chat:', chatId);
-      // fetch messages of this chatId
-    }
-  }, [chatId]);
 
   const userId = global.id?.toString();
   const peerId = currentprovider?.id?.toString();
 
-  const [P_Data, setP_Data] = useState([]);
+  const [providerDetails, setProviderDetails] = useState([]);
   const focus = useIsFocused();
 
-  const getData = async () => {
-    const formdata = new FormData();
-    formdata.append('provider_id', currentprovider?.id);
-    const response = await fetch(`${BASIC_URL}user/get_providers_detail.php`, {
-      method: 'POST',
-      body: formdata,
-    });
-    const result = await response.json();
-    console.log('✅ Provider details result:', result.add_skills);
-    if (result?.add_skills) setP_Data(result.add_skills);
-  };
-
-  useEffect(() => {
-    getData();
-  }, [focus]);
-  const handlechat = async () => {
-    const formdata = new FormData();
-    formdata.append('own_id', global.id);
+  const getData = useCallback(async () => {
+    if (!currentprovider?.id) return;
     try {
-      const response = await fetch(
-        'https://theskilledman.com/api/firebase/chat.php',
-        {
-          method: 'POST',
-          body: formdata,
-        },
-      );
+      const formdata = new FormData();
+      formdata.append('provider_id', currentprovider.id);
+      const response = await fetch(`${BASIC_URL}user/get_providers_detail.php`, {
+        method: 'POST',
+        body: formdata,
+      });
       const result = await response.json();
-      console.log('✅ chat.php result:', JSON.stringify(result, null, 2));
-      if (result?.chat?.chat?.length > 0) {
-        const lastChat = result.chat.chat[0];
-        console.log(`💬 Last Chat from ${lastChat.name}: ${lastChat.message}`);
-      } else {
-        console.log('ℹ️ No chat messages found.');
+      if (result?.add_skills) {
+        setProviderDetails(result.add_skills);
       }
     } catch (error) {
-      console.error('❌ Error fetching chat:', error);
+      console.log('Error fetching provider details:', error);
     }
-  };
-  console.log('Chat screen Data visualization', P_Data);
+  }, [currentprovider?.id]);
+
+  useEffect(() => {
+    if (focus) {
+      getData();
+    }
+  }, [focus, getData]);
+
   return (
-    <>
+    <SafeAreaView style={styles.safeArea}>
       <ChatUsrHeader
         recieverdata={currentprovider}
         onPress={() => navigation.goBack()}
@@ -462,42 +319,71 @@ const IndvidualCht = () => {
         searchIcon="ellipsis-v"
         navigation={navigation}
         onProfilePress={() => {
-          if (global.role === '1') {
-            navigation.navigate('ExpertDetail', {item: P_Data[0]});
+          if (global.role === '1' && providerDetails[0]) {
+            navigation.navigate('ExpertDetail', { item: providerDetails[0] });
           }
         }}
       />
-      <View style={{flex: 1, backgroundColor: 'white'}}>
+      <View style={styles.chatViewContainer}>
         {userId && peerId ? (
-          <NewMessage
-            userId={userId}
-            providerId={peerId}
-            onChatUpdate={handlechat}
-          />
+          <NewMessage userId={userId} providerId={peerId} />
         ) : (
-          <Text
-            style={{textAlign: 'center', marginTop: 30, color: color.defalt}}>
-            Missing user information. Please log in again.
-          </Text>
+          <View style={styles.missingUserBox}>
+            <Text style={styles.missingUserText}>
+              Missing user information. Please log in again.
+            </Text>
+          </View>
         )}
       </View>
-    </>
+    </SafeAreaView>
   );
 };
 
-// -------------------------------------------------------------
+export default IndvidualCht;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
+  chatWrapper: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
+  chatViewContainer: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
+  chatMsgImage: {
+    width: 150,
+    height: 100,
+    borderRadius: 12,
+    margin: 5,
+  },
   sendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 60,
+    height: 48,
+  },
+  cameraIconBtn: {
+    marginHorizontal: 8,
   },
   sendButton: {
-    marginRight: 15,
+    marginRight: 10,
     backgroundColor: color.defalt,
     borderRadius: 8,
     padding: 10,
+  },
+  inputToolbar: {
+    marginHorizontal: 8,
+    marginBottom: 8,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
+    borderTopWidth: 0,
+  },
+  composerInput: {
+    color: '#0F172A',
+    fontSize: 15,
   },
   modalContainer: {
     flex: 1,
@@ -509,6 +395,14 @@ const styles = StyleSheet.create({
     width: Dimensions.get('window').width,
     height: Dimensions.get('window').height,
   },
+  missingUserBox: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  missingUserText: {
+    textAlign: 'center',
+    color: color.defalt,
+    fontSize: 15,
+  },
 });
-
-export default IndvidualCht;

@@ -1,99 +1,119 @@
-import React, {useRef} from 'react';
-import {StyleSheet, Text, View, Image, ImageBackground} from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, View, SafeAreaView, StatusBar } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
+
 import color from '../../Assets/colors/colors';
 import BotonComp from '../../Components/BtnComp';
-import {useNavigation} from '@react-navigation/native';
-// import GetStartedBtn from '../../Components/GetStartedBtn';
+
 const LndedScren = () => {
   const navigation = useNavigation();
+
   return (
-    <>
-      <ImageBackground
-        source={require('../../Assets/Images/bg.png')}
-        resizeMode="cover"
-        style={{width: '100%', height: '100%'}}>
-        <View style={styles.contentContainer}>
-          <Text style={styles.titleStyle}>Skilledman</Text>
-          <Image
-            source={require('../../Assets/Images/landed.png')}
-            style={styles.imgStyle}
-          />
-          <Text style={styles.contentStyle}>
-            A product of Intelligence Technologies Ltd designed to provide a
-            forum for the skilled men (service providers) to conveniently meet
-            with service users using technologies.
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <View style={styles.content}>
+        <Animatable.View animation="fadeInDown" duration={1000} style={styles.header}>
+          <Text style={styles.title}>Skilledman</Text>
+          <Text style={styles.subtitle}>Professional Services at Your Fingertips</Text>
+        </Animatable.View>
+
+        <Animatable.Image
+          animation="zoomIn"
+          duration={1200}
+          source={require('../../Assets/Images/landed.png')}
+          style={styles.image}
+          resizeMode="contain"
+        />
+
+        <Animatable.View animation="fadeInUp" duration={1000} style={styles.footer}>
+          <Text style={styles.description}>
+            Connecting skilled professionals with service seekers through innovative technology.
           </Text>
-          <View style={styles.btnContainer}>
+
+          <View style={styles.btnGroup}>
             <BotonComp
-              BtnStyle={styles.signUpStyle}
+              BtnStyle={styles.signUpBtn}
               btnText="Sign Up"
-              btnTextStyle={styles.btnTextStyle}
-              onPress={() => navigation.navigate('SignupScreen')}
+              btnTextStyle={{ color: color.defalt, fontSize: 16 }}
+              onPressFunc={() => navigation.navigate('SignupScreen')}
             />
             <BotonComp
-              BtnStyle={styles.signInStyle}
+              BtnStyle={styles.signInBtn}
               btnText="Sign In"
+              btnTextStyle={{ fontSize: 16 }}
               onPressFunc={() => navigation.navigate('Signin')}
             />
           </View>
-        </View>
-      </ImageBackground>
-    </>
+        </Animatable.View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 export default LndedScren;
 
 const styles = StyleSheet.create({
-  titleStyle: {
-    textAlign: 'center',
-    color: color.defalt,
-    fontSize: 40,
-    textTransform: 'uppercase',
-    fontWeight: 'bold',
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 25,
+    justifyContent: 'space-between',
     paddingVertical: 30,
   },
-  imgStyle: {
-    width: '90%',
-    height: '20%',
+  header: {
+    alignItems: 'center',
+    marginTop: 10,
   },
-  contentStyle: {
-    fontSize: 23,
-    fontWeight: '700',
+  title: {
+    fontSize: 34,
+    fontWeight: '800',
     color: color.defalt,
-    width: '70%',
-    alignSelf: 'center',
-    textAlign: 'center',
-    marginTop: 30,
-    lineHeight: 30,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
-  btnContainer: {
+  subtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    marginTop: 6,
+    fontWeight: '500',
+  },
+  image: {
+    width: '100%',
+    height: '42%',
+  },
+  footer: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 15,
+    color: '#475569',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 28,
+    paddingHorizontal: 10,
+  },
+  btnGroup: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     width: '100%',
-    marginTop: 50,
   },
-  contentContainer: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignContent: 'center',
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  btnTextStyle: {
-    color: color.defalt,
-  },
-  signUpStyle: {
-    backgroundColor: color.wite,
-    borderWidth: 2,
+  signUpBtn: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
     borderColor: color.defalt,
-    color: color.defalt,
-    elevation: 1,
-    width: '48%',
+    elevation: 0,
+    shadowOpacity: 0,
+    borderRadius: 12,
   },
-  signInStyle: {
+  signInBtn: {
     width: '48%',
+    backgroundColor: color.defalt,
+    borderRadius: 12,
   },
 });

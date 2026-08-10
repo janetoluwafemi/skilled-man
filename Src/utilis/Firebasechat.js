@@ -1,364 +1,61 @@
-// const usersCollection = firestore().collection('chat');
-// // Get user document with an ID
-// const userDocument = firestore().collection('chat').doc('rNhaUfLwpukpesn3Kg5R');
-
-// class FirebaseApp extends Component {
-//     constructor(props) {
-//         super(props);
-//         state = {
-//           // user: {
-//           //   name: '',
-//           // },
-//           users: [],
-//         };
-//     // this.getUser();
-//     // this.getfilteruser();
-//     this.subcriber = firestore()
-//       .collection('chat')
-//       //.doc('rNhaUfLwpukpesn3Kg5R')
-//       .onSnapshot(docs => {
-//         let users = [];
-//         docs.forEach(doc => {
-//           users.push(doc.data());
-//         });
-//         this.setState({users});
-//         console.log(users);
-//         // this.setState({
-//         //   user: {
-//         //     name: doc.data().receiver_id,
-//         //   },
-//         // });
-//       });
-//     // firestore()
-//     //   .collection('chat')
-//     //   .get()
-//     //   .then(querySnapshot => {
-//     //     console.log('Total users: ', querySnapshot.size);
-
-//     //     querySnapshot.forEach(documentSnapshot => {
-//     //       console.log(
-//     //         'User ID: ',
-//     //         documentSnapshot.id,
-//     //         documentSnapshot.data(),
-//     //       );
-//     //     });
-//     //   });
-//   }
-//   getUser = async () => {
-//     const userDocument = await firestore()
-//       .collection('chat')
-//       .doc('rNhaUfLwpukpesn3Kg5R')
-//       .get();
-//     console.log(userDocument);
-//   };
-//   //filteruser
-//   //   getfilteruser=async()=>{
-//   //     const userDocument = await firestore()
-//   //     .collection('chat')
-//   //     .where('age','<',25)
-//   //     .get();
-//   //   console.log(userDocument);
-
-//   //   }
-//   addRandomUser=async()=>{
-//     let name =Math.random().toString(36).substring(7)
-//               firestore().collection('users').add({
-//                 receiver_id,
-//                 created_at:20-2-2024
-
-//               })
-//   }
-//   render() {
-//     return(
-//     <View>
-//         <Button title='Add' onPress={this.addRandomUser}/>
-//       {this.state.users.map((user, index) => (
-//         <View key={index}>
-//           <Text>{user.receiver_id}</Text>
-//         </View>
-//       ))}
-//     </View>
-//     );
-//     //  <View>Name :{this.state.user.receiver_id}</View>;
-//   }
-// }
-// import React, { useEffect, useState } from 'react';
-// import { View, Text, Button } from 'react-native';
-// import firestore from '@react-native-firebase/firestore';
-// import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
-// const ConversationScreen = () => {
-//    const userId = 1;
-//   const providerid =2;
-//   const route = useRoute();
-//   const currentprovider = route.params?.currentuser;
-//   const [messages, setMessages] = useState([]);
-//   const conversationId = [userId,providerid ].sort().join('_'); // Create a unique conversation ID
-
-//   useEffect(() => {
-//     const unsubscribe = firestore()
-//       .collection('chat')
-//       .doc(conversationId)
-//       .collection('message')
-//       .orderBy('timestamp', 'desc')
-//       .onSnapshot(querySnapshot => {
-//         const messages = querySnapshot.docs.map(doc => ({
-//           id: doc.id,
-//           ...doc.data(),
-//         }));
-//         setMessages(messages);
-//       });
-
-//     return () => unsubscribe();
-//   }, [conversationId]);
-
-//   const sendMessage = async (text) => {
-//     await firestore()
-//       .collection('chat')
-//       .doc(conversationId)
-//       .collection('message')
-//       .add({
-//         userId,
-//         providerid,
-//         text,
-//         timestamp: firestore.FieldValue.serverTimestamp(),
-//       });
-//   };
-
-//   const updateLastMessage = async (text) => {
-//     await firestore()
-//       .collection('chat')
-//       .doc(conversationId)
-//       .update({
-//         lastMessage: text,
-//         lastMessageTimestamp: firestore.FieldValue.serverTimestamp(),
-//       });
-//   };
-
-//   const handleSendMessage = async () => {
-//     const messageText = 'Your here mnmnmnm'; // Replace with actual message
-//     await sendMessage(messageText);
-//     await updateLastMessage(messageText);
-//   };
-
-//   return (
-//     <View>
-
-//       {messages.map(message => (
-//         <View
-//         style={{backgroundColor:'black',height:22}}
-//         key={message.id}>
-//           <Text
-//           style={{color:'red'}}
-//           >{message.text}</Text>
-//           {/* Display other message details */}
-//         </View>
-//       ))}
-//       <Button title="Send Message" onPress={handleSendMessage} />
-//     </View>
-//   );
-// };
-import React, {useEffect, useState, useCallback} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  Button,
   TextInput,
   ScrollView,
   Image,
   TouchableOpacity,
-  StyleSheet
+  StyleSheet,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
-import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
-import {GiftedChat} from 'react-native-gifted-chat';
+import storage from '@react-native-firebase/storage';
+import { useRoute } from '@react-navigation/native';
 import DocumentPicker from 'react-native-document-picker';
 import color from '../Assets/colors/colors';
-import {Icons} from '../Components/Icons';
-
-// const ConversationScreen = () => {
-//   const userId = global.id;
-//   const providerId = global.providerid;
-//   const route = useRoute();
-//   const currentprovider = route.params?.currentuser;
-//   global.providerid= currentprovider.id;
-//   console.log(  global.providerid,'globalproviderid')
-//   const [messages, setMessages] = useState([]);
-//   const [messageText, setMessageText] = useState('');
-//   const conversationId = [userId, providerId].sort().join('_'); // Unique conversation ID
-
-//   useEffect(() => {
-//     const unsubscribe = firestore()
-//       .collection('chat')
-//       .doc(conversationId)
-//       .collection('message')
-//       .orderBy('timestamp', 'asc') // Order messages by timestamp
-//       .onSnapshot(querySnapshot => {
-//         const messages = querySnapshot.docs.map(doc => ({
-//           id: doc.id,
-//           ...doc.data(),
-//         }));
-//         setMessages(messages);
-//       });
-
-//     return () => unsubscribe();
-//   }, [conversationId]);
-
-//   const sendMessage = async () => {
-//     if (messageText.trim() === '') return; // Prevent sending empty messages
-//     await firestore()
-//       .collection('chat')
-//       .doc(conversationId)
-//       .collection('message')
-//       .add({
-//         userId,
-//         providerId,
-//         text: messageText.trim(),
-//         timestamp: firestore.FieldValue.serverTimestamp(),
-//       });
-
-//     setMessageText(''); // Clear the message input after sending
-//   };
-
-//   return (
-//     // <ScrollView style={{flex: 1}}>
-//     //   {messages.map(message => (
-//     //     <View
-//     //       style={{
-//     //         backgroundColor: message.userId === userId ? 'lightblue' : 'lightgrey',
-//     //         marginVertical: 5,
-//     //         padding: 10,
-//     //         borderRadius: 10,
-//     //         alignSelf: message.userId === userId ? 'flex-end' : 'flex-start',
-//     //       }}
-//     //       key={message.id}>
-//     //       <Text style={{color: message.userId === userId ? 'black' : 'black'}}>
-//     //         {message.text}
-//     //       </Text>
-//     //       <Text style={{fontSize: 12, color: 'grey'}}>
-//     //         {message.timestamp && new Date(message.timestamp.toDate()).toLocaleString()}
-//     //       </Text>
-//     //     </View>
-//     //   ))}
-//     //   <View
-//     //     style={{
-//     //       flexDirection: 'row',
-//     //       alignItems: 'center',
-//     //       paddingHorizontal: 10,
-//     //     }}>
-//     //     <TextInput
-//     //       style={{
-//     //         flex: 1,
-//     //         height: 40,
-//     //         borderColor: 'gray',
-//     //         borderWidth: 1,
-//     //         borderRadius: 5,
-//     //         marginRight: 10,
-//     //         marginBottom: 100,
-//     //       }}
-//     //       placeholder="Type your message..."
-//     //       value={messageText}
-//     //       onChangeText={text => setMessageText(text)}
-//     //     />
-//     //     <Button title="Send" onPress={sendMessage} />
-//     //   </View>
-//     // </ScrollView>
-//     <ScrollView style={{ flex: 1 }}>
-//     {messages.map(message => (
-//       <View
-//         style={{
-//           flexDirection: 'row',
-//           alignItems: 'flex-start',
-//           justifyContent: message.userId === userId ? 'flex-end' : 'flex-start',
-//           marginVertical: 5,
-//           paddingHorizontal: 10,
-//         }}
-//         key={message.id}>
-//         {message.userId !== userId && (
-//           <Image
-//             source={{
-//               uri: `https://fisdemoprojects.com/skilledman/api/uploads//${currentprovider.image}`,
-//             }}
-//             style={{ width: 30, height: 30, borderRadius: 15, marginRight: 5 }}
-//           />
-//         )}
-//         <View
-//           style={{
-//             backgroundColor: message.userId === userId ? 'lightblue' : 'lightgrey',
-//             borderRadius: 10,
-//             padding: 10,
-//           }}>
-//           <Text style={{ color: 'black' }}>{message.text}</Text>
-//           <Text style={{ fontSize: 12, color: 'grey', marginTop: 5 }}>
-//             {message.timestamp && new Date(message.timestamp.toDate()).toLocaleString()}
-//           </Text>
-//         </View>
-//         {message.userId === userId && (
-//           <Image
-//             source={{
-//               uri: `https://fisdemoprojects.com/skilledman/api/uploads//${global.profile}`,
-//             }}
-//             style={{ width: 30, height: 30, borderRadius: 15, marginLeft: 5 }}
-//           />
-//         )}
-//       </View>
-//     ))}
-//     <View
-//       style={{
-//         flexDirection: 'row',
-//         alignItems: 'center',
-//         paddingHorizontal: 10,
-//       }}>
-//       <TextInput
-//         style={{
-//           flex: 1,
-//           height: 40,
-//           borderColor: 'gray',
-//           borderWidth: 1,
-//           borderRadius: 5,
-//           marginRight: 10,
-//           marginBottom: 100,
-//         }}
-//         placeholder="Type your message..."
-//         value={messageText}
-//         onChangeText={text => setMessageText(text)}
-//       />
-//       <Button title="Send" onPress={sendMessage} />
-//     </View>
-//   </ScrollView>
-//   );
-// };
+import { Icons } from '../Components/Icons';
+import { BASIC_URL } from '../Screens/Signin/Signin';
 
 const ConversationScreen = () => {
   const userId = global.id;
-  const providerId = global.providerid;
   const route = useRoute();
   const currentprovider = route.params?.currentuser;
-  global.providerid = currentprovider.id;
-  console.log(global.providerid, 'globalproviderid');
+
+  if (currentprovider?.id) {
+    global.providerid = currentprovider.id;
+  }
+  const providerId = global.providerid;
+
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
-  const [attachment, setAttachment] = useState(null); // State to store selected attachment
-  const conversationId = [userId, providerId].sort().join('_'); // Unique conversation ID
+  const [attachment, setAttachment] = useState(null);
+
+  const conversationId = [userId, providerId].sort().join('_');
 
   useEffect(() => {
+    if (!conversationId) return;
+
     const unsubscribe = firestore()
       .collection('chat')
       .doc(conversationId)
       .collection('message')
-      .orderBy('timestamp', 'asc') // Order messages by timestamp
+      .orderBy('timestamp', 'asc')
       .onSnapshot(querySnapshot => {
-        const messages = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setMessages(messages);
+        if (querySnapshot) {
+          const fetchedMessages = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setMessages(fetchedMessages);
+        }
       });
 
     return () => unsubscribe();
   }, [conversationId]);
 
   const sendMessage = async () => {
-    if (messageText.trim() === '' && !attachment) return; // Prevent sending empty messages and attachments
+    if (messageText.trim() === '' && !attachment) return;
+
     const messageData = {
       userId,
       providerId,
@@ -367,19 +64,23 @@ const ConversationScreen = () => {
     };
 
     if (attachment) {
-      // If an attachment is selected, upload it to Firebase storage
-      const response = await fetch(attachment.uri);
-      const blob = await response.blob();
-      const filename = attachment.name || 'attachment';
-      const storageRef = storage().ref(`attachments/${filename}`);
-      await storageRef.put(blob);
-      const downloadUrl = await storageRef.getDownloadURL();
-      messageData.attachment = {
-        type: attachment.type,
-        uri: downloadUrl,
-        name: filename,
-      };
-      setAttachment(null); // Clear the attachment state after sending
+      try {
+        const response = await fetch(attachment.uri);
+        const blob = await response.blob();
+        const filename = attachment.name || `file_${Date.now()}`;
+        const storageRef = storage().ref(`attachments/${filename}`);
+        await storageRef.put(blob);
+        const downloadUrl = await storageRef.getDownloadURL();
+
+        messageData.attachment = {
+          type: attachment.type,
+          uri: downloadUrl,
+          name: filename,
+        };
+      } catch (err) {
+        console.log('Error uploading attachment:', err);
+      }
+      setAttachment(null);
     }
 
     await firestore()
@@ -388,7 +89,7 @@ const ConversationScreen = () => {
       .collection('message')
       .add(messageData);
 
-    setMessageText(''); // Clear the message input after sending
+    setMessageText('');
   };
 
   const pickAttachment = async () => {
@@ -396,408 +97,197 @@ const ConversationScreen = () => {
       const res = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
-      setAttachment(res);
+      if (res && res[0]) {
+        setAttachment(res[0]);
+      }
     } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-        console.log('User cancelled the picker');
-      } else {
-        console.log('Error while picking file:', err);
+      if (!DocumentPicker.isCancel(err)) {
+        console.log('Error picking file:', err);
       }
     }
   };
 
   return (
-    <ScrollView style={{flex: 1}}>
-      {messages.map(message => (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-            width: '100%',
-            justifyContent:
-              message.userId === userId ? 'flex-end' : 'flex-start',
-            marginVertical: 5,
-            paddingHorizontal: 10,
-          }}
-          key={message.id}>
-          {message.userId !== userId && (
-            <Image
-              source={{
-                uri: `https://fisdemoprojects.com/skilledman/api/uploads//${currentprovider.image}`,
-              }}
-              style={{height: 55, width: 55, borderRadius: 8, marginRight: 6}}
-            />
-          )}
-          <View
-            style={{
-              backgroundColor:
-                message.userId === userId ? '#965c00' : '#e4e4e4',
-              borderRadius: 14,
-              padding: 10,
-              width:'60%',
-            }}>
-            {message.attachment &&
-            message.attachment.type.startsWith('image') ? (
-              <TouchableOpacity
-                onPress={() => {
-                  /* Handle image preview */
-                }}>
+    <View style={styles.mainWrapper}>
+      <ScrollView style={styles.scrollContainer}>
+        {messages.map(message => {
+          const isSender = message.userId === userId;
+          return (
+            <View
+              key={message.id}
+              style={[
+                styles.msgRow,
+                { justifyContent: isSender ? 'flex-end' : 'flex-start' },
+              ]}>
+              {!isSender && (
                 <Image
-                  source={{uri: message.attachment.uri}}
-                  style={{width: 200, height: 200, borderRadius: 10}}
+                  source={
+                    currentprovider?.image
+                      ? { uri: `${BASIC_URL}uploads/${currentprovider.image}` }
+                      : require('../Assets/Images/user.jpg')
+                  }
+                  style={styles.avatarImg}
                 />
-              </TouchableOpacity>
-            ) : (
-              <Text style={{color: 'black'}}>{message.text}</Text>
-            )}
-            {message.attachment && (
-              <Text style={{fontSize: 12, color: 'grey', marginTop: 5}}>
-                {message.attachment.name}
-              </Text>
-            )}
-            <Text
-              style={{
-                fontSize: 12,
-                marginTop: 2,
-                color: color.litGry,
-                alignSelf: 'flex-start',
-                marginBottom: 5,
-                marginRight: '1%',
-              }}>
-              {message.timestamp &&
-                new Date(message.timestamp.toDate()).toLocaleString()}
-            </Text>
-          </View>
-       
-          {message.userId === userId && (
-            <Image
-              source={{
-                uri: `https://fisdemoprojects.com/skilledman/api/uploads//${global.profile}`,
-              }}
-              style={{height: 55, width: 55, borderRadius: 8, marginRight: 6}}
-            />
-          )}
-          
-        </View>
-        
-      ))}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: '#e4e4e4',
-          padding: 4,
-          borderRadius: 12,
-          marginTop: 8,
-          elevation: 0,
-        }}>
+              )}
+
+              <View
+                style={[
+                  styles.msgBubble,
+                  { backgroundColor: isSender ? '#965c00' : '#e4e4e4' },
+                ]}>
+                {message.attachment &&
+                message.attachment.type?.startsWith('image') ? (
+                  <TouchableOpacity activeOpacity={0.8}>
+                    <Image
+                      source={{ uri: message.attachment.uri }}
+                      style={styles.attachmentImage}
+                    />
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={{ color: isSender ? color.wite : color.blak }}>
+                    {message.text}
+                  </Text>
+                )}
+
+                {message.attachment && (
+                  <Text style={styles.attachmentName}>
+                    {message.attachment.name}
+                  </Text>
+                )}
+
+                <Text
+                  style={[
+                    styles.timestampText,
+                    { color: isSender ? '#ddd' : color.litGry },
+                  ]}>
+                  {message.timestamp?.toDate
+                    ? new Date(message.timestamp.toDate()).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                    : ''}
+                </Text>
+              </View>
+
+              {isSender && (
+                <Image
+                  source={
+                    global.profile
+                      ? { uri: `${BASIC_URL}uploads/${global.profile}` }
+                      : require('../Assets/Images/user.jpg')
+                  }
+                  style={styles.avatarImg}
+                />
+              )}
+            </View>
+          );
+        })}
+      </ScrollView>
+
+      <View style={styles.inputBar}>
         <TextInput
-          style={{
-            color: 'black',
-            flex: 1,
-            paddingHorizontal: 16,
-          }}
+          style={styles.textInput}
           placeholder="Send Message"
           placeholderTextColor={color.litGry}
           value={messageText}
-          onChangeText={text => setMessageText(text)}
+          onChangeText={setMessageText}
         />
 
-        <View
-          style={{marginLeft: 8, flexDirection: 'row', alignItems: 'center'}}>
+        <View style={styles.actionIcons}>
           <TouchableOpacity onPress={pickAttachment}>
-            <Icons.AntDesign
-              name="paperclip"
-              size={25}
-              color={color.litGry}
-            />
-            <Text
-              style={{
-                fontSize: 1,
-                color: color.blak,
-                fontWeight: '600',
-              }}>
-              {attachment ? attachment.name : ''}
-            </Text>
+            <Icons.AntDesign name="paperclip" size={24} color={color.litGry} />
           </TouchableOpacity>
+
           <TouchableOpacity onPress={sendMessage}>
-            <Icons.FontAwesome
-              name="send"
-              size={20}
-              color={color.litGry}
-              style={{
-                marginLeft: 7,
-                backgroundColor: color.defalt,
-                color: color.wite,
-                paddingVertical: 8,
-                paddingHorizontal: 8,
-                borderRadius: 6,
-              }}
-            />
+            <Icons.FontAwesome name="send" size={18} style={styles.sendIcon} />
           </TouchableOpacity>
-          {/* <Button title="Send" onPress={sendMessage} /> */}
         </View>
       </View>
-    </ScrollView>
+
+      {attachment ? (
+        <Text style={styles.attachmentPreview} numberOfLines={1}>
+          Attached: {attachment.name}
+        </Text>
+      ) : null}
+    </View>
   );
 };
 
-//upper attach code
-// const ConversationScreen = () => {
-//   const userId = global.id;
-//   const providerId = global.providerid;
-//   const route = useRoute();
-//   const currentprovider = route.params?.currentuser;
-//   global.providerid = currentprovider.id;
-//   console.log(global.providerid, 'globalproviderid');
-//   const [messages, setMessages] = useState([]);
-//   const [attachment, setAttachment] = useState(null); // State to store selected attachment
-//   const conversationId = [userId, providerId].sort().join('_'); // Unique conversation ID
-
-//   useEffect(() => {
-//     const unsubscribe = firestore()
-//       .collection('chat')
-//       .doc(conversationId)
-//       .collection('message')
-//       .orderBy('timestamp', 'asc')
-//       .onSnapshot(querySnapshot => {
-//         const messages = querySnapshot.docs.map(doc => {
-//           if (!doc.exists) {
-//             return null; // Handle the case where the document doesn't exist
-//           }
-
-//           const data = doc.data();
-//           return {
-//             _id: doc.id,
-//             text: data.text,
-//             createdAt: data.timestamp ? data.timestamp.toDate() : null,
-//             user: {
-//               _id: data.userId === userId ? 1 : 2,
-//               name: data.userId === userId ? 'You' : currentprovider.name,
-//               avatar: data.userId === userId ? `https://fisdemoprojects.com/skilledman/api/uploads//${global.profile}` : `https://fisdemoprojects.com/skilledman/api/uploads//${currentprovider.image}`,
-//             },
-//             image: data.attachment && data.attachment.type.startsWith('image') ? data.attachment.uri : null,
-//             file: data.attachment && !data.attachment.type.startsWith('image') ? data.attachment.uri : null,
-//           };
-//         }).filter(message => message !== null); // Remove null values from messages array
-//         setMessages(messages);
-//       });
-
-//     return () => unsubscribe();
-//   }, [conversationId]);
-//   const onSend = async newMessages => {
-//     const message = newMessages[0];
-//     const messageData = {
-//       userId,
-//       providerId,
-//       text: message.text,
-//       timestamp: firestore.FieldValue.serverTimestamp(),
-//     };
-
-//     if (message.image || message.file) {
-//       const response = await fetch(message.image || message.file);
-//       const blob = await response.blob();
-//       const filename = message.image ? 'image.jpg' : 'file.pdf'; // Change file name as needed
-//       const storageRef = storage().ref(`attachments/${filename}`);
-//       await storageRef.put(blob);
-//       const downloadUrl = await storageRef.getDownloadURL();
-//       messageData.attachment = {
-//         type: message.image ? 'image/jpeg' : 'application/pdf', // Adjust mime type based on file type
-//         uri: downloadUrl,
-//         name: filename,
-//       };
-//     }
-
-//     await firestore()
-//       .collection('chat')
-//       .doc(conversationId)
-//       .collection('message')
-//       .add(messageData);
-//   };
-
-//   const pickAttachment = async () => {
-//     try {
-//       const res = await DocumentPicker.pick({
-//         type: [DocumentPicker.types.allFiles],
-//       });
-//       setAttachment(res);
-//     } catch (err) {
-//       if (DocumentPicker.isCancel(err)) {
-//         console.log('User cancelled the picker');
-//       } else {
-//         console.log('Error while picking file:', err);
-//       }
-//     }
-//   };
-
-//   return (
-//     <View style={{ flex: 1 }}>
-//       <GiftedChat
-//         messages={messages}
-//         onSend={newMessages => onSend(newMessages)}
-//         user={{
-//           _id: 1, // Assuming your user ID is 1
-//         }}
-//         renderActions={() => (
-//           <TouchableOpacity onPress={pickAttachment}>
-//             <Text style={{ color: 'blue', marginRight: 10 }}>Attach</Text>
-//           </TouchableOpacity>
-//         )}
-//       />
-//     </View>
-//   );
-// };
-
-
-
+export default ConversationScreen;
 
 const styles = StyleSheet.create({
-  labelStyle: {
-    fontSize: 1,
-    color: color.blak,
-    fontWeight: '600',
-  },
-  container: {
-    flex: 0.98,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    backgroundColor: '#f0f0f0',
-  },
-  senderMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#e4e4e4',
-    paddingVertical: 17,
-    borderRadius: 8,
-    marginBottom: 4,
-    paddingHorizontal: 10,
-    width: '80%',
-  },
-  receiverMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: color.defalt,
-    paddingVertical: 15,
-    borderRadius: 8,
-    marginBottom: 4,
-    width: '78%',
-    paddingHorizontal: 10,
-  },
-  messageText: {
-    color: color.litGry, // For sender messages
-    fontSize: 16,
-    flexWrap: 'wrap',
-  },
-  receiverText: {
-    color: color.wite, // For sender messages
-    fontSize: 16,
-    flexWrap: 'wrap',
-  },
-  timestamp: {
-    fontSize: 12,
-    marginTop: 2,
-    color: color.litGry,
-    alignSelf: 'flex-end',
-    marginBottom: 10,
-    marginRight: '21%',
-  },
-  timeStyle: {
-    fontSize: 12,
-    marginTop: 2,
-    color: color.litGry,
-    alignSelf: 'flex-start',
-    marginBottom: 10,
-    marginLeft: '21%',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e4e4e4',
-    padding: 4,
-    borderRadius: 12,
-    marginTop: 8,
-    elevation: 0,
-  },
-  input: {
-    color: 'black',
+  mainWrapper: {
     flex: 1,
-    paddingHorizontal: 16,
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 10,
+    paddingBottom: 10,
   },
-  sendButton: {
-    marginLeft: 8,
+  scrollContainer: {
+    flex: 1,
+  },
+  msgRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    width: '100%',
+    marginVertical: 6,
+  },
+  avatarImg: {
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    marginHorizontal: 4,
+  },
+  msgBubble: {
+    borderRadius: 12,
+    padding: 10,
+    maxWidth: '70%',
+  },
+  attachmentImage: {
+    width: 180,
+    height: 180,
+    borderRadius: 8,
+  },
+  attachmentName: {
+    fontSize: 12,
+    color: 'gray',
+    marginTop: 4,
+  },
+  timestampText: {
+    fontSize: 10,
+    marginTop: 4,
+    alignSelf: 'flex-end',
+  },
+  inputBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e4e4e4',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginTop: 6,
+  },
+  textInput: {
+    color: color.blak,
+    flex: 1,
+    paddingHorizontal: 12,
+    height: 42,
+  },
+  actionIcons: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  sendButtonText: {
-    color: '#007AFF',
-    fontWeight: 'bold',
-  },
-  sendStyle: {
-    marginLeft: 7,
+  sendIcon: {
+    marginLeft: 10,
     backgroundColor: color.defalt,
     color: color.wite,
     paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
   },
-  imageStyle: {
-    height: 55,
-    width: 55,
-    borderRadius: 8,
-    marginRight: 6,
-  },
-  imgContainer: {
-    flexDirection: 'row',
-    width: '100%',
-  },
-  recImg: {
-    marginLeft: 6,
-  },
-  imagemodal: {
-    height: '80%',
-    width: '80%',
-    borderRadius: 8,
-    marginRight: 6,
-  },
-  modalContainer: {
-    borderTopRightRadius: 20,
-    borderTopLeftRadius: 20,
-    marginLeft: 0,
-    marginRight: 0,
-  },
-  modalBody: {
-    flexDirection: 'column',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-  },
-  modalView: {
-    borderRadius: 12,
-    width: '70%',
-    height: 320,
-    alignSelf: 'center',
-    backgroundColor: color.wite,
-  },
-  btnContainer: {
-    width: '60%',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-  },
-  successmodalBody: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-  },
-  modalStyle: {},
-  modal: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fullImage: {
-    width: '90%',
-    height: '90%',
+  attachmentPreview: {
+    fontSize: 12,
+    color: color.defalt,
+    marginTop: 4,
+    paddingLeft: 12,
   },
 });
-export default ConversationScreen;

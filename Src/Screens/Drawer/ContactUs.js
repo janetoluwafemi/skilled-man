@@ -1,50 +1,40 @@
-import React, {useRef, useEffect, useContext, useState} from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
   ImageBackground,
-  ScrollView,
+  SafeAreaView,
+  Alert,
 } from 'react-native';
-import CashHistoryCard from '../../Components/CashHistoryCard';
 import color from '../../Assets/colors/colors';
 import CstmHeader from '../../Components/CustomHeader';
-import {useIsFocused} from '@react-navigation/native';
 import ProfileInput from '../../Components/ProfileInput';
 import MultiLineInput from '../../Components/MultiLineInput';
-import {border} from 'native-base/lib/typescript/theme/styled-system';
-const CntctUs = props => {
-  const [Data, setData] = useState([]);
-  const isfocused = useIsFocused();
 
-  const Items = ({item}) => (
-    <View style={styles.bodyCont}>
-      <Text style={styles.contStyle}>{item.Date}</Text>
-      <Text style={styles.contStyle}>{item.Total_Expense}</Text>
-      <Text style={styles.contStyle}>{item.Cash_Collected}</Text>
-      <Text style={styles.contStyle}>{item.Closing_Balance}</Text>
-      <Text
-        style={[
-          styles.contStyle,
-          {
-            backgroundColor:
-              item.rider_status === 'accept' ? color.Gren : color.ylow,
-            color: color.wite,
-            borderRadius: 3,
-          },
-        ]}>
-        {item.rider_status}
-      </Text>
-    </View>
-  );
+const CntctUs = props => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = () => {
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      Alert.alert('Validation Error', 'Please fill in all fields');
+      return;
+    }
+
+    Alert.alert('Success', 'Thank you for reaching out to us!');
+    setName('');
+    setEmail('');
+    setMessage('');
+  };
+
   return (
-    <>
+    <SafeAreaView style={styles.safeArea}>
       <CstmHeader
         title="Contact Us"
-        onPress={() => {
-          props.navigation.goBack();
-        }}
+        onPressBack={() => props.navigation.goBack()}
       />
       <ImageBackground
         source={require('../../Assets/Images/background.jpeg')}
@@ -52,90 +42,68 @@ const CntctUs = props => {
         style={styles.backgroundImg}>
         <View style={styles.container}>
           <ProfileInput
-            style={{color: color.gry}}
+            style={styles.inputStyle}
             placeholder="Name"
             placeholderTextColor={color.gry}
-            onChangeText={val => setName(val)}
+            value={name}
+            onChangeText={setName}
             icon="user-circle"
           />
           <ProfileInput
-            style={{color: color.gry}}
+            style={styles.inputStyle}
             placeholder="Email"
             placeholderTextColor={color.gry}
-            onChangeText={val => setemail(val)}
+            value={email}
+            onChangeText={setEmail}
             icon="envelope"
           />
           <MultiLineInput
-            style={{color: color.gry}}
+            style={styles.inputStyle}
             placeholder="Message..."
             placeholderTextColor={color.gry}
+            value={message}
+            onChangeText={setMessage}
             numberOfLines={8}
-            styles={{marginTop: 18, textAlignVertical: 'top'}}
+            styles={styles.multiLineExtra}
           />
-          <TouchableOpacity style={styles.loginBtn}>
+          <TouchableOpacity
+            style={styles.loginBtn}
+            activeOpacity={0.8}
+            onPress={handleSubmit}>
             <Text style={styles.btnText}>Submit</Text>
           </TouchableOpacity>
         </View>
       </ImageBackground>
-    </>
+    </SafeAreaView>
   );
 };
 
 export default CntctUs;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     paddingHorizontal: 15,
     paddingVertical: 20,
   },
-  bodyCont: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: color.wite,
-
-    alignSelf: 'center',
-    elevation: 5,
-    paddingHorizontal: 4,
-    paddingVertical: 20,
-    width: '100%',
-  },
-  HeadStyle: {
-    fontSize: 19,
-    fontWeight: '600',
-    paddingVertical: 10,
-    color: color.drkgren,
-  },
-  contStyle: {
-    fontSize: 13,
+  inputStyle: {
     color: color.gry,
-    flexWrap: 'wrap',
-    textAlign: 'center',
-    paddingHorizontal: 5,
   },
-  iconStyle: {
-    color: color.wite,
-    fontSize: 33,
-    backgroundColor: color.drkGren,
-    borderRadius: 50,
-    paddingHorizontal: 6,
-    paddingVertical: 6,
-  },
-  iconCont: {
-    position: 'absolute',
-    right: '2%',
-    bottom: '3%',
+  multiLineExtra: {
+    marginTop: 18,
+    textAlignVertical: 'top',
   },
   backgroundImg: {
-    height: '100%',
+    flex: 1,
   },
   loginBtn: {
     borderRadius: 5,
     backgroundColor: color.drkgren,
-    textAlign: 'center',
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
     flexDirection: 'row',
     width: '100%',
     paddingVertical: 12,
@@ -143,7 +111,7 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: 'white',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
   },
 });

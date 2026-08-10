@@ -1,34 +1,32 @@
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   Dimensions,
   Button,
-  Modal,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
-import color from '../../Assets/colors/colors';
-import {ScrollView} from 'react-native-gesture-handler';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import CstmHeader from '../../Components/CustomHeader';
-import {WebView} from 'react-native-webview';
-import C_TxtInput from '../../Components/C_TextInput';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { WebView } from 'react-native-webview';
 import Toast from 'react-native-simple-toast';
-import {BASIC_URL} from '../Signin/Signin';
 
-const {height, width} = Dimensions.get('window');
+import color from '../../Assets/colors/colors';
+import CstmHeader from '../../Components/CustomHeader';
+import C_TxtInput from '../../Components/C_TextInput';
+import { BASIC_URL } from '../Signin/Signin';
+
+const { height, width } = Dimensions.get('window');
 
 const CrdDetails = props => {
   const navigation = useNavigation();
   const route = useRoute();
 
-  // Add safe parameter extraction with defaults
   const {
-    price = 1, // Default to 0 if undefined
+    price = 1,
     fullName = '',
     date = new Date(),
     phoneNumber = '',
@@ -41,8 +39,7 @@ const CrdDetails = props => {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Initialize with safe values
-  const [billingDetail, setBillingDetail] = useState({
+  const [billingDetail] = useState({
     billingName: global.name || '',
     billingEmail: global.email || '',
     billingMobile: global.phone_number || '',
@@ -53,7 +50,6 @@ const CrdDetails = props => {
     createBooking();
   }, []);
 
-  // Safe toString function
   const safeToString = value => {
     if (value === null || value === undefined) {
       return '';
@@ -61,11 +57,18 @@ const CrdDetails = props => {
     return value.toString();
   };
 
+  const formatTime = dateObj => {
+    const d = new Date(dateObj);
+    const hours = d.getHours().toString().padStart(2, '0');
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    const seconds = d.getSeconds().toString().padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  };
+
   const createBooking = async () => {
     try {
       setLoading(true);
 
-      // Validate required fields
       if (!price || price <= 0) {
         Alert.alert('Error', 'Invalid price amount');
         return;
@@ -76,8 +79,9 @@ const CrdDetails = props => {
         return;
       }
 
-      const bookingdate = date.toISOString().split('T')[0];
-      const bookingtime = formatTime(date);
+      const bookingDateObj = new Date(date);
+      const bookingdate = bookingDateObj.toISOString().split('T')[0];
+      const bookingtime = formatTime(bookingDateObj);
 
       const formdata = new FormData();
       formdata.append('user_id', global.id);
@@ -89,11 +93,13 @@ const CrdDetails = props => {
       formdata.append('provider_id', provider_id);
       formdata.append('Full_name', fullName);
 
-      formdata.append('file', {
-        uri: selectedfile.uri,
-        name: selectedfile.name,
-        type: selectedfile.type,
-      });
+      if (selectedfile && selectedfile.uri) {
+        formdata.append('file', {
+          uri: selectedfile.uri,
+          name: selectedfile.name || 'file',
+          type: selectedfile.type || 'application/octet-stream',
+        });
+      }
 
       const requestOptions = {
         method: 'POST',
@@ -102,7 +108,7 @@ const CrdDetails = props => {
 
       const response = await fetch(
         `${BASIC_URL}user/book_service.php`,
-        requestOptions,
+        requestOptions
       );
 
       if (!response.ok) {
@@ -114,21 +120,18 @@ const CrdDetails = props => {
       if (result?.status) {
         global.bookid = result.booking_id;
         initiatePaystack();
-      }
-      else if (
+      } else if (
         result?.error ===
         'Your Request is in Progress. So, Before Completing Previous you can Not Send Again'
       ) {
         Alert.alert(
           'Booking Failed',
-          'Transaction incomplete. Kindly message the booked provider to reject your booking, then initiate a new transaction',
+          'Transaction incomplete. Kindly message the booked provider to reject your booking, then initiate a new transaction'
         );
       } else {
         Alert.alert('Booking Failed', result?.error || 'Unknown error');
-        console.log('Booking Error', result);
       }
     } catch (error) {
-      console.error('Booking error:', error);
       Alert.alert('Error', 'Booking failed. Try again.');
     } finally {
       setLoading(false);
@@ -138,9 +141,10 @@ const CrdDetails = props => {
   const initiatePaystack = async () => {
     try {
       const formdata = new FormData();
-      // formdata.append('amount', billingDetail.billingAmount.toString());
-      // Using This line because paystack use mini value in this case kodo
-      formdata.append('amount', (billingDetail.billingAmount * 100).toString());
+      formdata.append(
+        'amount',
+        (billingDetail.billingAmount * 100).toString()
+      );
       formdata.append('email', billingDetail.billingEmail);
       formdata.append('transaction_type', 'deposit');
       formdata.append('booking_id', global.bookid);
@@ -163,17 +167,15 @@ const CrdDetails = props => {
         setPaymentUrl(result?.data?.authorization_url);
         setModalVisible(true);
       } else {
-        console.error('Payment initialization failed:', result);
         Alert.alert('Payment Error', 'Failed to initialize payment');
       }
     } catch (error) {
-      console.error('Payment error:', error);
       Alert.alert('Payment Error', 'Failed to process payment');
     }
   };
 
   const handlePaymentNavigationChange = navState => {
-    const {url} = navState;
+    const { url } = navState;
 
     if (url.includes('payment-success')) {
       handlePaymentSuccess();
@@ -191,17 +193,10 @@ const CrdDetails = props => {
     navigation.goBack();
   };
 
-  const formatTime = date => {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
-  };
-
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={color.primary} />
+        <ActivityIndicator size="large" color={color.defalt} />
       </View>
     );
   }
@@ -210,25 +205,25 @@ const CrdDetails = props => {
     return (
       <View style={styles.container}>
         <WebView
-          source={{uri: paymentUrl}}
+          source={{ uri: paymentUrl }}
           style={styles.webView}
           onNavigationStateChange={handlePaymentNavigationChange}
           startInLoadingState={true}
           renderLoading={() => (
             <ActivityIndicator
               size="large"
-              color={color.primary}
-              style={{marginTop: 20}}
+              color={color.defalt}
+              style={styles.loaderMargin}
             />
           )}
         />
-        <Button title="Cancel Payment" onPress={handleCloseModal} />
+        <Button title="Cancel Payment" onPress={handleCloseModal} color={color.defalt} />
       </View>
     );
   }
 
   return (
-    <>
+    <View style={styles.container}>
       <CstmHeader
         title="Card Detail"
         onPressBack={() => props.navigation.goBack()}
@@ -261,7 +256,7 @@ const CrdDetails = props => {
           />
         </View>
       </ScrollView>
-    </>
+    </View>
   );
 };
 
@@ -270,9 +265,7 @@ export default CrdDetails;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  viewContainer: {
-    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   webView: {
     flex: 1,
@@ -281,39 +274,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 20,
   },
-  radioStyle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingVertical: 3,
-  },
-  methodName: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: color.defalt,
-  },
-  paymentTitle: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: color.defalt,
-    marginBottom: 15,
-  },
-  BtnStyle: {
-    marginTop: 35,
-  },
-  closeStyle: {
-    marginHorizontal: 8,
-  },
-  lockCont: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    marginTop: 20,
-    justifyContent: 'center',
+  inputContainer: {
+    width: '100%',
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  loaderMargin: {
+    marginTop: 20,
   },
 });

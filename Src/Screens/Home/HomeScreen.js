@@ -1,24 +1,14 @@
-import React, {useRef, useEffect} from 'react';
-import {StyleSheet, Text, View, ImageBackground} from 'react-native';
-import HomStakwithoutsarch from '../../Components/HomeStackwithoutsearch';
-import Two_Crd from '../../Components/Two_Card';
-import Card from '../../Components/OpeningCard';
-import TargetCard from '../../Components/TargetCard';
+import React from 'react';
+import { StyleSheet, Text, View, SafeAreaView } from 'react-native';
 import color from '../../Assets/colors/colors';
+
 const WishlstScren = () => {
   return (
-    <>
-      <Text
-        style={{
-          fontSize: 19,
-          fontWeight: '600',
-          color: color.drkgren,
-          alignSelf: 'center',
-          paddingVertical: 10,
-        }}>
-        Welcome Jhon!
-      </Text>
-    </>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.welcomeText}>Welcome Jhon!</Text>
+      </View>
+    </SafeAreaView>
   );
 };
 
@@ -26,6 +16,19 @@ export default WishlstScren;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: '#fff',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  welcomeText: {
+    fontSize: 19,
+    fontWeight: '600',
+    color: color.drkgren,
+    textAlign: 'center',
+    paddingVertical: 10,
   },
 });

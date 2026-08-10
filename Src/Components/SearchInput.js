@@ -1,31 +1,16 @@
-import React, { useState } from 'react';
-import {
-  Dimensions,
-  StyleSheet,
-  TextInput,
-  View,
-  TouchableOpacity,
-} from 'react-native';
-import { Icons } from '../Components/Icons';
-import LinearGradient from 'react-native-linear-gradient';
-
+import React from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
+import { Icons } from './Icons';
 import color from '../Assets/colors/colors';
-const SarchInpt = props => {
-  const { mode = 'outlined' } = props;
-  const [text, setText] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
 
+const SarchInpt = props => {
   return (
-    <View style={styles.searchContainer}>
+    <View style={[styles.searchContainer, props.containerStyle]}>
       <Icons.FontAwesome name="search" size={18} color={color.defalt} />
       <TextInput
-        style={{
-          flex: 1,
-          paddingLeft: 10,
-        }}
-        placeholder="Search"
+        style={styles.inputStyle}
+        placeholder={props.placeholder || 'Search'}
         placeholderTextColor={color.defalt}
-        color={color.defalt}
         onChangeText={props.onChangeText}
         value={props.value}
       />
@@ -33,26 +18,21 @@ const SarchInpt = props => {
   );
 };
 
+export default SarchInpt;
+
 const styles = StyleSheet.create({
-  inputstyle: {
-    width: '100%',
-    paddingVertical: 10,
-    fontSize: 15,
-    paddingHorizontal: 15,
-    borderBottomColor: color.litGry,
-    borderBottomWidth: 1,
-    borderBottomColor: color.litGry,
-    backgroundColor: 'transparent',
-    borderRadius: 6,
-  },
   searchContainer: {
     flexDirection: 'row',
-    height: 50,
+    height: 48,
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     borderRadius: 10,
     backgroundColor: color.wite,
   },
+  inputStyle: {
+    flex: 1,
+    paddingLeft: 10,
+    color: color.defalt,
+    fontSize: 14,
+  },
 });
-
-export default SarchInpt;

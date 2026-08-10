@@ -1,129 +1,111 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  Image,
   ImageBackground,
-  Dimensions,
-  TouchableOpacity,
+  SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
-import C_TxtInput from '../../Components/C_TextInput';
-import color from '../../Assets/colors/colors';
-import BotonComp from '../../Components/BtnComp';
-import { Checkbox } from 'react-native-paper';
-import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
-import C_Dropdwn from '../../Components/C_Dropdown';
-import InputWIcon from '../../Components/InputWithIcon';
-import C_TaxInput from '../../Components/C_Taxinput';
-const { width } = Dimensions.get('window');
-const { height } = Dimensions.get('window');
+import { useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-simple-toast';
 
+import color from '../../Assets/colors/colors';
+import BotonComp from '../../Components/BtnComp';
+import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
+import C_TaxInput from '../../Components/C_Taxinput';
+import { BASIC_URL } from '../Signin/Signin';
+
 const AdTax = props => {
-
-
-
   const navigation = useNavigation();
-  const [checked, setChecked] = React.useState(false);
-  const [description, setDescription] = React.useState('')
-  const [TaxId, setTaxId] = React.useState('')
+  const [description, setDescription] = useState('');
+  const [taxId, setTaxId] = useState('');
+  const [load, setLoad] = useState(false);
 
-  const handledesciption = (value) => {
-    console.log("description", value)
-    setDescription(value)
-  }
-  const handleTax = (value) => {
-    console.log("setTaxID", value)
-    setTaxId(value)
-  }
-
-  const AdTxfun = async () => {
-    if (TaxId === '' || description === "") {
+  const adTxFun = async () => {
+    if (!taxId.trim() || !description.trim()) {
       Toast.show('Please fill the required fields.');
       return;
     }
     try {
-      var myHeaders = new Headers();
-      myHeaders.append("Cookie", "PHPSESSID=eddcih6nlqteh4o8jvflmsa5vn");
+      setLoad(true);
+      const formdata = new FormData();
+      formdata.append('tax', taxId);
+      formdata.append('user_id', global.id);
+      formdata.append('description', description);
 
-      var formdata = new FormData();
-      formdata.append("tax", TaxId);
-      formdata.append("user_id", global.id);
-      formdata.append("description", description);
-
-      var requestOptions = {
+      const response = await fetch(`${BASIC_URL}add_tax.php`, {
         method: 'POST',
-        headers: myHeaders,
         body: formdata,
-        redirect: 'follow'
-      };
+      });
 
-      fetch("https://fisdemoprojects.com/skilledman/api/add_tax.php", requestOptions)
-        .then(response => response.json())
-        .then(result => {
-          if (result) {
-            console.log(result)
-            navigation.navigate('Congratulations')
-          }
-        })
-        .catch(error => console.log('error', error));
+      const result = await response.json();
+      setLoad(false);
+
+      if (result) {
+        Toast.show('Tax details added successfully');
+        navigation.navigate('Congratulations');
+      }
     } catch (error) {
-      console.log('error', error)
+      setLoad(false);
+      Toast.show('Failed to add tax details.');
     }
-
-  }
-
+  };
 
   return (
-    <>
+    <SafeAreaView style={styles.safeArea}>
       <ImageBackground
         source={require('../../Assets/Images/bg.png')}
         resizeMode="cover"
         style={styles.backgroundImg}>
         <CstmHeaderIcon
-          onPress={() => {
-            props.navigation.goBack();
-          }}
+          onPress={() => props.navigation.goBack()}
           headerIcon={styles.headerIcon}
         />
         <View style={styles.container}>
           <Text style={styles.accountVer}>Add Tax Detail</Text>
 
           <View style={styles.inputContainer}>
-
             <C_TaxInput
               placeholder="Tax Id"
               placeholderTextColor={color.defalt}
-              value={TaxId}
-              onChangeText={handleTax} />
-
+              value={taxId}
+              onChangeText={setTaxId}
+            />
           </View>
+
           <View style={styles.inputContainer}>
             <C_TaxInput
               placeholder="Description"
               placeholderTextColor={color.defalt}
               value={description}
-              onChangeText={handledesciption}
+              onChangeText={setDescription}
             />
           </View>
+
           <BotonComp
             BtnStyle={styles.BtnStyle}
-            btnText="Register"
-            onPressFunc={() => {
-              AdTxfun()
-            }}
+            btnText={
+              load ? <ActivityIndicator size="small" color="#fff" /> : 'Register'
+            }
+            onPressFunc={adTxFun}
           />
         </View>
       </ImageBackground>
-    </>
+    </SafeAreaView>
   );
 };
 
 export default AdTax;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  backgroundImg: {
+    width: '100%',
+    height: '100%',
+  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -132,35 +114,12 @@ const styles = StyleSheet.create({
     width: '80%',
     flex: 0.8,
   },
-
-  backgroundImg: {
-    width: '100%',
-    height: '100%',
-  },
-  logoStyle: {
-    justifyContent: 'center',
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 70,
-    marginBottom: 25,
-  },
-  logoImg: {
-    width: width / 2,
-    height: height / 4.6,
-  },
-  dropdownContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    width: '100%',
-  },
   inputContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-
   BtnStyle: {
     marginTop: 25,
     width: '100%',

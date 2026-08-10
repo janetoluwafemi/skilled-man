@@ -1,40 +1,55 @@
-import {FlatList, Image, StyleSheet, Text, View} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+} from 'react-native';
 import color from '../../Assets/colors/colors';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import SearchHeader from './SearchHeader';
+import { BASIC_URL } from '../Signin/Signin';
 
 const Balance = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchdata();
-  }, []);
-
-  const fetchdata = async () => {
+  const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch(
-        `https://theskilledman.com/api/provider-transactions/${global.id}`,
+        `${BASIC_URL}provider-transactions/${global.id}`
       );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+
       const result = await response.json();
       const transactions = result.data || [];
+      setData(transactions);
       setFilteredData(transactions);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.log('Error fetching transaction balance data:', error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSearch = query => {
     setSearchQuery(query);
     if (query.trim() === '') {
-      fetchdata();
+      setFilteredData(data);
     } else {
-      const filtered = filteredData.filter(item =>
-        item.user_name.toLowerCase().includes(query.toLowerCase()),
+      const filtered = data.filter(item =>
+        item.user_name?.toLowerCase().includes(query.toLowerCase())
       );
       setFilteredData(filtered);
     }
@@ -42,35 +57,30 @@ const Balance = () => {
 
   const handleSearchIconPress = () => {
     if (searchQuery.trim() === '') {
-      fetchdata();
+      setFilteredData(data);
     }
   };
 
-  const renderItem = ({item}) => (
+  const renderItem = ({ item }) => (
     <View style={styles.container}>
-      {/* Container for Image and Name with flex: 1 to allow shrinking/growing */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          flex: 1,
-          marginRight: 10,
-        }}>
+      <View style={styles.leftRow}>
         <Image
-          source={require('../../Assets/Images/logo.png')}
-          style={{width: 50, height: 50, borderRadius: 25}}
+          source={
+            item.user_profile
+              ? { uri: `${BASIC_URL}uploads/${item.user_profile}` }
+              : require('../../Assets/Images/logo.png')
+          }
+          style={styles.avatar}
         />
-        <View style={{marginLeft: 10, flex: 1}}>
-          {/* Added flex: 1 here and numberOfLines below */}
+        <View style={styles.infoCol}>
           <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
             {item.user_name}
           </Text>
-          <Text style={{color: color.defalt, fontSize: 10}}>{item.date}</Text>
+          <Text style={styles.dateText}>{item.date}</Text>
         </View>
       </View>
 
-      {/* Balance Section - Keeps its fixed width layout */}
-      <View style={{alignItems: 'flex-end'}}>
+      <View style={styles.rightCol}>
         <Text style={styles.name}>Balance:</Text>
         <Text style={styles.balance}>₦ {item.amount || 0}</Text>
       </View>
@@ -78,20 +88,35 @@ const Balance = () => {
   );
 
   return (
-    <View style={{flex: 1}}>
+    <View style={styles.flexFill}>
       <SearchHeader
         onSearch={handleSearch}
         searchQuery={searchQuery}
         onSearchIconPress={handleSearchIconPress}
       />
-      <View style={{flex: 1, marginTop: 30}}>
-        <FlatList
-          data={filteredData}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => index.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{paddingBottom: 20}}
-        />
+      <View style={styles.listWrapper}>
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color={color.defalt}
+            style={styles.loader}
+          />
+        ) : (
+          <FlatList
+            data={filteredData}
+            renderItem={renderItem}
+            keyExtractor={(item, index) =>
+              item.id?.toString() || index.toString()
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <View style={styles.emptyBox}>
+                <Text style={styles.emptyText}>No transaction records found</Text>
+              </View>
+            }
+          />
+        )}
       </View>
     </View>
   );
@@ -100,29 +125,72 @@ const Balance = () => {
 export default Balance;
 
 const styles = StyleSheet.create({
+  flexFill: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  listWrapper: {
+    flex: 1,
+    marginTop: 10,
+  },
+  listContent: {
+    paddingBottom: 20,
+  },
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
     backgroundColor: 'white',
     borderRadius: 10,
     elevation: 2,
-    marginBottom: 10,
-    marginTop: 10,
+    marginBottom: 8,
+    marginTop: 8,
     alignSelf: 'center',
     width: '90%',
   },
+  leftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  infoCol: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  rightCol: {
+    alignItems: 'flex-end',
+  },
   name: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: color.defalt,
-    marginBottom: 8,
-    marginTop: 4,
+    marginBottom: 4,
   },
   balance: {
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 15,
+    fontWeight: '600',
     color: color.defalt,
+  },
+  dateText: {
+    color: color.defalt,
+    fontSize: 11,
+  },
+  loader: {
+    marginTop: 40,
+  },
+  emptyBox: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: color.gry,
   },
 });

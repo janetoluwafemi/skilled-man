@@ -1,4 +1,10 @@
 {
   "name": "skilledman",
-  "displayName": "skilledman"
+  "displayName": "skilledman",
+  "plugins": [
+    "expo-sharing"
+  ],
+  "android": {
+    "package": "com.janetoluwafemi.skilledman"
+  }
 }

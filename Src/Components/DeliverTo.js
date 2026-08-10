@@ -1,31 +1,37 @@
-import React, {useState} from 'react';
-import {
-  Dimensions,
-  StyleSheet,
-  TextInput,
-  View,
-  TouchableOpacity,
-  Text,
-} from 'react-native';
-import {Icons} from './Icons';
-import LinearGradient from 'react-native-linear-gradient';
-
+import React from 'react';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { Icons } from './Icons';
 import color from '../Assets/colors/colors';
-const DlivrTo = props => {
+
+const DlivrTo = ({
+                   deliverTo = 'Deliver to:',
+                   location,
+                   changeText = 'Change',
+                   onChangePress,
+                   deliverContStyle,
+                 }) => {
   return (
-    <View style={[styles.locationCont, {...props.deliverCont}]}>
-      <View style={styles.location}>
-        <Icons.FontAwesome name="map-marker" size={23} color={color.defalt} />
-        <Text style={styles.deliverStyle}>{props.deliverTo}</Text>
-        <Text style={styles.locStyle}>{props.location}</Text>
+    <View style={[styles.locationCont, deliverContStyle]}>
+      <View style={styles.locationWrapper}>
+        <Icons.FontAwesome name="map-marker" size={22} color={color.defalt} />
+        <Text style={styles.deliverStyle}>{deliverTo}</Text>
+        {location ? (
+          <Text style={styles.locStyle} numberOfLines={1}>
+            {location}
+          </Text>
+        ) : null}
       </View>
 
-      <TouchableOpacity>
-        <Text style={styles.chStyle}>{props.change}</Text>
-      </TouchableOpacity>
+      {onChangePress ? (
+        <TouchableOpacity activeOpacity={0.7} onPress={onChangePress}>
+          <Text style={styles.chStyle}>{changeText}</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 };
+
+export default DlivrTo;
 
 const styles = StyleSheet.create({
   locationCont: {
@@ -33,26 +39,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: 5,
+    width: '100%',
   },
-  location: {
+  locationWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  locStyle: {
-    fontSize: 16,
-    color: color.litGry,
+    flex: 1,
+    marginRight: 10,
   },
   deliverStyle: {
-    fontSize: 19,
+    fontSize: 18,
     fontWeight: '700',
     color: color.blak,
-    paddingHorizontal: 7,
+    paddingHorizontal: 6,
+  },
+  locStyle: {
+    fontSize: 15,
+    color: color.litGry,
+    flexShrink: 1,
   },
   chStyle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
     color: color.defalt,
   },
 });
-
-export default DlivrTo;

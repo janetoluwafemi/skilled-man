@@ -1,6 +1,5 @@
-import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
 import React from 'react';
-// import { TextInput } from 'react-native-paper';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 
@@ -10,22 +9,15 @@ const SearchHeader = ({ onSearch, searchQuery, onSearchIconPress }) => {
       <Text style={styles.userStyle}>Earned Balance</Text>
       <View style={styles.searchStyle}>
         <View style={styles.searchContainer}>
-          <TouchableOpacity onPress={onSearchIconPress}>
+          <TouchableOpacity onPress={onSearchIconPress} activeOpacity={0.8}>
             <Icons.FontAwesome5 name="search" size={18} color={color.defalt} />
           </TouchableOpacity>
           <TextInput
-            style={{
-              flex: 1,
-              paddingLeft: 10,
-              color: color.defalt,
-              backgroundColor: 'white',
-              height: 50,
-
-            }}
+            style={styles.inputStyle}
             value={searchQuery}
             placeholder="Search for services"
             placeholderTextColor={color.defalt}
-            onChangeText={onSearch} // Call the search handler on text change
+            onChangeText={onSearch}
           />
         </View>
       </View>
@@ -42,17 +34,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderBottomRightRadius: 10,
     borderBottomLeftRadius: 10,
-    height: 100,
     alignItems: 'center',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    width: '100%',
-    height: 50,
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    backgroundColor: color.wite,
   },
   userStyle: {
     fontSize: 20,
@@ -60,7 +42,23 @@ const styles = StyleSheet.create({
     color: color.wite,
     marginBottom: 10,
   },
-  searchStyle:{
-    marginTop: 20,
-  }
+  searchStyle: {
+    width: '100%',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    height: 48,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: color.wite,
+  },
+  inputStyle: {
+    flex: 1,
+    paddingLeft: 10,
+    color: color.defalt,
+    backgroundColor: 'transparent',
+    height: '100%',
+  },
 });

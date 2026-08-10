@@ -1,29 +1,32 @@
 import React from 'react';
-import { TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
 import { socket } from '../Socket_io';
 
-export function ConectionMnager() {
-  function connect() {
+export function ConnectionManager() {
+  const connect = () => {
     socket.connect();
-  }
+  };
 
-  function disconnect() {
+  const disconnect = () => {
     socket.disconnect();
-  }
+  };
 
   return (
-    <>
-      <TouchableOpacity style={styles.button} onPress={connect}>
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.button} onPress={connect} activeOpacity={0.8}>
         <Text style={styles.buttonText}>Connect</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={disconnect}>
+      <TouchableOpacity style={styles.button} onPress={disconnect} activeOpacity={0.8}>
         <Text style={styles.buttonText}>Disconnect</Text>
       </TouchableOpacity>
-    </>
+    </View>
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+  },
   button: {
     backgroundColor: 'blue',
     padding: 10,
@@ -33,5 +36,6 @@ const styles = {
   buttonText: {
     color: 'white',
     textAlign: 'center',
+    fontWeight: '600',
   },
-};
+});

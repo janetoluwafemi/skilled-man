@@ -1,54 +1,29 @@
-import * as React from 'react';
-import {Text, View, Dimensions, StyleSheet, Image, Platform} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import React from 'react';
+import { StyleSheet, Text, View, ScrollView, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import color from '../../Assets/colors/colors';
-import {ScrollView} from 'native-base';
 import CstmHeader from '../../Components/CustomHeader';
-
-const {height: SCREEN_HEIGHT, width: SCREEN_WIDTH} = Dimensions.get('window');
-const isSmallDevice = SCREEN_HEIGHT < 700;
-const isMediumDevice = SCREEN_HEIGHT >= 700 && SCREEN_HEIGHT < 900;
-const isLargeDevice = SCREEN_HEIGHT >= 900;
-
-const getResponsiveSize = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
-
-const getResponsiveSpacing = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
 
 const AbutUs = props => {
   const insets = useSafeAreaInsets();
-  
-  React.useEffect(() => {
-    // Perform any necessary setup or data fetching here
-    console.log(global.role, 'role');
-  }, []);
-  
+
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 20;
+
   return (
-    <SafeAreaView style={{flex: 1}} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <CstmHeader
         title="Help"
-        onPressBack={() => {
-          props.navigation.goBack();
-        }}
+        onPressBack={() => props.navigation.goBack()}
       />
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          {paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 20}
+          { paddingBottom: bottomPadding },
         ]}
         style={styles.containerStyle}
         showsVerticalScrollIndicator={false}>
-        {/* <View style={{ flex: 1 }}> */}
-        {global.role == 0 ? (
-          <>
+        {global.role === 0 || global.role === '0' ? (
+          <View>
             <Text style={styles.headStyle}>
               1. What is Skilledman and what does it do?
             </Text>
@@ -100,7 +75,7 @@ const AbutUs = props => {
             </Text>
             <Text style={styles.headCont}>
               You can reach out to our customer support team directly through
-              the app or email us at [Support Email]. We’ll do our best to
+              the app or email us at support@skilledman.com. We'll do our best to
               resolve the issue promptly.
             </Text>
             <Text style={styles.headStyle}>
@@ -156,9 +131,9 @@ const AbutUs = props => {
               Signing up is free. A small service fee is deducted from completed
               job payments to maintain the platform.
             </Text>
-          </>
+          </View>
         ) : (
-          <>
+          <View>
             <Text style={styles.headStyle}>
               1. What is Skilledman and what does it do?
             </Text>
@@ -179,7 +154,7 @@ const AbutUs = props => {
             <Text style={styles.headStyle}>3. How do I book an artisan?</Text>
             <Text style={styles.headCont}>
               Select an artisan, check their availability, and send a booking
-              request. Once the artisan accepts, you’ll receive a confirmation.
+              request. Once the artisan accepts, you'll receive a confirmation.
             </Text>
             <Text style={styles.headStyle}>4. Is there a service fee?</Text>
             <Text style={styles.headCont}>
@@ -198,7 +173,7 @@ const AbutUs = props => {
             </Text>
             <Text style={styles.headCont}>
               You can reach out to our customer support team directly through
-              the app or email us at [Support Email]. We’ll do our best to
+              the app or email us at support@skilledman.com. We'll do our best to
               resolve the issue promptly.
             </Text>
             <Text style={styles.headStyle}>7. Can I cancel a booking?</Text>
@@ -210,13 +185,12 @@ const AbutUs = props => {
               8. How do I leave a review for an artisan?
             </Text>
             <Text style={styles.headCont}>
-              After the job is completed, you’ll have the option to leave a
+              After the job is completed, you'll have the option to leave a
               review and rating for the artisan. Your feedback helps improve the
               platform and assists other users in making informed decisions.
             </Text>
-          </>
+          </View>
         )}
-        {/* </View> */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -225,40 +199,37 @@ const AbutUs = props => {
 export default AbutUs;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   containerStyle: {
     backgroundColor: color.wite,
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: getResponsiveSpacing(15, 18, 20),
-    paddingTop: getResponsiveSpacing(15, 18, 20),
-  },
-  HeadStyle: {
-    color: color.gry,
-    fontSize: getResponsiveSize(14, 15, 16),
-    lineHeight: getResponsiveSize(20, 21, 22),
-    marginBottom: 0,
+    paddingHorizontal: 18,
+    paddingTop: 18,
   },
   headStyle: {
     color: color.gry,
-    fontSize: getResponsiveSize(15, 16, 17),
+    fontSize: 16,
     fontWeight: '700',
-    marginTop: getResponsiveSpacing(12, 15, 18),
-    marginBottom: getResponsiveSpacing(6, 8, 10),
-    lineHeight: getResponsiveSize(22, 24, 26),
+    marginTop: 15,
+    marginBottom: 8,
+    lineHeight: 24,
   },
   headCont: {
     color: color.gry,
-    fontSize: getResponsiveSize(14, 15, 16),
-    lineHeight: getResponsiveSize(20, 21, 22),
-    marginBottom: getResponsiveSpacing(8, 10, 12),
-    paddingHorizontal: getResponsiveSpacing(0, 2, 4),
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 10,
   },
   headCont1: {
-    marginBottom: getResponsiveSpacing(30, 35, 40),
-    fontSize: getResponsiveSize(14, 15, 16),
-    lineHeight: getResponsiveSize(20, 21, 22),
+    marginBottom: 35,
+    fontSize: 14,
+    lineHeight: 21,
     color: color.gry,
   },
 });

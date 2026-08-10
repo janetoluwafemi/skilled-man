@@ -1,4 +1,4 @@
-import React, {useRef, useEffect, useState} from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,96 +6,106 @@ import {
   TouchableOpacity,
   FlatList,
   ImageBackground,
+  SafeAreaView,
 } from 'react-native';
-import HomStakwithoutsarch from '../../Components/HomeStackwithoutsearch';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import ExpenseCard from '../../Components/ExpenseCard';
 import color from '../../Assets/colors/colors';
-import icon, {Icons} from '../../Components/Icons';
+import { Icons } from '../../Components/Icons';
 import CstmHeader from '../../Components/CustomHeader';
-import {useIsFocused} from '@react-navigation/native';
 
 const ExpnsScren = props => {
-  const isfoucsed = useIsFocused();
+  const isFocused = useIsFocused();
+  const navigation = useNavigation();
   const [data, setData] = useState([]);
 
-  const renderItem = ({item}) => (
-    <>
-      <ExpenseCard
-        cashinhand={item.expenses}
-        price={item.price}
-        source={require('../../Assets/Images/petrol.png')}
-      />
-    </>
-  );
-  const getExpns = () => {
-    var myHeaders = new Headers();
-    myHeaders.append('Cookie', 'PHPSESSID=er5ecftfsivp3r986np7jpf28o');
-    var formdata = new FormData();
-    formdata.append('id', global.userid);
-    var requestOptions = {
-      method: 'POST',
-      headers: myHeaders,
-      body: formdata,
-      redirect: 'follow',
-    };
-    fetch(
-      'https://fisdemoprojects.com/freshfood/api/view-expense-riders.php',
-      requestOptions,
-    )
-      .then(response => response.json())
-      .then((Expenses, failed) => {
-        if (Expenses.Expenses) {
-          console.log(Expenses.Expenses, 'EXPENSES');
-          setData(Expenses.Expenses);
-        } else if (failed) {
-          setData(null);
+  const getExpns = useCallback(async () => {
+    try {
+      const formdata = new FormData();
+      formdata.append('id', global.userid || global.id);
+
+      const response = await fetch(
+        'https://fisdemoprojects.com/freshfood/api/view-expense-riders.php',
+        {
+          method: 'POST',
+          body: formdata,
         }
-      })
-      .catch(error => console.log('error', error));
-  };
+      );
+      const result = await response.json();
+      if (result?.Expenses) {
+        setData(result.Expenses);
+      } else {
+        setData([]);
+      }
+    } catch (error) {
+      console.log('Error fetching expenses:', error);
+      setData([]);
+    }
+  }, []);
+
   useEffect(() => {
-    getExpns();
-  }, [isfoucsed]);
+    if (isFocused) {
+      getExpns();
+    }
+  }, [isFocused, getExpns]);
+
+  const renderItem = ({ item }) => (
+    <ExpenseCard
+      cashinhand={item.expenses}
+      price={item.price}
+      source={require('../../Assets/Images/petrol.png')}
+    />
+  );
+
   return (
-    <>
+    <SafeAreaView style={styles.safeArea}>
       <CstmHeader
         title="Expense"
-        onPress={() => {
-          props.navigation.goBack();
-        }}
+        onPress={() => props.navigation.goBack()}
       />
       <ImageBackground
         source={require('../../Assets/Images/background.jpeg')}
         resizeMode="cover"
         style={styles.backgroundImg}>
         <View style={styles.container}>
-          <Text style={styles.HeadStyle}> Latest Spending</Text>
+          <Text style={styles.headStyle}>Latest Spending</Text>
 
           <FlatList
             data={data}
             renderItem={renderItem}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No expenses found</Text>
+              </View>
+            }
           />
         </View>
       </ImageBackground>
       <TouchableOpacity
         style={styles.iconCont}
+        activeOpacity={0.8}
         onPress={() => props.navigation.navigate('add_expense')}>
         <Icons.AntDesign name="plus" style={styles.iconStyle} />
       </TouchableOpacity>
-    </>
+    </SafeAreaView>
   );
 };
 
 export default ExpnsScren;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     paddingHorizontal: 15,
     paddingVertical: 10,
     flex: 1,
   },
-  HeadStyle: {
+  headStyle: {
     fontSize: 19,
     fontWeight: '600',
     paddingVertical: 10,
@@ -111,11 +121,20 @@ const styles = StyleSheet.create({
   },
   iconCont: {
     position: 'absolute',
-    right: '2%',
-    bottom: '3%',
+    right: '4%',
+    bottom: '4%',
   },
   backgroundImg: {
-    // height: '100%',
     flex: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: color.gry,
   },
 });

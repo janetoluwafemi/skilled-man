@@ -1,37 +1,57 @@
-import React, {useState, useRef} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import color from '../Assets/colors/colors';
-import {Picker} from '@react-native-picker/picker';
 
-const C_Dropdwn = props => {
-  console.log(props, 'props');
-  const [selectedBusiness, setselectedBusiness] = useState(props.selectedValue);
-  const pickerRef = useRef();
-
+const C_Dropdwn = ({
+                     selectedValue,
+                     onValueChange,
+                     options = [],
+                     titleText = 'Select Option',
+                     enabled = true,
+                     containerStyle,
+                     mode = 'dialog',
+                     dropdownIconColor = color.defalt,
+                     selectionColor = color.ylow,
+                     labelKey = 'select_bussiness',
+                     valueKey = 'select_bussiness',
+                     ...rest
+                   }) => {
   return (
-    <View style={styles.DropDownContainer}>
+    <View style={[styles.DropDownContainer, containerStyle]}>
       <Picker
-        ref={pickerRef}
-        selectedValue={selectedBusiness}
+        selectedValue={selectedValue}
         onValueChange={(itemValue, itemIndex) => {
-          setselectedBusiness(itemValue);
-          props.onValueChange(itemValue);
+          if (onValueChange) {
+            onValueChange(itemValue, itemIndex);
+          }
         }}
-        onChangeText={props.onChangeText}
-        enabled={true}
-        mode={'dialog'}
-        dropdownIconColor={color.defalt}
-        prompt={props.titleText}
-        selectionColor={color.ylow}
-        itemStyle={styles.itemsStyle}>
-        {props.options?.map((option, index) => (
-          <Picker.Item
-            key={index}
-            label={option.select_bussiness}
-            value={option.select_bussiness}
-            color={color.defalt}
-          />
-        ))}
+        enabled={enabled}
+        mode={mode}
+        dropdownIconColor={dropdownIconColor}
+        prompt={titleText}
+        selectionColor={selectionColor}
+        itemStyle={styles.itemsStyle}
+        {...rest}>
+        {options?.map((option, index) => {
+          const label =
+            typeof option === 'object'
+              ? option[labelKey] || option.label || option.value
+              : option;
+          const value =
+            typeof option === 'object'
+              ? option[valueKey] || option.value || option.label
+              : option;
+
+          return (
+            <Picker.Item
+              key={index}
+              label={String(label ?? '')}
+              value={value}
+              color={color.defalt}
+            />
+          );
+        })}
       </Picker>
     </View>
   );
@@ -48,12 +68,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginTop: 6,
     height: 53,
+    justifyContent: 'center',
   },
   itemsStyle: {
     color: color.rd,
     fontWeight: '400',
-  },
-  containerStyle: {
-    zIndex: 100,
   },
 });

@@ -1,17 +1,15 @@
 import { io } from 'socket.io-client';
-
-// "undefined" means the URL will be computed from the `window.location` object
-const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:4000';
+import { Platform } from 'react-native';
 
 
-// io= new Server({
-//     cors: {
-//       origin: "http://localhost:3000"
-//     }
-//   });
-  
-//   io.listen(4000);
+const DEV_URL = Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
 
-export const socket = io(URL, {
-    autoConnect: true
-  });
+const SOCKET_URL = __DEV__ ? DEV_URL : 'https://theskilledman.com';
+
+export const socket = io(SOCKET_URL, {
+  autoConnect: true,
+  transports: ['websocket', 'polling'],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+});

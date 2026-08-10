@@ -1,28 +1,25 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   TouchableOpacity,
   Platform,
-  ToastAndroid,
   Dimensions,
   ScrollView,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {Switch} from 'react-native-paper';
-import Icon, {Icons} from '../../Components/Icons';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+import { Switch } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
+
+import { Icons } from '../../Components/Icons';
 import color from '../../Assets/colors/colors';
 import CstmHeader from '../../Components/CustomHeader';
-import {useNavigation} from '@react-navigation/native';
 
-const {height: SCREEN_HEIGHT, width: SCREEN_WIDTH} = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const isSmallDevice = SCREEN_HEIGHT < 700;
 const isMediumDevice = SCREEN_HEIGHT >= 700 && SCREEN_HEIGHT < 900;
-const isLargeDevice = SCREEN_HEIGHT >= 900;
 
 const getResponsiveSize = (small, medium, large) => {
   if (isSmallDevice) return small;
@@ -37,38 +34,45 @@ const getResponsiveSpacing = (small, medium, large) => {
 };
 
 const AccSetting = props => {
-  useEffect(() => {
-    const loadNotificationSetting = async () => {
-      const savedValue = await AsyncStorage.getItem('notificationsEnabled');
-
-      if (savedValue !== null) {
-        setIsSwitchOn(JSON.parse(savedValue));
-      }
-    };
-
-    loadNotificationSetting();
-  }, []);
-
   const [isSwitchOn, setIsSwitchOn] = useState(false);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+
+  const loadNotificationSetting = useCallback(async () => {
+    try {
+      const savedValue = await AsyncStorage.getItem('notificationsEnabled');
+      if (savedValue !== null) {
+        setIsSwitchOn(JSON.parse(savedValue));
+      }
+    } catch (error) {
+      console.log('Error loading notification setting:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadNotificationSetting();
+  }, [loadNotificationSetting]);
+
+  const toggleSwitch = async () => {
+    const newValue = !isSwitchOn;
+    setIsSwitchOn(newValue);
+    try {
+      await AsyncStorage.setItem(
+        'notificationsEnabled',
+        JSON.stringify(newValue)
+      );
+    } catch (error) {
+      console.log('Error saving notification setting:', error);
+    }
+  };
 
   const iconSize = getResponsiveSize(26, 28, 30);
   const arrowIconSize = getResponsiveSize(24, 26, 28);
   const bottomPadding =
     Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 20;
-  const toggleSwitch = async () => {
-    const newValue = !isSwitchOn;
-    setIsSwitchOn(newValue);
-
-    await AsyncStorage.setItem(
-      'notificationsEnabled',
-      JSON.stringify(newValue),
-    );
-  };
 
   return (
-    <SafeAreaView style={{flex: 1}} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <CstmHeader
         title="Settings"
         onPressBack={() => props.navigation.goBack()}
@@ -77,7 +81,7 @@ const AccSetting = props => {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          {paddingBottom: bottomPadding},
+          { paddingBottom: bottomPadding },
         ]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.accountContainer}>
@@ -88,6 +92,7 @@ const AccSetting = props => {
           />
           <Text style={styles.headStyle}>Account</Text>
         </View>
+
         <View style={styles.settingsSection}>
           <TouchableOpacity
             style={styles.settingButton}
@@ -100,6 +105,7 @@ const AccSetting = props => {
               size={arrowIconSize}
             />
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.settingButton}
             onPress={() => navigation.navigate('ChangePassword')}
@@ -112,16 +118,14 @@ const AccSetting = props => {
             />
           </TouchableOpacity>
         </View>
+
         <View style={[styles.accountContainer, styles.notificationHeader]}>
           <Icons.FontAwesome name="bell" size={iconSize} color={color.defalt} />
           <Text style={styles.headStyle}>Notification</Text>
         </View>
+
         <View style={[styles.settingButton, styles.notificationSetting]}>
           <Text style={styles.subTitle}>Notification</Text>
-          {/* <Switch
-            value={isSwitchOn}
-            onValueChange={() => setIsSwitchOn(!isSwitchOn)}
-          /> */}
           <Switch
             color="#c07a50"
             value={isSwitchOn}
@@ -133,7 +137,13 @@ const AccSetting = props => {
   );
 };
 
+export default AccSetting;
+
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   scrollView: {
     flex: 1,
   },
@@ -177,4 +187,3 @@ const styles = StyleSheet.create({
     color: color.drkGry,
   },
 });
-export default AccSetting;

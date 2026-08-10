@@ -1,95 +1,104 @@
-import {StyleSheet, TouchableOpacity, Text, View, Platform, StatusBar} from 'react-native';
-import {React, useEffect, useState} from 'react';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import React, { useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  View,
+  Platform,
+  StatusBar,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Image } from 'native-base';
+import { useIsFocused } from '@react-navigation/native';
+
 import color from '../Assets/colors/colors';
-import LinearGradient from 'react-native-linear-gradient';
-import {Image} from 'native-base';
 import OpningCrd from './OpeningCard';
-import {BASIC_URL} from '../Screens/Signin/Signin';
-import {useIsFocused} from '@react-navigation/native';
-const HomStakwithoutsarch = props => {
+import { BASIC_URL } from '../Screens/Signin/Signin';
+
+const HomStakwithoutsarch = ({
+                               onPress,
+                               onPressnotification,
+                               cardStyle,
+                             }) => {
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
-  const [profileData, setprofileData] = useState(null);
-  const [name, setName] = useState(null);
-  const [profileimg, setprofileimg] = useState(null);
+  const [profileData, setProfileData] = useState(null);
+
   useEffect(() => {
-    if (profileData) {
-      setName(profileData.name);
-      setprofileimg(profileData.profile);
+    if (focus) {
+      getProfileData();
     }
-  }, [profileData, focus]);
+  }, [focus]);
 
-  //console.log(props);
-  useEffect(() => {
-    GetProfileData();
-  }, [global.id, focus]);
-  const GetProfileData = async () => {
+  const getProfileData = async () => {
     try {
-      var myHeaders = new Headers();
-      myHeaders.append('Cookie', 'PHPSESSID=nehf3e2dgdauiaooraluprccv7');
-
-      var formdata = new FormData();
+      const formdata = new FormData();
       formdata.append('id', global.id);
 
-      var requestOptions = {
+      const response = await fetch(`${BASIC_URL}user/get_profile.php`, {
         method: 'POST',
-        headers: myHeaders,
         body: formdata,
-        redirect: 'follow',
-      };
+      });
 
-      // fetch("https://fisdemoprojects.com/skilledman/api/user/get_profile.php", requestOptions)
-      fetch(`${BASIC_URL}user/get_profile.php`, requestOptions)
-        .then(response => response.json())
-        .then(result => {
-          console.log('Profile Data', result);
-
-          if (result) {
-            setprofileData(result);
-          }
-        })
-        .catch(error => console.log('error', error));
+      const result = await response.json();
+      if (result) {
+        setProfileData(result);
+      }
     } catch (error) {
-      Alert.alert('Error', error?.message || String(error) || 'An error occurred');
+      console.log('Error fetching profile data:', error);
     }
   };
 
+  const imageUri = profileData?.profile
+    ? `${BASIC_URL}uploads/${profileData.profile}`
+    : null;
+
   return (
-    <View style={[
-      styles.containerStyle,
-      {paddingTop: Math.max(insets.top, Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0)}
-    ]}>
-      <StatusBar barStyle="light-content" backgroundColor={color.defalt} translucent={false} />
+    <View
+      style={[
+        styles.containerStyle,
+        {
+          paddingTop: Math.max(
+            insets.top,
+            Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0
+          ),
+        },
+      ]}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={color.defalt}
+        translucent={false}
+      />
       <View style={styles.topCont}>
-        <TouchableOpacity onPress={props.onPress} style={styles.menuStyle}>
+        <TouchableOpacity
+          onPress={onPress}
+          style={styles.menuStyle}
+          activeOpacity={0.7}>
           <Icon name="menu" size={35} color={color.wite} />
         </TouchableOpacity>
 
         <View style={styles.rightCont}>
-          <TouchableOpacity onPress={props.onPressnotification}>
-            {profileimg && profileimg.profile !== null ? (
-              <Image
-                // source={{ uri: `https://fisdemoprojects.com/skilledman/api/uploads/${profileData?.profile}` }}
-                source={{uri: `${BASIC_URL}uploads/${profileData?.profile}`}}
-                resizeMode="cover"
-                style={styles.imgStyle}
-                //alt="user"
-              />
-            ) : (
-              <Image
-                source={require('../Assets/Images/user.jpg')}
-                resizeMode="cover"
-                style={styles.imgStyle}
-                //alt="user"
-              />
-            )}
+          <TouchableOpacity onPress={onPressnotification} activeOpacity={0.7}>
+            <Image
+              source={
+                imageUri
+                  ? { uri: imageUri }
+                  : require('../Assets/Images/user.jpg')
+              }
+              resizeMode="cover"
+              style={styles.imgStyle}
+              alt="User Avatar"
+            />
           </TouchableOpacity>
         </View>
       </View>
-      <Text style={styles.userStyle}>Hi, {name}</Text>
-      <OpningCrd cardStyle={styles.OpeningBalanceCard} />
+
+      <Text style={styles.userStyle}>
+        Hi, {profileData?.name || 'User'}
+      </Text>
+
+      <OpningCrd cardStyle={[styles.openingBalanceCard, cardStyle]} />
     </View>
   );
 };
@@ -97,17 +106,6 @@ const HomStakwithoutsarch = props => {
 export default HomStakwithoutsarch;
 
 const styles = StyleSheet.create({
-  OpeningBalanceCard: {
-    position: 'absolute',
-    top: '100%',
-    alignSelf: 'center',
-  },
-  topCont: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: Platform.OS === 'android' ? 8 : 4,
-  },
   containerStyle: {
     backgroundColor: color.defalt,
     paddingHorizontal: 15,
@@ -116,20 +114,19 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 12,
     paddingBottom: 45,
   },
-  linearGradientStyle: {
-    elevation: 0,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    paddingVertical: 10,
+  topCont: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Platform.OS === 'android' ? 8 : 4,
   },
-
   rightCont: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
-  notIcon: {
-    marginLeft: 5,
+  menuStyle: {
+    padding: 4,
   },
-
   imgStyle: {
     height: 50,
     width: 50,
@@ -142,5 +139,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: color.wite,
     marginBottom: 30,
+    marginTop: 8,
+  },
+  openingBalanceCard: {
+    position: 'absolute',
+    top: '100%',
+    alignSelf: 'center',
   },
 });

@@ -1,39 +1,47 @@
 import React from 'react';
 import { FlatList, Text, View, StyleSheet } from 'react-native';
 
-export function Evnt({ events }) {
+export function Evnt({ events = [] }) {
   return (
     <FlatList
       data={events}
-      renderItem={({ item, index }) => (
+      keyExtractor={(item, index) =>
+        typeof item === 'string' || typeof item === 'number'
+          ? `${item}-${index}`
+          : index.toString()
+      }
+      renderItem={({ item }) => (
         <View style={styles.listItem}>
-          <Text>{item}</Text>
+          <Text style={styles.itemText}>{item}</Text>
         </View>
       )}
-      keyExtractor={(item, index) => index.toString()}
+      ListEmptyComponent={
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No events available.</Text>
+        </View>
+      }
     />
   );
 }
 
+export const Events = Evnt;
+
 const styles = StyleSheet.create({
   listItem: {
-    padding: 10,
+    padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
   },
+  itemText: {
+    fontSize: 15,
+    color: '#333',
+  },
+  emptyContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#888',
+  },
 });
-
-
-// import React from 'react';
-
-// export function Events({ events }) {
-//   return (
-//     <ul>
-//     {
-//       events.map((event, index) =>
-//         <li key={ index }>{ event }</li>
-//       )
-//     }
-//     </ul>
-//   );
-// }

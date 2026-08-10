@@ -1,70 +1,80 @@
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Pressable,
   TouchableOpacity,
-  ImageBackground, Linking
+  Linking,
 } from 'react-native';
-import React, { useState } from 'react';
 import colors from '../Assets/colors/colors';
 import { Icons } from './Icons';
-import color from '../Assets/colors/colors';
+import { BASIC_URL } from '../Screens/Signin/Signin';
 
-const FltLstCrd = props => {
-  const opnFil = () => {
-    const fileURL = `https://theskilledman.com/api/uploads/${props.filepress}`;
+const FltLstCrd = ({
+                     cardTitle,
+                     cardStyle,
+                     onPressShowProfile,
+                     iconName,
+                     paidTitle,
+                     dateCont,
+                     bookingId,
+                     filepress,
+                     date,
+                     status,
+                   }) => {
+  const openFile = () => {
+    if (!filepress) return;
 
-    // Use Linking to open the file URL
-    Linking.openURL(fileURL)
-      .catch((err) => {
-        console.error(`Error opening file: ${err}`);
-        // You can show an error message to the user if the file can't be opened
-      });
+    const fileURL = `${BASIC_URL}uploads/${filepress}`;
+    Linking.openURL(fileURL).catch(err => {
+      console.error(`Error opening file: ${err}`);
+    });
   };
+
   return (
-    <View style={[styles.textContainer, { ...props.cardStyle }]}>
+    <View style={[styles.textContainer, cardStyle]}>
       <View style={styles.openingStyle}>
-        <Text style={styles.TextStyle}>{props.cardTitle}</Text>
+        <Text style={styles.TextStyle}>{cardTitle}</Text>
         <View style={styles.rightCont}>
-          <TouchableOpacity onPress={props.onPressShowProfile}>
+          {iconName ? (
+            <TouchableOpacity onPress={onPressShowProfile}>
+              <Icons.FontAwesome
+                name={iconName}
+                size={30}
+                color={colors.drkGry}
+              />
+            </TouchableOpacity>
+          ) : null}
+          <Text style={[styles.paidStyle, dateCont]}>{paidTitle}</Text>
+        </View>
+      </View>
+
+      <View style={styles.openingStyle}>
+        <Text style={styles.bookingStyle}>{bookingId}</Text>
+        {filepress ? (
+          <TouchableOpacity onPress={openFile}>
             <Icons.FontAwesome
-              name={props.iconName}
-              size={30}
-              color={color.drkGry}
+              name="file-text"
+              size={25}
+              color={colors.drkGry}
             />
           </TouchableOpacity>
-          <Text style={[styles.paidStyle, { ...props.dateCont }]}>
-            {props.paidTitle}
-          </Text>
-        </View>
+        ) : null}
       </View>
-      <View style={styles.openingStyle}>
-        <Text style={styles.bookingStyle}>{props.bookingId}</Text>
-        <TouchableOpacity onPress={opnFil}>
-          <Icons.FontAwesome name="file-text" size={25} color={color.drkGry} />
-        </TouchableOpacity>
-      </View>
+
       <View style={styles.openingStyle}>
         <View style={styles.dateTimeCont}>
-          <Text style={styles.dateStyle}>{props.date} </Text>
-          {/* <Text style={styles.bookingStyle}>({props.time})</Text> */}
+          <Text style={styles.dateStyle}>{date}</Text>
         </View>
-        <Text style={styles.statusStyle}>{props.status}</Text>
+        <Text style={styles.statusStyle}>{status}</Text>
       </View>
     </View>
   );
 };
 
 export default FltLstCrd;
+
 const styles = StyleSheet.create({
-  balanceStyle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.blak,
-    textAlign: 'left',
-    paddingTop: 10,
-  },
   textContainer: {
     paddingHorizontal: 15,
     paddingVertical: 15,

@@ -1,22 +1,25 @@
-import {NavigationActions} from '@react-navigation/native';
+import { CommonActions } from '@react-navigation/native';
 
 let _navigator;
 
 function setTopLevelNavigator(navigatorRef) {
-	_navigator = navigatorRef;
+  _navigator = navigatorRef;
 }
 
 function navigate(routeName, params) {
-	_navigator.navigate(routeName,params);
+  if (_navigator) {
+    _navigator.navigate(routeName, params);
+  }
 }
 
 function goBack() {
-	_navigator.dispatch(NavigationActions.back());
+  if (_navigator && _navigator.canGoBack()) {
+    _navigator.dispatch(CommonActions.goBack());
+  }
 }
 
-
 export default {
-	navigate,
-	setTopLevelNavigator,
-	goBack,
+  navigate,
+  setTopLevelNavigator,
+  goBack,
 };

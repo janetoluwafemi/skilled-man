@@ -1,22 +1,21 @@
-import React, {createContext, useReducer, useContext, useEffect} from 'react';
+import React, { createContext, useReducer, useContext, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Create the AuthContext
 const AuthContext = createContext();
 
 const initialState = {
   user: null,
   isAuth: false,
-  role: null, // Add the role property
+  role: null,
 };
 
-const athReducr = (state, action) => {
+const authReducer = (state, action) => {
   switch (action.type) {
     case 'LOGIN':
       return {
         user: action.payload.user,
         isAuth: true,
-        role: action.payload.role, // Set the role when the user logs in
+        role: action.payload.role,
       };
     case 'LOGOUT':
       return initialState;
@@ -25,92 +24,81 @@ const athReducr = (state, action) => {
   }
 };
 
+export const AuthProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(authReducer, initialState);
 
-export const AthProvidr = ({children}) => {
-  const [state, dispatch] = useReducer(athReducr, initialState);
-
-//   const signinGoogle = async (userInfo, userRole) => {
-//      userInfo = await AsyncStorage.getItem('userInfo');
-//      userRole = await AsyncStorage.getItem('userRole');
-//     console.log('user value in local storage', userRole);
-//     console.log('role value in local storage', userRole);
-//     if (userInfo && userRole) {
-//         const data = JSON.parse(userInfo);
-  
-//         dispatch({type: 'LOGIN', payload: {user: JSON.parse(userInfo), userRole}});
-//         global.email = data.email;
-//         global.id = data.id;
-//         global.name = data.name;
-//         global.phone_number = data.phone_number;
-        
-//         global.state = data.state;
-       
-//         global.role = data.userRole;
-       
-//         global.profile = data.profile;
-//       }
-    
-//   };
-const signinGogl = async () => {
+  const signInGoogle = useCallback(async () => {
     try {
-      let userInfo = await AsyncStorage.getItem('userInfo');
-      let userRole = await AsyncStorage.getItem('userRole');
-
-    //   console.log('user value in local storage', userInfo);
-    //   console.log('role value in local storage', userRole);
+      const userInfo = await AsyncStorage.getItem('userInfo');
+      const userRole = await AsyncStorage.getItem('userRole');
 
       if (userInfo && userRole) {
         const data = JSON.parse(userInfo);
 
-        dispatch({type: 'LOGIN', payload: {user: data, userRole}});
+        dispatch({
+          type: 'LOGIN',
+          payload: { user: data, role: userRole },
+        });
 
         global.email = data.email;
         global.id = data.id;
         global.name = data.name;
         global.phone_number = data.phone_number;
         global.state = data.state;
-        global.role = userRole; // Corrected this line
+        global.role = userRole;
         global.profile = data.profile;
       }
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.log('Error signing in with Google:', error);
     }
-  };
-
-
-  const chkUsrAthAndRol = async () => {
-    const user = await AsyncStorage.getItem('user');
-    const role = await AsyncStorage.getItem('role');
-    // console.log('user value in local storage', user);
-    // console.log('role value in local storage', role);
-
-    if (user && role) {
-      const data = JSON.parse(user);
-
-      dispatch({type: 'LOGIN', payload: {user: JSON.parse(user), role}});
-      global.email = data.email;
-      global.id = data.id;
-      global.name = data.name;
-      global.phone_number = data.phone_number;
-      global.address = data.address;
-      global.state = data.state;
-      global.whatsapp = data.whatsapp;
-      global.role = role;
-      global.working_experience = data.working_experience;
-      global.profile = data.profile;
-    }
-  };
-
-  useEffect(() => {
-    chkUsrAthAndRol();
   }, []);
 
+  const checkUserAuthAndRole = useCallback(async () => {
+    try {
+      const user = await AsyncStorage.getItem('user');
+      const role = await AsyncStorage.getItem('role');
+
+      if (user && role) {
+        const data = JSON.parse(user);
+
+        dispatch({
+          type: 'LOGIN',
+          payload: { user: data, role },
+        });
+
+        global.email = data.email;
+        global.id = data.id;
+        global.name = data.name;
+        global.phone_number = data.phone_number;
+        global.address = data.address;
+        global.state = data.state;
+        global.whatsapp = data.whatsapp;
+        global.role = role;
+        global.working_experience = data.working_experience;
+        global.profile = data.profile;
+      }
+    } catch (error) {
+      console.log('Error checking user auth:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkUserAuthAndRole();
+  }, [checkUserAuthAndRole]);
+
   return (
-    <AuthContext.Provider value={{state, dispatch,signinGoogle: signinGogl}}>
+    <AuthContext.Provider
+      value={{
+        state,
+        dispatch,
+        signinGoogle: signInGoogle,
+      }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+export const AthProvidr = AuthProvider;
 
 export const useAuth = () => {
   return useContext(AuthContext);

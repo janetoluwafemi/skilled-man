@@ -1,29 +1,21 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  Dimensions,
-  TouchableOpacity,
-} from 'react-native';
-import React, {useState} from 'react';
+import React from 'react';
+import { Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import colors from '../Assets/colors/colors';
-import {Icons} from './Icons';
-import color from '../Assets/colors/colors';
-import {Badge} from 'react-native-paper';
-const {height} = Dimensions.get('window');
-const {width} = Dimensions.get('window');
 
 const SrvicCrd = props => {
   return (
     <TouchableOpacity
+      activeOpacity={0.8}
       onPress={props.showProfile}
-      style={[styles.textContainer, {...props.cardStyle}]}>
+      style={[styles.textContainer, props.cardStyle]}>
       <Image
         style={styles.logoImg}
         resizeMode="contain"
-        // source={props.iconUrl}
-        source={{ uri: props.iconUrl }}
+        source={
+          props.iconUrl
+            ? { uri: props.iconUrl }
+            : require('../Assets/Images/logo.png')
+        }
       />
       <Text style={styles.TextStyle}>{props.serviceTitle}</Text>
     </TouchableOpacity>
@@ -31,10 +23,8 @@ const SrvicCrd = props => {
 };
 
 export default SrvicCrd;
+
 const styles = StyleSheet.create({
-  profileCont: {
-    width: '100%',
-  },
   textContainer: {
     paddingHorizontal: 13,
     paddingVertical: 15,

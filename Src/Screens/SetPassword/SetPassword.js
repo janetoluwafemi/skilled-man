@@ -1,28 +1,28 @@
-import React, {useState, useEffect} from 'react';
-import {useNavigation} from '@react-navigation/native';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  Image,
-  ImageBackground,
-  Dimensions,
   TouchableOpacity,
-  Alert,
+  ScrollView,
   ActivityIndicator,
+  SafeAreaView,
+  StatusBar,
+  Platform,
+  Alert,
 } from 'react-native';
-import C_TxtInput from '../../Components/C_TextInput';
-import color from '../../Assets/colors/colors';
-import BotonComp from '../../Components/BtnComp';
-import {Checkbox} from 'react-native-paper';
-import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
-const {height} = Dimensions.get('window');
-const {width} = Dimensions.get('window');
-import {Formik} from 'formik';
+import { useNavigation } from '@react-navigation/native';
+import { Formik } from 'formik';
 import * as yup from 'yup';
-import {configureLayoutAnimations} from 'react-native-reanimated/lib/typescript/reanimated2/core';
+import { Checkbox } from 'react-native-paper';
+import * as Animatable from 'react-native-animatable';
+
+import color from '../../Assets/colors/colors';
 import C_InputScurEntry from '../../Components/C_InputSecureEntry';
+import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
+import BotonComp from '../../Components/BtnComp';
 import { BASIC_URL } from '../Signin/Signin';
+
 const validationSchema = yup.object().shape({
   password: yup
     .string()
@@ -30,7 +30,7 @@ const validationSchema = yup.object().shape({
     .min(10, 'Password must be at least 10 characters')
     .matches(
       /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).*$/,
-      'Password must contain at least one uppercase letter, one lowercase letter, and one digit',
+      'Password must contain at least one uppercase letter, one lowercase letter, and one digit'
     ),
   confirmPassword: yup
     .string()
@@ -41,83 +41,96 @@ const validationSchema = yup.object().shape({
 const StPaswrd = props => {
   const navigation = useNavigation();
 
-  const [checked, setChecked] = React.useState(false);
-  const [hide, setHide] = React.useState(true);
-  const [confirmhide, seConfirmtHide] = React.useState(true);
-  const [load, setLoad] = React.useState(false);
-  console.log('email global', global.email);
+  const [checked, setChecked] = useState(false);
+  const [hide, setHide] = useState(true);
+  const [confirmHide, setConfirmHide] = useState(true);
+  const [load, setLoad] = useState(false);
+
   return (
-    <Formik
-      initialValues={{
-        password: '',
-        confirmPassword: '',
-      }}
-      validationSchema={validationSchema}
-      onSubmit={async values => {
-        // Handle form submission here
-        console.log('password data submitted:', values);
-        // Add your navigation logic here
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-        try {
-          setLoad(true);
-          var myHeaders = new Headers();
-          myHeaders.append('Cookie', 'PHPSESSID=repq4egpdnsd7ikh50kjova7jd');
+      <View style={styles.headerBar}>
+        <CstmHeaderIcon
+          onPress={() => props.navigation.goBack()}
+          headerIconStyle={styles.headerBackIcon}
+        />
+        <Text style={styles.headerTitle}>Set Password</Text>
+      </View>
 
-          var formdata = new FormData();
-          formdata.append('email', global.email);
-          formdata.append('password', values.password);
-
-          const apiUrl =
-            // 'https://fisdemoprojects.com/skilledman/api/register.php';
-            `${BASIC_URL}register.php`;
-
-            
-
-          var requestOptions = {
-            method: 'POST',
-            headers: myHeaders,
-            body: formdata,
-            redirect: 'follow',
-          };
-          const response = await fetch(apiUrl, requestOptions);
-          const result = await response.json();
-          console.log('confirm rresponse:', result);
-          if (result && checked == true) {
-            setLoad(false);
-            global.id = result.id;
-            if (result.role == 0) {
-              navigation.navigate('AddBusiness');
-            } else if (result.role == 1) {
-              navigation.navigate('Congratulations');
-            }
-          } else {
-            setLoad(false);
-            Alert.alert('Check Terms and Conditions');
+      <Formik
+        initialValues={{
+          password: '',
+          confirmPassword: '',
+        }}
+        validationSchema={validationSchema}
+        onSubmit={async values => {
+          if (!checked) {
+            Alert.alert('Terms & Conditions', 'Please agree with terms of use & privacy policy to continue.');
+            return;
           }
-        } catch (error) {
-          setLoad(false);
-          Alert.alert(error);
-        }
-        //
-      }}>
-      {({handleChange, handleBlur, handleSubmit, values, errors, touched}) => (
-        <>
-          <ImageBackground
-            source={require('../../Assets/Images/bg.png')}
-            resizeMode="cover"
-            style={styles.backgroundImg}>
-            <CstmHeaderIcon
-              onPress={() => {
-                props.navigation.goBack();
-              }}
-              headerIcon={styles.headerIcon}
-            />
-            <View style={styles.container}>
-              <Text style={styles.accountVer}>Set Password</Text>
-              <View style={styles.inputContainer}>
+
+          try {
+            setLoad(true);
+
+            const formdata = new FormData();
+            formdata.append('email', global.email);
+            formdata.append('password', values.password);
+
+            const apiUrl = `${BASIC_URL}register.php`;
+
+            const requestOptions = {
+              method: 'POST',
+              body: formdata,
+            };
+
+            const response = await fetch(apiUrl, requestOptions);
+            const result = await response.json();
+
+            setLoad(false);
+
+            if (result && !result.error) {
+              global.id = result.id;
+              if (result.role === 0 || result.role === '0') {
+                navigation.navigate('AddBusiness');
+              } else if (result.role === 1 || result.role === '1') {
+                navigation.navigate('Congratulations');
+              } else {
+                navigation.navigate('Congratulations');
+              }
+            } else {
+              Alert.alert('Registration Failed', result?.error || 'Something went wrong. Please try again.');
+            }
+          } catch (error) {
+            setLoad(false);
+            Alert.alert('Error', error?.message || String(error) || 'An error occurred');
+          }
+        }}>
+        {({
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            values,
+            errors,
+            touched,
+          }) => (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}>
+            <Animatable.View
+              animation="fadeInUp"
+              duration={600}
+              style={styles.formContainer}>
+              <Text style={styles.welcomeTitle}>Create Your Password</Text>
+              <Text style={styles.welcomeSubtitle}>
+                Choose a strong password with at least 10 characters, including an uppercase letter, lowercase letter, and a digit.
+              </Text>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Password</Text>
                 <C_InputScurEntry
-                  placeholder="Password"
-                  placeholderTextColor={color.defalt}
+                  placeholder="Enter password"
+                  placeholderTextColor={color.litGry}
                   secureTextEntry={hide}
                   icon="eye-off"
                   onChangeText={handleChange('password')}
@@ -129,164 +142,145 @@ const StPaswrd = props => {
                   <Text style={styles.errorText}>{errors.password}</Text>
                 )}
               </View>
-              <View style={styles.inputContainer}>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Confirm Password</Text>
                 <C_InputScurEntry
-                  placeholder="Confirm Password"
-                  placeholderTextColor={color.defalt}
+                  placeholder="Confirm password"
+                  placeholderTextColor={color.litGry}
                   onChangeText={handleChange('confirmPassword')}
                   onBlur={handleBlur('confirmPassword')}
                   value={values.confirmPassword}
                   icon="eye-off"
-                  secureTextEntry={confirmhide}
-                  onPress={() => seConfirmtHide(!confirmhide)}
+                  secureTextEntry={confirmHide}
+                  onPress={() => setConfirmHide(!confirmHide)}
                 />
-
                 {touched.confirmPassword && errors.confirmPassword && (
                   <Text style={styles.errorText}>{errors.confirmPassword}</Text>
                 )}
               </View>
-              <View style={styles.checkboxStyle}>
+
+              <View style={styles.termsWrapper}>
                 <Checkbox
                   status={checked ? 'checked' : 'unchecked'}
-                  onPress={() => {
-                    setChecked(!checked);
-                  }}></Checkbox>
-
+                  onPress={() => setChecked(!checked)}
+                  color={color.defalt}
+                />
                 <TouchableOpacity
-                  onPress={() => {
-                    navigation.navigate('privacy_policy');
-                  }}>
-                  <Text style={styles.rememberStyle}>
+                  activeOpacity={0.8}
+                  style={styles.termsTextBtn}
+                  onPress={() => navigation.navigate('privacy_policy')}>
+                  <Text style={styles.termsText}>
                     I agree with{' '}
-                    <Text style={styles.termsStyle}>
+                    <Text style={styles.termsHighlight}>
                       terms of use & privacy policy
                     </Text>
                   </Text>
                 </TouchableOpacity>
               </View>
+
               <BotonComp
-                BtnStyle={styles.BtnStyle}
+                BtnStyle={styles.submitBtn}
                 btnText={
                   load ? (
-                    <ActivityIndicator size={28} color="#f8f8ff" />
+                    <ActivityIndicator color="#FFFFFF" size="small" />
                   ) : (
                     'Submit'
                   )
                 }
-                onPressFunc={() => {
-                  handleSubmit(values);
-                }}
+                onPressFunc={handleSubmit}
               />
-            </View>
-          </ImageBackground>
-        </>
-      )}
-    </Formik>
+            </Animatable.View>
+          </ScrollView>
+        )}
+      </Formik>
+    </SafeAreaView>
   );
 };
 
 export default StPaswrd;
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  headerBar: {
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? 12 : 6,
+    paddingBottom: 10,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    flexDirection: 'column',
-    width: '80%',
-    flex: 0.6,
+    backgroundColor: '#FFFFFF',
   },
-  errorText: {
-    color: 'red',
-    fontSize: 10, // Adjust the font size
-    marginTop: 3,
+  headerBackIcon: {
+    color: '#0F172A',
   },
-  backgroundImg: {
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginLeft: 12,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  formContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 6,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 28,
+    lineHeight: 20,
+  },
+  fieldGroup: {
+    marginBottom: 20,
     width: '100%',
-    height: '100%',
   },
-  logoStyle: {
-    justifyContent: 'center',
-    width: '100%',
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 6,
+  },
+  termsWrapper: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 70,
-    marginBottom: 25,
+    marginBottom: 24,
+    marginTop: 4,
   },
-  logoImg: {
-    width: width / 2,
-    height: height / 4.6,
+  termsTextBtn: {
+    flex: 1,
+    marginLeft: 4,
   },
-  inputContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 10,
+  termsText: {
+    fontSize: 13,
+    color: '#475569',
   },
-  signinText: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: color.wite,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  BtnStyle: {
-    marginTop: 25,
-    width: '100%',
-  },
-  fieldRequired: {
-    color: color.drkRd,
-    textAlign: 'left',
-    alignSelf: 'flex-start',
-    paddingLeft: 10,
+  termsHighlight: {
+    color: color.defalt,
     fontWeight: '600',
   },
-  checkboxStyle: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
+  submitBtn: {
     width: '100%',
-    paddingVertical: 12,
+    marginTop: 10,
+    backgroundColor: color.defalt,
+    borderRadius: 12,
+    paddingVertical: 14,
   },
-  rememberStyle: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: color.drkGry,
-    lineHeight: 25,
-  },
-  termsStyle: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: color.defalt,
-    flexWrap: 'wrap',
-  },
-  checkContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    width: '85%',
-    paddingVertical: 10,
-    flexWrap: 'wrap',
-  },
-  registerNow: {
-    color: color.defalt,
-    fontWeight: '500',
-    fontSize: 18,
-    textDecorationLine: 'underline',
-  },
-  haveAccount: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    width: '80%',
-  },
-  headerIcon: {
-    paddingLeft: 20,
-  },
-  accountVer: {
-    color: color.defalt,
-    fontSize: 25,
-    marginBottom: 30,
-    fontWeight: 'bold',
-    marginTop: 20,
+  errorText: {
+    color: '#EF4444',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 2,
   },
 });

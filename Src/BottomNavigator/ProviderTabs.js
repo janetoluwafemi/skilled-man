@@ -1,17 +1,26 @@
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import React, {useEffect, useState, useRef} from 'react';
-import {StyleSheet, Text, TouchableOpacity, View, Dimensions, Platform} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import Icon, {Icons} from '../Components/Icons';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Dimensions,
+  Platform,
+} from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
+import LinearGradient from 'react-native-linear-gradient';
+
+import Icon, { Icons } from '../Components/Icons';
 import color from '../Assets/colors/colors';
 import Dshbord from '../Screens/DashBoard/Dashboard';
-import LinearGradient from 'react-native-linear-gradient';
 import MyWrk from '../Screens/MyWork/MyWork';
 import ReqestScren from '../Screens/Request/Request';
 import ChatScreen from '../Screens/Chat/ChatScreen';
+import { BASIC_URL } from '../Screens/Signin/Signin';
 
-const {height} = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 const TabArr = [
   {
@@ -20,8 +29,6 @@ const TabArr = [
     type: Icons.Ionicons,
     icon: 'home',
     component: Dshbord,
-    color: color.drkgren,
-    alphaClr: color.wite,
   },
   {
     route: 'MyWork',
@@ -29,18 +36,13 @@ const TabArr = [
     type: Icons.FontAwesome6,
     icon: 'clipboard-list',
     component: MyWrk,
-    color: color.drkgren,
-    alphaClr: color.wite,
   },
-
   {
     route: 'RequestScreen',
     label: 'Request',
     type: Icons.FontAwesome,
     icon: 'commenting-o',
     component: ReqestScren,
-    color: color.drkgren,
-    alphaClr: color.wite,
   },
   {
     route: 'ChatScreen',
@@ -48,124 +50,79 @@ const TabArr = [
     type: Icons.FontAwesome,
     icon: 'commenting',
     component: ChatScreen,
-    color: color.drkgren,
-    alphaClr: color.wite,
   },
 ];
 
 const Tab = createBottomTabNavigator();
 
-const TabBtn = props => {
-  const {item, onPress, accessibilityState} = props;
+const TabBtn = ({ item, onPress, accessibilityState }) => {
   const focused = accessibilityState?.selected;
   const viewRef = useRef(null);
   const textViewRef = useRef(null);
-  const [getChat, setALlChat] = useState([]);
-  const [countunread, setCountUnread] = useState(0);
+  const [countUnread, setCountUnread] = useState(0);
 
   useEffect(() => {
     if (focused) {
-      // 0.3: { scale: .7 }, 0.5: { scale: .3 }, 0.8: { scale: .7 },
-      viewRef.current.animate({0: {scale: 0}, 1: {scale: 1}});
-      textViewRef.current.animate({0: {scale: 0}, 1: {scale: 1}});
+      viewRef.current?.animate({ 0: { scale: 0 }, 1: { scale: 1 } });
+      textViewRef.current?.animate({ 0: { scale: 0 }, 1: { scale: 1 } });
     } else {
-      viewRef.current.animate({0: {scale: 1}, 1: {scale: 0}});
-      textViewRef.current.animate({0: {scale: 1}, 1: {scale: 0}});
+      viewRef.current?.animate({ 0: { scale: 1 }, 1: { scale: 0 } });
+      textViewRef.current?.animate({ 0: { scale: 1 }, 1: { scale: 0 } });
     }
   }, [focused]);
 
-  const gellAllChat = async () => {
+  const fetchUnreadChats = async () => {
     try {
-      var myHeaders = new Headers();
-      myHeaders.append('Cookie', 'PHPSESSID=634t4952888bd6bei50ea3d3aa');
-
-      var formdata = new FormData();
+      const formdata = new FormData();
       formdata.append('own_id', global.id);
 
-      var requestOptions = {
+      const response = await fetch(`${BASIC_URL}get_all_chats.php`, {
         method: 'POST',
-        headers: myHeaders,
         body: formdata,
-        redirect: 'follow',
-      };
-      const API =
-        'https://fisdemoprojects.com/skilledman/api/get_all_chats.php';
+      });
 
-      const response = await fetch(API, requestOptions);
       const result = await response.json();
-      if (result && result.chat) {
-        setALlChat(result.chat);
+      if (result?.chat && Array.isArray(result.chat)) {
+        const total = result.chat.reduce(
+          (sum, chatItem) => sum + (chatItem.unread_count || 0),
+          0
+        );
+        setCountUnread(total);
       }
     } catch (error) {
-      console.log('error in get allchat');
+      console.log('Error fetching chat unread count:', error);
     }
   };
 
-  const totalunread = () => {
-    let unread = getChat.reduce((total, item) => total + item.unread_count, 0);
-    setCountUnread(unread);
-    console.log('unread count', unread);
-  };
-  console.log('Final Unread Count', countunread);
   useEffect(() => {
-    gellAllChat();
-    totalunread();
+    if (focused) {
+      fetchUnreadChats();
+    }
   }, [focused]);
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={1}
-      style={[styles.container, {flex: focused ? 1 : 1}]}>
-      <View>
-        <Animatable.View
-          ref={viewRef}
-          style={[StyleSheet.absoluteFillObject]}
-        />
-        <View
-          style={[
-            styles.btnStyle,
-            {backgroundColor: focused ? 'transparent' : item.white},
-            {borderBottomWidth: focused ? 3 : 0},
-            {borderBottomColor: focused ? color.wite : 'transparent'},
-          ]}>
-          {item.icon == 'commenting-o' && countunread > 0 ? (
-            <>
-              <View
-                style={[
-                  styles.noOfMsg,
-                  {
-                    position: 'absolute',
-                    bottom: 31,
-                    zIndex: 99,
-                    right: -5,
-                    width: 20,
-                    height: 20,
-                    borderRadius: 10,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  },
-                ]}>
-                <Text>{countunread}</Text>
-              </View>
-
-              <Icon
-                type={item.type}
-                name={item.icon}
-                color={focused ? color.wite : color.wite}
-                size={27}
-              />
-            </>
-          ) : (
-            <Icon
-              type={item.type}
-              name={item.icon}
-              color={focused ? color.wite : color.wite}
-              size={27}
-            />
+      activeOpacity={0.9}
+      style={styles.container}>
+      <View style={styles.tabContent}>
+        <Animatable.View ref={viewRef} style={StyleSheet.absoluteFillObject} />
+        <View style={[styles.btnStyle, focused && styles.activeTabBorder]}>
+          {(item.icon === 'commenting' || item.icon === 'commenting-o') && countUnread > 0 && (
+            <View style={styles.badgeContainer}>
+              <Text style={styles.badgeText}>{countUnread}</Text>
+            </View>
           )}
-          <Text style={styles.labelStyle}>{item.label}</Text>
-          <Animatable.View ref={textViewRef}></Animatable.View>
+
+          <Icon
+            type={item.type}
+            name={item.icon}
+            color={color.wite}
+            size={27}
+          />
+          <Animatable.Text ref={textViewRef} style={styles.labelStyle}>
+            {item.label}
+          </Animatable.Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -195,47 +152,70 @@ export default function ProviderTabs() {
         tabBarBackground: () => (
           <LinearGradient
             colors={[color.lnTpClr, color.lnMdClr]}
-            style={{flex: 1}}></LinearGradient>
+            style={styles.gradientFlex}
+          />
         ),
       }}>
-      {TabArr.map((item, index) => {
-        return (
-          <Tab.Screen
-            key={index}
-            name={item.route}
-            component={item.component}
-            options={{
-              tabBarShowLabel: false,
-              tabBarButton: props => <TabBtn {...props} item={item} />,
-            }}
-          />
-        );
-      })}
+      {TabArr.map(item => (
+        <Tab.Screen
+          key={item.route}
+          name={item.route}
+          component={item.component}
+          options={{
+            tabBarShowLabel: false,
+            tabBarButton: props => <TabBtn {...props} item={item} />,
+          }}
+        />
+      ))}
     </Tab.Navigator>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'center',
+    flex: 1,
+    justify: 'center',
     alignItems: 'center',
     backgroundColor: color.defalt,
-    width: '100%',
+  },
+  tabContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   btnStyle: {
     alignItems: 'center',
     paddingBottom: 3,
     marginTop: 5,
+    borderBottomWidth: 0,
+    borderBottomColor: 'transparent',
+  },
+  activeTabBorder: {
+    borderBottomWidth: 3,
+    borderBottomColor: color.wite,
   },
   labelStyle: {
     fontSize: 11,
     fontWeight: '500',
     color: color.wite,
   },
-  noOfMsg: {
+  badgeContainer: {
+    position: 'absolute',
+    top: -5,
+    right: -8,
     backgroundColor: 'red',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 99,
+  },
+  badgeText: {
     color: color.wite,
-    // position: "absolute",
-    fontSize: 7,
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  gradientFlex: {
+    flex: 1,
   },
 });

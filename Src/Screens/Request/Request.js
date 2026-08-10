@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,18 +10,17 @@ import {
   FlatList,
   Linking,
   Platform,
+  Modal,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import color from '../../Assets/colors/colors';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import Toast from 'react-native-simple-toast';
+
+import color from '../../Assets/colors/colors';
 import HomStakWSarch from '../../Components/HomeStackWithSearch';
-import { Modal } from 'react-native-paper';
-import Icon, { Icons } from '../../Components/Icons';
+import { Icons } from '../../Components/Icons';
 import FltLstCrd from '../../Components/FlatListCard';
 import BotonComp from '../../Components/BtnComp';
-import Toast from 'react-native-simple-toast';
 import { BASIC_URL } from '../Signin/Signin';
 
 const { height, width } = Dimensions.get('window');
@@ -31,143 +31,127 @@ const ReqestScren = () => {
   const insets = useSafeAreaInsets();
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [booklist, setbooklist] = useState([]);
-  const [currentitem, setCurrentItem] = useState(null);
-  const [searchTerm, setsearchTerm] = useState('');
-  
+  const [booklist, setBooklist] = useState([]);
+  const [currentItem, setCurrentItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
   const bottomPadding = (height * 0.085) + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
 
   const toggleModal = (item) => {
     if (item.status !== 'progress') {
-      setModalVisible(!modalVisible);
       setCurrentItem(item);
+      setModalVisible(true);
     } else {
       Toast.show('This request is already in progress and cannot be modified.');
     }
   };
 
-  const getBokngReqest = async () => {
-    const myHeaders = new Headers();
-    myHeaders.append("Cookie", "PHPSESSID=5sfeloifjcmrpti44vvqmr763q");
-
-    const formdata = new FormData();
-    formdata.append("provider_id", global.id);
-    if (searchTerm !== '') {
-      formdata.append("searchTerm", searchTerm);
-    }
-
-    const requestOptions = {
-      method: 'POST',
-      headers: myHeaders,
-      body: formdata,
-      redirect: 'follow',
-    };
-
-    const apiurl = `${BASIC_URL}provider_status.php`;
-
+  const getBookingRequests = async () => {
     try {
-      const response = await fetch(apiurl, requestOptions);
-      const result = await response.json();
+      const formdata = new FormData();
+      formdata.append('provider_id', global.id);
+      if (searchTerm.trim() !== '') {
+        formdata.append('searchTerm', searchTerm.trim());
+      }
 
-      if (result && result.booking_request) {
-        setbooklist(result.booking_request);
-      } else if (result && result.error) {
+      const response = await fetch(`${BASIC_URL}provider_status.php`, {
+        method: 'POST',
+        body: formdata,
+      });
+
+      const result = await response.json();
+      if (result?.booking_request) {
+        setBooklist(result.booking_request);
+      } else if (result?.error) {
         Toast.show(result.error);
       }
     } catch (error) {
-      console.error("Error fetching bookings:", error);
+      console.error('Error fetching bookings:', error);
     }
   };
 
   useEffect(() => {
-    getBokngReqest();
+    if (focused) {
+      getBookingRequests();
+    }
   }, [focused, searchTerm]);
 
-  const changstatus = async (v) => {
+  const changeStatus = async (statusValue) => {
     try {
-      const myHeaders = new Headers();
-      myHeaders.append("Cookie", "PHPSESSID=5sfeloifjcmrpti44vvqmr763q");
-  
       const formdata = new FormData();
-      formdata.append("id", currentitem.booking_id);
-      formdata.append("status", v);
-  
-      const requestOptions = {
+      formdata.append('id', currentItem.booking_id);
+      formdata.append('status', statusValue);
+
+      const response = await fetch(`${BASIC_URL}status_update.php`, {
         method: 'POST',
-        headers: myHeaders,
         body: formdata,
-        redirect: 'follow',
-      };
-  
-      const apiurl = `${BASIC_URL}status_update.php`;
-  
-      const response = await fetch(apiurl, requestOptions);
+      });
+
       const result = await response.json();
-  
-      if (result.success) {
+      if (result?.success) {
         Toast.show(result.success);
-        setModalVisible(false);      // ✅ Close the modal
-        setCurrentItem(null);        // ✅ Reset the current item
-        getBokngReqest();            // ✅ Immediately refresh data
+        setModalVisible(false);
+        setCurrentItem(null);
+        getBookingRequests();
+      } else if (result?.error) {
+        Toast.show(result.error);
       }
     } catch (error) {
-      Alert.alert("Error", error.message);
+      Alert.alert('Error', error?.message || 'An error occurred');
     }
   };
-  
+
   const openFile = () => {
-    const fileURL = `${BASIC_URL}uploads/${currentitem?.file}`;
-    Linking.openURL(fileURL).catch((err) =>
+    if (!currentItem?.file) return;
+    const fileURL = `${BASIC_URL}uploads/${currentItem.file}`;
+    Linking.openURL(fileURL).catch(err =>
       console.error(`Error opening file: ${err}`)
     );
   };
 
   return (
-    <>
-      <SafeAreaView style={{flex: 1}} edges={['top']}>
-        <HomStakWSarch
-          onPress={() => navigation.openDrawer()}
-          onPressnotification={() => navigation.navigate('edit_profile')}
-          onChangeText={(val) => setsearchTerm(val)}
-          value={searchTerm}
-        />
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <HomStakWSarch
+        onPress={() => navigation.openDrawer()}
+        onPressnotification={() => navigation.navigate('edit_profile')}
+        onChangeText={val => setSearchTerm(val)}
+        value={searchTerm}
+      />
 
-        <FlatList
-          data={booklist}
-          keyExtractor={(item) => item.booking_id.toString()}
-          renderItem={({ item, index }) => (
-            <FltLstCrd
-              index={index}
-              cardTitle={item.name}
-              bookingId={`Booking ID - ${item.booking_id}`}
-              date={item.service_date}
-              time={item.service_time}
-              status={item.status}
-              onPressShowProfile={() => toggleModal(item)}
-              iconName="ellipsis-v"
-              filepress={item.file}
-            />
-          )}
-          contentContainerStyle={[
-            styles.cardContainer,
-            {paddingBottom: bottomPadding}
-          ]}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No requests found</Text>
-            </View>
-          }
-        />
-      </SafeAreaView>
+      <FlatList
+        data={booklist}
+        keyExtractor={(item, index) => item.booking_id?.toString() || index.toString()}
+        renderItem={({ item, index }) => (
+          <FltLstCrd
+            index={index}
+            cardTitle={item.name}
+            bookingId={`Booking ID - ${item.booking_id}`}
+            date={item.service_date}
+            time={item.service_time}
+            status={item.status}
+            onPressShowProfile={() => toggleModal(item)}
+            iconName="ellipsis-v"
+            filepress={item.file}
+          />
+        )}
+        contentContainerStyle={[
+          styles.cardContainer,
+          { paddingBottom: bottomPadding },
+        ]}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No requests found</Text>
+          </View>
+        }
+      />
 
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
+        onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalOverlay}>
           <View style={styles.modalView}>
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
@@ -175,51 +159,50 @@ const ReqestScren = () => {
                   name="times"
                   color={color.wite}
                   size={20}
-                  style={styles.closeStyle}
                 />
               </TouchableOpacity>
             </View>
 
             <View style={styles.successmodalBody}>
-              {currentitem?.profile ? (
-                <Image
-                  style={styles.logoImg}
-                  resizeMode="contain"
-                  source={{ uri: `${BASIC_URL}uploads/${currentitem.profile}` }}
-                />
-              ) : (
-                <Image
-                  style={styles.logoImg}
-                  resizeMode="contain"
-                  source={require('../../Assets/Images/profile.jpg')}
-                />
-              )}
+              <Image
+                style={styles.logoImg}
+                resizeMode="cover"
+                source={
+                  currentItem?.profile
+                    ? { uri: `${BASIC_URL}uploads/${currentItem.profile}` }
+                    : require('../../Assets/Images/user.jpg')
+                }
+              />
 
-              <Text style={styles.pendAppr}>{currentitem?.name}</Text>
+              <Text style={styles.pendAppr}>{currentItem?.name}</Text>
               <Text style={styles.bookingStyle}>
-                Booking ID- {currentitem?.booking_id}
+                Booking ID - {currentItem?.booking_id}
               </Text>
 
               <View style={styles.dateTimeCont}>
-                <Text style={styles.dateStyle}>{currentitem?.service_date}</Text>
-                <Text style={styles.bookingStyle}>
-                  ({currentitem?.service_time})
-                </Text>
+                <Text style={styles.dateStyle}>{currentItem?.service_date}</Text>
+                {currentItem?.service_time ? (
+                  <Text style={styles.bookingStyle}>
+                    {' '}({currentItem.service_time})
+                  </Text>
+                ) : null}
               </View>
 
-              <View style={styles.dateTimeCont}>
-                <TouchableOpacity onPress={openFile} style={{ flexDirection: 'row' }}>
-                  <Icons.FontAwesome
-                    name="file-text"
-                    size={22}
-                    color={color.drkGry}
-                  />
-                  <Text style={styles.bookingStyle}> Service Detail</Text>
-                </TouchableOpacity>
-              </View>
+              {currentItem?.file ? (
+                <View style={styles.dateTimeCont}>
+                  <TouchableOpacity onPress={openFile} style={styles.fileBtn}>
+                    <Icons.FontAwesome
+                      name="file-text"
+                      size={20}
+                      color={color.drkGry}
+                    />
+                    <Text style={styles.bookingStyle}> Service Detail</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
 
               <TouchableOpacity>
-                <Text style={styles.getDir}> Get Direction</Text>
+                <Text style={styles.getDir}>Get Direction</Text>
               </TouchableOpacity>
             </View>
 
@@ -228,56 +211,28 @@ const ReqestScren = () => {
                 BtnStyle={styles.acceptStyle}
                 btnTextStyle={styles.btnTextStyle}
                 btnText="Accept"
-                onPressFunc={() => changstatus('progress')}
+                onPressFunc={() => changeStatus('progress')}
               />
               <BotonComp
                 BtnStyle={styles.rejectStyle}
                 btnTextStyle={styles.btnTextStyle}
                 btnText="Reject"
-                onPressFunc={() => changstatus('reject')}
+                onPressFunc={() => changeStatus('reject')}
               />
             </View>
           </View>
         </View>
       </Modal>
-    </>
+    </SafeAreaView>
   );
 };
 
 export default ReqestScren;
 
-
-
-
 const styles = StyleSheet.create({
-  linearGradientStyle: {
-    elevation: 0,
-    borderRadius: 6,
-    height: '100%',
-  },
-  scrollView: {
-    paddingHorizontal: 15,
-    paddingVertical: 6,
-  },
-  vegetableTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: color.blak,
-  },
-  inputCont: {
-    marginVertical: 10,
-    width: '100%',
-  },
-
-  iconCont: {
-    width: '38%',
-  },
-  iconStyle: {
-    fontSize: 30,
-    color: color.drkGren,
-    position: 'absolute',
-    right: -180,
-    top: 10,
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
   },
   cardContainer: {
     paddingHorizontal: 15,
@@ -295,24 +250,65 @@ const styles = StyleSheet.create({
     color: color.gry,
     fontWeight: '500',
   },
-
-  modalContainer: {
-    // flex:1,
-    borderTopRightRadius: 20,
-    borderTopLeftRadius: 20,
-    marginLeft: 0,
-    marginRight: 0,
-  },
-  modalBody: {
-    flexDirection: 'column',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalView: {
     borderRadius: 12,
-    width: '80%',
-    alignSelf: 'center',
+    width: '85%',
     backgroundColor: color.wite,
+    overflow: 'hidden',
+    elevation: 5,
+  },
+  modalHeader: {
+    backgroundColor: color.defalt,
+    alignItems: 'flex-end',
+    paddingVertical: 14,
+    paddingHorizontal: 15,
+  },
+  successmodalBody: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+  },
+  logoImg: {
+    width: width / 4,
+    height: width / 4,
+    marginTop: -40,
+    borderRadius: (width / 4) / 2,
+    borderWidth: 2,
+    borderColor: color.wite,
+  },
+  pendAppr: {
+    fontWeight: 'bold',
+    fontSize: 17,
+    color: color.blak,
+    paddingVertical: 5,
+  },
+  bookingStyle: {
+    fontSize: 14,
+    color: color.gry,
+    fontWeight: '400',
+  },
+  dateTimeCont: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  dateStyle: {
+    fontSize: 14,
+    color: color.ylow,
+    fontWeight: '400',
+  },
+  fileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   btnContainer: {
     width: '100%',
@@ -322,64 +318,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
   },
-  successmodalBody: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-  },
-  pendAppr: {
-    fontWeight: 'bold',
-    fontSize: 17,
-    color: color.blak,
-    paddingVertical: 5,
-  },
-
-  scrollViewStyle: {
-    marginBottom: 40,
-    paddingBottom: 40,
-  },
-  modalHeader: {
-    backgroundColor: color.defalt,
-    alignItems: 'flex-end',
-    paddingVertical: 17,
-    paddingHorizontal: 10,
-    borderTopRightRadius: 10,
-    borderTopLeftRadius: 10,
-  },
-  logoImg: {
-    width: width / 4,
-    height: height / 8,
-    marginTop: -55,
-    borderRadius: 10,
-  },
-  bookingStyle: {
-    fontSize: 14,
-    color: color.gry,
-    fontWeight: '400',
-    textAlign: 'left',
-  },
-  openingStyle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '93%',
-    marginBottom: 15,
-  },
-  dateTimeCont: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  dateStyle: {
-    fontSize: 14,
-    color: color.ylow,
-    fontWeight: '400',
-    textAlign: 'left',
-  },
-
   btnTextStyle: {
     fontSize: 13,
   },

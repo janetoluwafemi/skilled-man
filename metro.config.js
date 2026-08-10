@@ -1,18 +1,25 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig } = require('expo/metro-config');
 
-/**
- * Metro configuration
- * https://facebook.github.io/metro/docs/configuration
- *
- * @type {import('metro-config').MetroConfig}
- */
-const config = {};
+const config = getDefaultConfig(__dirname);
 
-module.exports = {
-    resolver: {
-      sourceExts: ["js", "ts", "jsx", "tsx", "json"],
-    },
+config.resolver = config.resolver || {};
 
-    }
+// Safely stub out native/web-incompatible modules
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const currentPlatform = platform || context.platform || 'web';
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+  if (
+    moduleName === 'normalize-css-color' ||
+    (currentPlatform === 'web' &&
+      (moduleName === 'react-native-maps' ||
+        moduleName.startsWith('react-native-maps/')))
+  ) {
+    return { type: 'empty' };
+  }
+
+  return context.resolveRequest
+    ? context.resolveRequest(context, moduleName, currentPlatform)
+    : context.resolve(context, moduleName, currentPlatform);
+};
+
+module.exports = config;

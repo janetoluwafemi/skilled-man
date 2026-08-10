@@ -1,25 +1,19 @@
+import React, { useEffect, useState } from 'react';
 import {
-  View,
   Text,
   StyleSheet,
-  Pressable,
   TouchableOpacity,
   Image,
   Dimensions,
-  Platform,
-  Alert,
 } from 'react-native';
-import {React, useEffect, useState} from 'react';
-import {useIsFocused} from '@react-navigation/native';
-import color from '../Assets/colors/colors';
-import icon, {Icons} from '../Components/Icons';
-import {useNavigation} from '@react-navigation/native';
-import {BASIC_URL} from '../Screens/Signin/Signin';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 
-const {height: SCREEN_HEIGHT} = Dimensions.get('window');
+import color from '../Assets/colors/colors';
+import { BASIC_URL } from '../Screens/Signin/Signin';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const isSmallDevice = SCREEN_HEIGHT < 700;
 const isMediumDevice = SCREEN_HEIGHT >= 700 && SCREEN_HEIGHT < 900;
-const isLargeDevice = SCREEN_HEIGHT >= 900;
 
 const getResponsiveSize = (small, medium, large) => {
   if (isSmallDevice) return small;
@@ -32,104 +26,71 @@ const getResponsiveSpacing = (small, medium, large) => {
   if (isMediumDevice) return medium;
   return large;
 };
-const Img_URL =
-  'https://https://theskilledman.com/../../freshfood/public/riderlog/';
-//const ImageUrl = 'https://fisdemoprojects.com/../../freshfood/public/riderlog/';
 
-const DrarUsr = props => {
+const DrarUsr = () => {
   const navigation = useNavigation();
   const focus = useIsFocused();
-  const [profileData, setprofileData] = useState(null);
-  const [name, setName] = useState(null);
-  const [profileimg, setprofileimg] = useState(null);
+  const [profileData, setProfileData] = useState(null);
+
   useEffect(() => {
-    if (profileData) {
-      setName(profileData.name);
-      setprofileimg(profileData.profile);
+    if (focus) {
+      getProfileData();
     }
-  }, [profileData, focus]);
+  }, [focus]);
 
-  //console.log(props);
-  useEffect(() => {
-    GetProfileData();
-  }, [global.id, focus]);
-  const GetProfileData = async () => {
+  const getProfileData = async () => {
     try {
-      var myHeaders = new Headers();
-      myHeaders.append('Cookie', 'PHPSESSID=nehf3e2dgdauiaooraluprccv7');
-
-      var formdata = new FormData();
+      const formdata = new FormData();
       formdata.append('id', global.id);
 
-      var requestOptions = {
+      const response = await fetch(`${BASIC_URL}user/get_profile.php`, {
         method: 'POST',
-        headers: myHeaders,
         body: formdata,
-        redirect: 'follow',
-      };
+      });
 
-      // fetch("https://fisdemoprojects.com/skilledman/api/user/get_profile.php", requestOptions)
-      fetch(`${BASIC_URL}user/get_profile.php`, requestOptions)
-        .then(response => response.json())
-        .then(result => {
-          console.log('Profile Data in Drawe user Screen', result);
-
-          if (result) {
-            setprofileData(result);
-          }
-        })
-        .catch(error => console.log('error', error));
+      const result = await response.json();
+      if (result) {
+        setProfileData(result);
+      }
     } catch (error) {
-      Alert.alert('Error', error?.message || String(error) || 'An error occurred');
+      console.log('Error fetching drawer user data:', error);
     }
   };
+
+  const imageUri = profileData?.profile
+    ? `${BASIC_URL}uploads/${profileData.profile}`
+    : null;
+
   return (
     <TouchableOpacity
-      style={styles.MainContainer}
-      onPress={() => {
-        navigation.navigate('account_setting');
-      }}>
-      {global.logo === null ? (
-        <Image
-          source={require('../Assets/Images/user.jpg')}
-          style={styles.imgStyle}
-        />
-      ) : (
-        <Image
-          source={{uri: Img_URL + global.logo}}
-          // style={styles.imgStyle} commenting out this line to avoid an empty border above profile image in drawer
-        />
-      )}
-
-      {profileimg && profileimg.profile !== null ? (
-        <Image
-          // source={{ uri: `https://fisdemoprojects.com/skilledman/api/uploads/${profileData?.profile}` }}
-          source={{uri: `${BASIC_URL}uploads/${profileData?.profile}`}}
-          resizeMode="cover"
-          style={styles.imgStyle}
-          //alt="user"
-        />
-      ) : (
-        <Image
-          source={require('../Assets/Images/user.jpg')}
-          resizeMode="cover"
-          style={styles.imgStyle}
-          //alt="user"
-        />
-      )}
-      <Text style={[
-        styles.userName,
-        {fontSize: getResponsiveSize(18, 19, 20)}
-      ]}>
-        {name}
+      style={styles.mainContainer}
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate('account_setting')}>
+      <Image
+        source={
+          imageUri
+            ? { uri: imageUri }
+            : require('../Assets/Images/user.jpg')
+        }
+        resizeMode="cover"
+        style={styles.imgStyle}
+      />
+      <Text
+        style={[
+          styles.userName,
+          { fontSize: getResponsiveSize(18, 19, 20) },
+        ]}
+        numberOfLines={1}>
+        {profileData?.name || 'User'}
       </Text>
     </TouchableOpacity>
   );
 };
 
 export default DrarUsr;
+
 const styles = StyleSheet.create({
-  MainContainer: {
+  mainContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     borderBottomColor: color.wite,

@@ -1,4 +1,5 @@
-import {SET_PROVIDR} from '../Actions/actions';
+import { SET_PROVIDR } from '../Actions/actions';
+
 const initialState = {
   providers: [],
 };
@@ -6,7 +7,7 @@ const initialState = {
 function ProvidersReducer(state = initialState, action) {
   switch (action.type) {
     case SET_PROVIDR:
-      return {...state, providersa: action.payload};
+      return { ...state, providers: action.payload };
     default:
       return state;
   }

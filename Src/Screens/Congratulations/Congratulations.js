@@ -1,5 +1,4 @@
-import React, {useState, useEffect} from 'react';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import React from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,31 +6,29 @@ import {
   Image,
   ImageBackground,
   Dimensions,
-  TouchableOpacity,
-  TextInput,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import color from '../../Assets/colors/colors';
 import BotonComp from '../../Components/BtnComp';
 import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
-const {width} = Dimensions.get('window');
-const {height} = Dimensions.get('window');
+
+const { width, height } = Dimensions.get('window');
 
 const Congratulation = props => {
   const navigation = useNavigation();
-  // console.log(props.route.params);
-  // const selectedRole = props.route.params ?? 'user';
-  // console.log(selectedRole, 'congral');
+
   return (
-    <>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <ImageBackground
         source={require('../../Assets/Images/cong.png')}
         resizeMode="cover"
         style={styles.backgroundImg}>
         <CstmHeaderIcon
-          onPress={() => {
-            props.navigation.goBack();
-          }}
-          headerIcon={styles.headerIcon}
+          onPress={() => props.navigation.goBack()}
+          headerIconStyle={styles.headerBackIcon}
         />
         <View style={styles.container}>
           <View style={styles.logoStyle}>
@@ -48,72 +45,62 @@ const Congratulation = props => {
           <BotonComp
             BtnStyle={styles.BtnStyle}
             btnText="Get Started"
-            onPressFunc={() => {
-              // props.navigation.navigate('Main', selectedRole);
-              props.navigation.navigate('Signin');
-            }}
+            onPressFunc={() => navigation.navigate('Signin')}
           />
         </View>
       </ImageBackground>
-    </>
+    </SafeAreaView>
   );
 };
 
 export default Congratulation;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  backgroundImg: {
+    width: '100%',
+    height: '100%',
+  },
+  headerBackIcon: {
+    color: '#0F172A',
+  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
     flexDirection: 'column',
-    width: '80%',
-    flex: 0.8,
-  },
-
-  backgroundImg: {
-    width: '100%',
-    height: '100%',
+    width: '85%',
+    flex: 0.85,
   },
   logoStyle: {
     justifyContent: 'center',
     width: '100%',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 30,
   },
   logoImg: {
-    width: width / 2,
-    height: height / 4.6,
+    width: width / 2.2,
+    height: height / 4.5,
   },
-  dropdownContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    width: '100%',
-  },
-  inputContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 8,
-  },
-
   BtnStyle: {
-    marginTop: 55,
+    marginTop: 45,
     width: '100%',
-  },
-  headerIcon: {
-    paddingLeft: 20,
   },
   CongText: {
     color: color.defalt,
-    fontSize: 25,
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: 12,
+    textAlign: 'center',
   },
   successText: {
-    fontSize: 17,
+    fontSize: 16,
     textAlign: 'center',
-    color: color.defalt,
+    color: '#475569',
+    fontWeight: '500',
+    lineHeight: 22,
   },
 });

@@ -1,14 +1,16 @@
 import React from 'react';
-import {StyleSheet, Image, TouchableOpacity, Text, Dimensions, Platform} from 'react-native';
+import {
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Dimensions,
+} from 'react-native';
 import color from '../Assets/colors/colors';
-import {useNavigation} from '@react-navigation/native';
-import icon, {Icons} from '../Components/Icons';
-import {Hidden} from 'native-base';
+import { Icons } from './Icons';
 
-const {height: SCREEN_HEIGHT} = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const isSmallDevice = SCREEN_HEIGHT < 700;
 const isMediumDevice = SCREEN_HEIGHT >= 700 && SCREEN_HEIGHT < 900;
-const isLargeDevice = SCREEN_HEIGHT >= 900;
 
 const getResponsiveSize = (small, medium, large) => {
   if (isSmallDevice) return small;
@@ -22,36 +24,50 @@ const getResponsiveSpacing = (small, medium, large) => {
   return large;
 };
 
-const DrarCstmBtn = props => {
-  const navigation = useNavigation();
-
+const DrarCstmBtn = ({
+                       title,
+                       drawerIcon,
+                       DrawerBtnPress,
+                       IconComponent = Icons.FontAwesome,
+                       style,
+                       textStyle,
+                       iconStyle,
+                       activeOpacity = 0.7,
+                       ...rest
+                     }) => {
   return (
-    <>
-      <TouchableOpacity 
-        style={styles.loginBtn} 
-        onPress={props.DrawerBtnPress}
-        activeOpacity={0.7}>
-        <Icons.FontAwesome 
-          name={props.drawerIcon} 
+    <TouchableOpacity
+      style={[styles.loginBtn, style]}
+      onPress={DrawerBtnPress}
+      activeOpacity={activeOpacity}
+      {...rest}>
+      {drawerIcon ? (
+        <IconComponent
+          name={drawerIcon}
           style={[
             styles.iconStyle,
-            {fontSize: getResponsiveSize(24, 26, 27)}
-          ]} 
+            { fontSize: getResponsiveSize(24, 26, 27) },
+            iconStyle,
+          ]}
         />
-        <Text style={[
+      ) : null}
+      <Text
+        style={[
           styles.btnText,
-          {fontSize: getResponsiveSize(16, 17, 18)}
-        ]}>
-          {props.title}
-        </Text>
-      </TouchableOpacity>
-    </>
+          { fontSize: getResponsiveSize(16, 17, 18) },
+          textStyle,
+        ]}
+        numberOfLines={1}>
+        {title}
+      </Text>
+    </TouchableOpacity>
   );
 };
 
+export default DrarCstmBtn;
+
 const styles = StyleSheet.create({
   loginBtn: {
-    textAlign: 'flex-start',
     justifyContent: 'flex-start',
     alignItems: 'center',
     flexDirection: 'row',
@@ -73,5 +89,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-export default DrarCstmBtn;

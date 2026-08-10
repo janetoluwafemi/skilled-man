@@ -1,177 +1,159 @@
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Image,
-  TouchableOpacity,
-  Dimensions,
   FlatList,
-  Alert
+  Platform,
+  Dimensions,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import color from '../../Assets/colors/colors';
-import { ScrollView } from 'react-native-gesture-handler';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import ProflHader from '../../Components/ProfileHeader';
-import ProflCrd from '../../Components/ProfileCard';
+import Toast from 'react-native-simple-toast';
+
+import color from '../../Assets/colors/colors';
 import HeaderWSarchFiltr from '../../Components/HeaderWithSearchFilter';
 import SavCrd from '../../Components/SaveCard';
 import { BASIC_URL } from '../Signin/Signin';
-import Toast from 'react-native-simple-toast';
 
 const { height } = Dimensions.get('window');
-const { width } = Dimensions.get('window');
 
-const SavScren = props => {
+const SavScren = () => {
   const navigation = useNavigation();
-  const [favouritelist, setfavouritlist] = useState([])
-  const foucus = useIsFocused()
-  const [save, setsave] = useState(true)
-  const [searchTerm, setsearchTerm] = useState('');
+  const focus = useIsFocused();
+  const insets = useSafeAreaInsets();
 
-  const removefavouritem = async (pid) => {
+  const [favoriteList, setFavoriteList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
-    console.log("remove id", pid)
-    const updatedFavouritelist = favouritelist.filter(item => item.provider_id !== pid);
-    setfavouritlist(updatedFavouritelist)
+  const removeFavoriteItem = async (pid) => {
+    const updatedList = favoriteList.filter(item => item.provider_id !== pid);
+    setFavoriteList(updatedList);
 
     try {
-      var myHeaders = new Headers();
-      myHeaders.append("Cookie", "PHPSESSID=qhabj34eqn4k9p23vmoeqoa5th");
+      const formdata = new FormData();
+      formdata.append('user_id', global.id);
+      formdata.append('provider_id', pid);
+      formdata.append('status', '0');
 
-      var formdata = new FormData();
-      formdata.append("user_id", global.id);
-      formdata.append("provider_id", pid);
-      formdata.append("status", "0");
-
-      var requestOptions = {
+      const response = await fetch(`${BASIC_URL}user/favorite_status_update.php`, {
         method: 'POST',
-        headers: myHeaders,
         body: formdata,
-        redirect: 'follow'
-      };
-      // const apiurl = "https://fisdemoprojects.com/skilledman/api/user/favorite_status_update.php"
-      const apiurl = `${BASIC_URL}user/favorite_status_update.php`
+      });
 
-      const response = await fetch(apiurl, requestOptions)
-      const result = await response.json()
-
-      if (result) {
-        console.log("bookmark status changes", result)
+      const result = await response.json();
+      if (result?.error) {
+        Toast.show(result.error);
       }
     } catch (error) {
-      console.log(error)
+      console.log('Error updating favorite status:', error);
     }
-
-
-  }
-
+  };
 
   useEffect(() => {
-
-    const getFavourite = async () => {
+    const getFavorites = async () => {
       try {
-        var myHeaders = new Headers();
-        myHeaders.append("Cookie", "PHPSESSID=qhabj34eqn4k9p23vmoeqoa5th");
+        const formdata = new FormData();
+        formdata.append('user_id', global.id);
 
-        var formdata = new FormData();
-        formdata.append("user_id", global.id);
-
-        var requestOptions = {
+        const response = await fetch(`${BASIC_URL}user/get_favorite_provider.php`, {
           method: 'POST',
-          headers: myHeaders,
           body: formdata,
-          redirect: 'follow'
-        };
-        // const apiurl = "https://fisdemoprojects.com/skilledman/api/user/get_favorite_provider.php"
-        const apiurl = `${BASIC_URL}user/get_favorite_provider.php`
+        });
 
-        const response = await fetch(apiurl, requestOptions)
-        const result = await response.json()
-        if (result && result.favorite_providers) {
-          console.log("result.favorite_providers", result?.favorite_providers)
-          setfavouritlist(result?.favorite_providers)
+        const result = await response.json();
+        if (result?.favorite_providers) {
+          setFavoriteList(result.favorite_providers);
+        } else if (result?.error) {
+          Toast.show(result.error);
         }
-        else if (result.error) {
-          // Alert.alert(result.error)
-          Toast.show(result.error)
-        }
-
       } catch (error) {
-        console.log(error)
+        console.log('Error fetching favorite providers:', error);
       }
+    };
+
+    if (focus) {
+      getFavorites();
     }
-    getFavourite()
-  }, [foucus])
+  }, [focus]);
 
-  const filteredData = favouritelist.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  console.log(filteredData, 'filteredData')
+  const filteredData = favoriteList.filter(item =>
+    item?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
+  const bottomPadding = (height * 0.085) + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
 
   return (
-    <>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <HeaderWSarchFiltr
-        onPress={() => {
-          navigation.openDrawer();
-        }}
-        onPressNotifiction={() => {
-          navigation.navigate('notification_screen');
-        }}
-        onPressProfile={() => {
-          navigation.navigate('editUserProfile');
-        }}
+        onPress={() => navigation.openDrawer()}
+        onPressNotifiction={() => navigation.navigate('notification_screen')}
+        onPressProfile={() => navigation.navigate('editUserProfile')}
         titleText="What are you looking for?"
         bellIcon="bell"
-        onChangeText={val => {
-          setsearchTerm(val);
-        }}
+        onChangeText={val => setSearchTerm(val)}
         value={searchTerm}
-        screen={'user'}
+        screen="user"
       />
-      <ScrollView style={styles.scrollView}>
-        <FlatList
-          data={filteredData}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({item: itemval, index: ind}) => (
-            <SavCrd
-              item={itemval}
-              showProfile={() =>
-                navigation.navigate('IndividualChat', {currentuser: itemval})
-              }
-              cardTitle={itemval.name}
-              time="12:00 AM"
-              msgTitle="Total Jobs"
-              totJobs={itemval.total_jobs}
-              // imgUrl={`https://fisdemoprojects.com/skilledman/api/uploads//${itemval.image}`}
-              imgUrl={`${BASIC_URL}uploads//${itemval.image}`}
-              approvedIcon="user-check"
-              bookMarkIcon="bookmark"
-              ratingTitle="Rating"
-              totRat={itemval.rating}
-              // distance="Distance"
-              // totDis={`${itemval.distance}km`}
-              removefavouritem={removefavouritem}
-              save={save}
-              togglestat={() => setsave(false)}
-            />
-          )}
-        />
-      </ScrollView>
-    </>
+
+      <FlatList
+        data={filteredData}
+        keyExtractor={(item, index) => item.provider_id?.toString() || index.toString()}
+        renderItem={({ item }) => (
+          <SavCrd
+            item={item}
+            showProfile={() =>
+              navigation.navigate('IndividualChat', { currentuser: item })
+            }
+            cardTitle={item.name}
+            time="12:00 AM"
+            msgTitle="Total Jobs"
+            totJobs={item.total_jobs}
+            imgUrl={`${BASIC_URL}uploads/${item.image}`}
+            approvedIcon="user-check"
+            bookMarkIcon="bookmark"
+            ratingTitle="Rating"
+            totRat={item.rating}
+            removefavouritem={removeFavoriteItem}
+            save={true}
+          />
+        )}
+        contentContainerStyle={[
+          styles.cardContainer,
+          { paddingBottom: bottomPadding },
+        ]}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No saved providers found</Text>
+          </View>
+        }
+      />
+    </SafeAreaView>
   );
 };
 
 export default SavScren;
 
 const styles = StyleSheet.create({
-  scrollView: {
-    paddingHorizontal: 15,
-    marginTop: 40,
-    maxHeight:"65%"
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
   },
-
-  inputCont: {
-    marginVertical: 10,
-    width: '100%',
+  cardContainer: {
+    paddingHorizontal: 15,
+    paddingTop: 40,
+    flexGrow: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: color.gry,
+    fontWeight: '500',
   },
 });

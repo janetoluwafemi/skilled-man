@@ -1,23 +1,38 @@
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import React from 'react';
+import {
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import color from '../Assets/colors/colors';
 
-const BtnDisable = props => {
-  const backgroundColor = props.isDisabled ? 'gray' : color.defalt;
-
+const BtnDisable = ({
+                      isDisabled = false,
+                      onPressFunc,
+                      btnTextStyle,
+                      load = false,
+                      btnText,
+                      BtnStyle,
+                      activeOpacity = 0.7,
+                      ...rest
+                    }) => {
   return (
     <TouchableOpacity
-      style={[styles.loginBtn, { backgroundColor }]}
-      onPress={props.onPressFunc}
-      disabled={props.isDisabled}
-    >
-      <Text style={[styles.btnText, props.btnTextStyle]}>
-        {props.load ? (
-          <ActivityIndicator size="small" color="#f8f8ff" />
-        ) : (
-          props.btnText
-        )}
-      </Text>
+      activeOpacity={activeOpacity}
+      style={[
+        styles.loginBtn,
+        isDisabled && styles.disabledBg,
+        BtnStyle,
+      ]}
+      onPress={onPressFunc}
+      disabled={isDisabled || load}
+      {...rest}>
+      {load ? (
+        <ActivityIndicator size="small" color="#f8f8ff" />
+      ) : (
+        <Text style={[styles.btnText, btnTextStyle]}>{btnText}</Text>
+      )}
     </TouchableOpacity>
   );
 };
@@ -27,11 +42,16 @@ export default BtnDisable;
 const styles = StyleSheet.create({
   loginBtn: {
     borderRadius: 8,
+    backgroundColor: color.defalt,
     width: '46%',
-    // marginTop: 20,
     alignSelf: 'center',
     paddingVertical: 13,
     elevation: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  disabledBg: {
+    backgroundColor: 'gray',
   },
   btnText: {
     color: color.wite,

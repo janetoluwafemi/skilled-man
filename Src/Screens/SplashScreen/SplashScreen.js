@@ -1,60 +1,63 @@
-import {
-  StyleSheet,
-  Text,
-  Dimensions,
-  View,
-  ImageBackground,
-  Image,
-} from 'react-native';
 import React, { useEffect } from 'react';
+import { StyleSheet, View, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '../../context/AuthProvider';
 import { useIsFocused } from '@react-navigation/native';
+import { useAuth } from '../../context/AuthProvider';
 import { notifiListener, reqestUsrPermision, getToken } from '../../utilis/notification';
 
-
 function SplshScren({ navigation }) {
-  const { state, dispatch } = useAuth()
-  const Focus = useIsFocused()
+  const { dispatch } = useAuth();
+  const isFocused = useIsFocused();
 
-  const checkUserAuthAndRole = () => {
+  const checkUserAuthAndRole = async () => {
+    try {
+      const user = await AsyncStorage.getItem('user');
+      const role = await AsyncStorage.getItem('role');
 
-    navigation.navigate("Signin")
-    // const user = await AsyncStorage.getItem('user');
-    // const role = await AsyncStorage.getItem('role');
+      if (user && role) {
+        const data = JSON.parse(user);
+        dispatch({ type: 'LOGIN', payload: { user: data, role } });
 
-    // if (user && role) {
-    //   const data = JSON.parse(user)
-    //   console.log("data in global store splash", data)
-    //   dispatch({ type: 'LOGIN', payload: { user: JSON.parse(user), role } });
-    //   global.email = data.email
-    //   global.id = data.id
-    //   global.name = data.name
-    //   global.phone_number = data.phone_number
-    //   global.address = data.address
-    //   global.state = data.state
-    //   global.whatsapp = data.whatsapp
-    //   global.role = role
-    //   global.working_experience = data.working_experience
-    //   global.profile = data.profile
+        global.email = data.email;
+        global.id = data.id;
+        global.name = data.name;
+        global.phone_number = data.phone_number;
+        global.address = data.address;
+        global.state = data.state;
+        global.whatsapp = data.whatsapp;
+        global.role = role;
+        global.working_experience = data.working_experience;
+        global.profile = data.profile;
 
-    //   if (role == '0' || role == '1') {
-    //     navigation.navigate('Parent');
-    //   }
-    // } else {
-    //   navigation.navigate('Signin');
-    // }
-  }
+        if (role === '0' || role === '1') {
+          navigation.navigate('Parent');
+        } else {
+          navigation.navigate('Signin');
+        }
+      } else {
+        navigation.navigate('Signin');
+      }
+    } catch (error) {
+      navigation.navigate('Signin');
+    }
+  };
 
   useEffect(() => {
-    setTimeout(() => {
-      checkUserAuthAndRole()
-      reqestUsrPermision()
-      notifiListener()
-      getToken()
+    let timer;
+    if (isFocused) {
+      timer = setTimeout(async () => {
+        await checkUserAuthAndRole();
+        await reqestUsrPermision();
+        await getToken();
+        notifiListener();
+      }, 2000);
+    }
 
-    }, 2000);
-  }, [Focus]);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isFocused]);
+
   return (
     <View style={styles.container}>
       <Image
@@ -70,8 +73,10 @@ export default SplshScren;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#fff',
   },
   imgStyle: {
     width: '100%',

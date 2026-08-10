@@ -1,29 +1,27 @@
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 
-export const signInWGoogle = async () => {
+export const signInWGoogle = async (webClientId = 'YOUR_WEB_CLIENT_ID') => {
   try {
-    // Configure Google Sign In
     GoogleSignin.configure({
-      webClientId: 'YOUR_WEB_CLIENT_ID', // Replace with your actual web client ID
+      webClientId,
       offlineAccess: false,
       scopes: ['profile', 'email'],
     });
 
-    // Check if Play Services are available
-    await GoogleSignin.hasPlayServices();
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-    // Sign in with Google
-    const {idToken, user} = await GoogleSignin.signIn();
+    const signInResult = await GoogleSignin.signIn();
+    const idToken = signInResult.data?.idToken || signInResult.idToken;
 
-    // Get Google credentials
-    const googleCredentials = auth.GoogleAuthProvider.credential(idToken);
+    if (!idToken) {
+      throw new Error('No ID token obtained from Google Sign In');
+    }
 
-    // Sign in to Firebase with Google credentials
-    await auth().signInWithCredential(googleCredentials);
+    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+    const userCredential = await auth().signInWithCredential(googleCredential);
 
-    // Return user information
-    return user;
+    return userCredential.user;
   } catch (error) {
     console.log('Google Sign In Error:', error);
     return null;

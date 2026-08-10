@@ -1,24 +1,30 @@
 import React from 'react';
 import { Text, StyleSheet } from 'react-native';
 
-export function ConectionStates({ isConnected }) {
+export function ConnectionStates({ isConnected = false }) {
   return (
-    <Text style={styles.text}>
+    <Text
+      style={[
+        styles.text,
+        isConnected ? styles.connectedText : styles.disconnectedText,
+      ]}>
       {isConnected ? 'Connected' : 'Disconnected'}
     </Text>
   );
 }
 
+export const ConectionStates = ConnectionStates;
+
 const styles = StyleSheet.create({
   text: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: 'blue', // You can customize the color
+    textAlign: 'center',
+  },
+  connectedText: {
+    color: '#2e7d32',
+  },
+  disconnectedText: {
+    color: '#d32f2f',
   },
 });
-
-// import React from 'react';
-// import { View } from 'react-native-animatable';
-// export function ConnectionState({ isConnected }) {
-//   return <View>{ ''+isConnected }</View>;
-// }

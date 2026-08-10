@@ -1,91 +1,92 @@
-import React, {useState} from 'react';
-import {Dimensions, StyleSheet, TextInput, View,TouchableOpacity} from 'react-native';
+import React, { useState, forwardRef } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 import color from '../Assets/colors/colors';
-import Icon,{ Icons }  from './Icons';
-const C_TxtInput = props => {
-  const {mode = 'outlined'} = props;
-  const [text, setText] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
+import { Icons } from './Icons';
 
-  const handleFocus = () => {
-    setIsFocused(true);
-  };
+const C_TxtInput = forwardRef(
+  (
+    {
+      placeholder,
+      placeholderTextColor = color.gry,
+      icon,
+      styles: customStyle,
+      containerStyle,
+      onFocus,
+      onBlur,
+      ...rest
+    },
+    ref
+  ) => {
+    const [isFocused, setIsFocused] = useState(false);
 
-  const handleBlur = () => {
-    setIsFocused(false);
-  };
+    const handleFocus = (e) => {
+      setIsFocused(true);
+      if (onFocus) onFocus(e);
+    };
 
-  const lowercaseFirstLetter = (str) => {
-    return str.charAt(0).toLowerCase() + str.slice(1);
-  };
-  return (
-    <View style={TextInputStyle.inputView}>
-      <TextInput
-        ref={props.ref}
-        placeholder={props.placeholder}
-        mode={mode}
-        color={color.defalt}
-        disabled={props.disabled}
-        value={props.value}
-       // value={lowercaseFirstLetter(props.value)}
-        placeholderTextColor={props.placeholderTextColor}
-        // editable={false}
-        textAlign={props.textAlign}
-        keyboardType={props.keyboardType}
-        scrollEnabled={false}
-        multiline={props.multiline}
-        numberOfLines={props.numberOfLines}
-        // onChangeText={props.onChangeText}
-        onChange={props.onChange}
-        secureTextEntry={props.secureTextEntry}
-        maxLength={props.maxLength}
-        // theme={{color: {primary: color.Green, underlineColor: color.red}}}
-        outlineColor={props.outlineColor}
-        underlineColor={props.underlineColor}
-        editable={props?.editable}
-        // onTouchMove
-        style={[TextInputStyle.inputstyle, {...props.styles}]}
-        onChangeText={props.onChangeText}
-        onBlur={props.onBlur}
-      />
-       <Icons.FontAwesome6 name={props.icon} style={TextInputStyle.iconStyle} />
-      {/* {props.secureTextEntry==true?(  <TouchableOpacity><Icons.Feather name={props.icon} style={TextInputStyle.iconStyle} /></TouchableOpacity>):(<TouchableOpacity><Icons.Feather name={"eye"} style={TextInputStyle.iconStyle} /></TouchableOpacity>)} */}
-    </View>
-  );
-};
+    const handleBlur = (e) => {
+      setIsFocused(false);
+      if (onBlur) onBlur(e);
+    };
 
-const TextInputStyle = StyleSheet.create({
-  inputstyle: {
-    width: '100%',
-    paddingVertical: 10,
-    fontSize: 17,
-    paddingHorizontal: 20,
-    borderColor: color.defalt,
-    borderWidth: 1,
-    borderBottomColor: color.defalt,
-    backgroundColor: 'transparent',
-    borderRadius: 6,
-    // fontWeight: 'bold',
-  },
-  inputView: {
-    backgroundColor: 'transparent',
-    borderRadius: 6,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginVertical: 5,
-    elevation: 0,
-  },
-  inputFocused: {
-    borderBottomWidth: 1.7,
-  },
-  iconStyle: {
-    fontSize: 25,
-    color: color.defalt,
-    marginLeft: -45,
-    marginRight: 6,
-  },
-});
+    return (
+      <View style={[styles.inputView, containerStyle]}>
+        <TextInput
+          {...rest}
+          ref={ref}
+          placeholder={placeholder}
+          placeholderTextColor={placeholderTextColor}
+          style={[
+            styles.inputstyle,
+            icon && styles.inputWithIcon,
+            isFocused && styles.focusedBorder,
+            customStyle,
+          ]}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+        {icon && (
+          <Icons.FontAwesome6 name={icon} style={styles.iconStyle} />
+        )}
+      </View>
+    );
+  }
+);
+
+C_TxtInput.displayName = 'C_TxtInput';
 
 export default C_TxtInput;
+
+const styles = StyleSheet.create({
+  inputView: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  inputstyle: {
+    width: '100%',
+    paddingVertical: 12,
+    fontSize: 16,
+    paddingLeft: 15,
+    paddingRight: 15,
+    borderColor: '#E0E0E0',
+    borderWidth: 1,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 10,
+    color: '#333',
+  },
+  inputWithIcon: {
+    paddingRight: 45,
+  },
+  focusedBorder: {
+    borderColor: color.defalt,
+    borderWidth: 1.5,
+  },
+  iconStyle: {
+    fontSize: 20,
+    color: color.defalt,
+    position: 'absolute',
+    right: 15,
+  },
+});

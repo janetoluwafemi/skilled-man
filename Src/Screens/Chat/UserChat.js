@@ -1,36 +1,24 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
-import React, {useState} from 'react';
-import color from '../../Assets/colors/colors';
-import {ScrollView} from 'react-native-gesture-handler';
-import {useNavigation} from '@react-navigation/native';
+import React from 'react';
+import { StyleSheet, View, ScrollView, SafeAreaView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import ProflHader from '../../Components/ProfileHeader';
 import ProflCrd from '../../Components/ProfileCard';
-const {height} = Dimensions.get('window');
-const {width} = Dimensions.get('window');
 
-const UsrCht = props => {
+const UsrCht = () => {
   const navigation = useNavigation();
 
   return (
-    <>
+    <SafeAreaView style={styles.safeArea}>
       <ProflHader
         rightIcon="search"
         screenTitle="Chat"
-        onPress={() => {
-          navigation.openDrawer();
-        }}
-        onPressnotification={() => {
-          navigation.navigate('');
-        }}
+        onPress={() => navigation.openDrawer()}
+        onPressnotification={() => {}}
       />
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
         <ProflCrd
           showProfile={() => navigation.navigate('IndividualChat')}
           cardTitle="Tafari"
@@ -67,20 +55,22 @@ const UsrCht = props => {
           noOfMsg={1}
         />
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 };
 
 export default UsrCht;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 15,
     paddingVertical: 15,
-  },
-
-  inputCont: {
-    marginVertical: 10,
-    width: '100%',
   },
 });

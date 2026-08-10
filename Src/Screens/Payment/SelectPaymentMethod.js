@@ -1,140 +1,211 @@
+import React, { useState } from 'react';
 import {
-  View,
-  Text,
   StyleSheet,
-  Image,
+  Text,
+  View,
   TouchableOpacity,
-  Dimensions,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  Platform,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { RadioButton } from 'react-native-paper';
+
 import color from '../../Assets/colors/colors';
-import {ScrollView} from 'react-native-gesture-handler';
-import {useNavigation, useRoute} from '@react-navigation/native';
 import CstmHeader from '../../Components/CustomHeader';
-import {RadioButton} from 'react-native-paper';
 import BotonComp from '../../Components/BtnComp';
-import {Icons} from '../../Components/Icons';
-const {height} = Dimensions.get('window');
-const {width} = Dimensions.get('window');
+import { Icons } from '../../Components/Icons';
 
 const SlctPaymentMethd = props => {
   const navigation = useNavigation();
-  const [value, setValue] = React.useState('Cash on Delivery');
-  // const handleNavigate = () => {
-  //   // Navigate to the OtherScreen and pass the map input value as a parameter
-  //  // navigation.navigate('SelectPaymentMethod',{price});
-  //  navigation.navigate('CardDetail', {price});
-  // };
   const route = useRoute();
-  const price = route.params?.price;
-  const fullName = route.params?.fullName;
-  const date = route.params?.date;
-  const phoneNumber = route.params?.phoneNumber;
-  const address = route.params?.address;
-  const provider_id = route.params?.provider_id;
-  const selectedfile = route.params?.selectedfile;
-  console.log('value u selected', value);
-  useEffect(() => {
-    console.log('price changed:', price);
-    console.log('full name changed:', fullName);
-    console.log('phone changed:', phoneNumber);
-    console.log('address changed:', address);
-    console.log('date changed:', date);
-    console.log('provider_id changed:', provider_id);
-    console.log('selectedfile', selectedfile);
-  }, [price, fullName, phoneNumber, address, date, provider_id, selectedfile]);
+
+  const {
+    price,
+    fullName,
+    date,
+    phoneNumber,
+    address,
+    provider_id,
+    selectedfile,
+  } = route.params || {};
+
+  const [value, setValue] = useState('Pay Online');
+
+  const handleNext = () => {
+    if (value === 'Cash on Delivery') {
+      navigation.navigate('PaymentCongratulations');
+    } else {
+      navigation.navigate('CardDetail', {
+        price,
+        fullName,
+        date,
+        phoneNumber,
+        address,
+        provider_id,
+        selectedfile,
+      });
+    }
+  };
+
   return (
-    <>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
       <CstmHeader
         title="Select Payment Method"
         onPressBack={() => props.navigation.goBack()}
       />
-      <ScrollView style={styles.scrollView}>
-        <View>
-          <Text style={styles.paymentTitle}>Select Payment Method </Text>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.container}>
+          <Text style={styles.paymentTitle}>Choose Payment Option</Text>
+          <Text style={styles.paymentSubtitle}>
+            Select how you would like to complete your booking payment
+          </Text>
+
           <RadioButton.Group
-            onValueChange={value => setValue(value)}
+            onValueChange={newValue => setValue(newValue)}
             value={value}>
-            <View style={styles.radioStyle}>
-              <RadioButton value="Pay Online" />
-              <Icons.FontAwesome5
-                name="credit-card"
-                color={color.gry}
-                size={28}
-                style={styles.closeStyle}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={[
+                styles.optionCard,
+                value === 'Pay Online' && styles.optionCardSelected,
+              ]}
+              onPress={() => setValue('Pay Online')}>
+              <RadioButton.Android
+                value="Pay Online"
+                color={color.defalt}
+                uncheckedColor="#94A3B8"
               />
-              <Text style={styles.methodName}>Pay Online</Text>
-            </View>
-            {/* <View style={styles.radioStyle}>
-              <RadioButton value="Cash on Delivery" />
-              <Icons.FontAwesome5
-                name="money-bill-alt"
-                color={color.drkGry}
-                size={28}
-                style={styles.closeStyle}
+              <View style={styles.iconWrapper}>
+                <Icons.FontAwesome5
+                  name="credit-card"
+                  color={color.defalt}
+                  size={20}
+                />
+              </View>
+              <View style={styles.optionTextCol}>
+                <Text style={styles.methodName}>Pay Online</Text>
+                <Text style={styles.methodSub}>Debit / Credit Card or Paystack</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={[
+                styles.optionCard,
+                value === 'Cash on Delivery' && styles.optionCardSelected,
+              ]}
+              onPress={() => setValue('Cash on Delivery')}>
+              <RadioButton.Android
+                value="Cash on Delivery"
+                color={color.defalt}
+                uncheckedColor="#94A3B8"
               />
-              <Text style={styles.methodName}>Cash on Delivery</Text>
-            </View> */}
+              <View style={styles.iconWrapper}>
+                <Icons.FontAwesome5
+                  name="money-bill-alt"
+                  color={color.defalt}
+                  size={20}
+                />
+              </View>
+              <View style={styles.optionTextCol}>
+                <Text style={styles.methodName}>Pay Later / Cash</Text>
+                <Text style={styles.methodSub}>Pay provider after service completion</Text>
+              </View>
+            </TouchableOpacity>
           </RadioButton.Group>
 
-          {value == 'Cash on Delivery' ? (
-            <BotonComp
-              onPressFunc={() => navigation.navigate('PaymentCongratulations')}
-              BtnStyle={styles.BtnStyle}
-              btnText="Next"
-            />
-          ) : (
-            <BotonComp
-              onPressFunc={() =>
-                // handleNavigate();
-                navigation.navigate('CardDetail', {
-                  price,
-                  fullName,
-                  date,
-                  phoneNumber,
-                  address,
-                  provider_id,
-                  selectedfile,
-                })
-              }
-              BtnStyle={styles.BtnStyle}
-              btnText="Next"
-            />
-          )}
+          <BotonComp
+            onPressFunc={handleNext}
+            BtnStyle={styles.submitBtn}
+            btnText="Next"
+          />
         </View>
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 };
 
 export default SlctPaymentMethd;
 
 const styles = StyleSheet.create({
-  scrollView: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  container: {
     paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  radioStyle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingVertical: 3,
-  },
-  methodName: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: color.defalt,
+    paddingTop: 20,
   },
   paymentTitle: {
-    fontSize: 19,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  paymentSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 24,
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    marginBottom: 14,
+  },
+  optionCardSelected: {
+    backgroundColor: '#F0FDF4',
+    borderColor: color.defalt,
+  },
+  iconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+    marginRight: 12,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  optionTextCol: {
+    flex: 1,
+  },
+  methodName: {
+    fontSize: 15,
     fontWeight: '700',
-    color: color.defalt,
-    marginBottom: 15,
+    color: '#0F172A',
   },
-  BtnStyle: {
-    marginTop: 35,
+  methodSub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
   },
-  closeStyle: {
-    marginHorizontal: 8,
+  submitBtn: {
+    width: '100%',
+    marginTop: 20,
+    backgroundColor: color.defalt,
+    borderRadius: 12,
+    paddingVertical: 14,
   },
 });

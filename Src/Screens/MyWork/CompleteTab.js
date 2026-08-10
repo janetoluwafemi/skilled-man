@@ -1,90 +1,80 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  Alert,
   FlatList,
+  Alert,
   Dimensions,
   Platform,
+  Modal,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useIsFocused } from '@react-navigation/native';
+import Toast from 'react-native-simple-toast';
+
 import FltLstCrd from '../../Components/FlatListCard';
 import color from '../../Assets/colors/colors';
-import {Modal} from 'react-native-paper';
-import {Icons} from '../../Components/Icons';
+import { Icons } from '../../Components/Icons';
 import OngoingDrpdwn from '../../Components/OngoingDropdown';
 import BotonComp from '../../Components/BtnComp';
-import Toast from 'react-native-simple-toast';
-import {useIsFocused} from '@react-navigation/native';
+import { BASIC_URL } from '../Signin/Signin';
 
-import {BASIC_URL} from '../Signin/Signin';
+const { height } = Dimensions.get('window');
 
-const {height} = Dimensions.get('window');
 const ComplteTab = props => {
-  //console.log(props.value, 'on complete tab')
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
-  const [data, setData] = useState();
+  const [data, setData] = useState([]);
+
+  const bottomPadding =
+    height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
+
   const toggleModal = () => {
-    setModalVisible(!modalVisible);
-  };
-  
-  const bottomPadding = (height * 0.085) + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
-
-  const getservicestataus = () => {
-    console.log('books ervice status');
+    setModalVisible(prev => !prev);
   };
 
-  useEffect(() => {
-    GetData();
-  }, [focus, props?.value]);
-
-  const GetData = async () => {
+  const getCompletedData = useCallback(async () => {
     try {
-      var myHeaders = new Headers();
-      myHeaders.append('Cookie', 'PHPSESSID=pqe6giac1t2jjjqkr6sh3r747i');
-
-      var formdata = new FormData();
+      const formdata = new FormData();
       formdata.append('provider_id', global.id);
       formdata.append('status', 'complete');
       if (props?.value) {
-        formdata.append('searchTerm', props?.value);
+        formdata.append('searchTerm', props.value);
       }
 
-      var requestOptions = {
+      const response = await fetch(`${BASIC_URL}provider_status.php`, {
         method: 'POST',
-        headers: myHeaders,
         body: formdata,
-        redirect: 'follow',
-      };
-      // const apiurl = "https://fisdemoprojects.com/skilledman/api/provider_status.php"
-      const apiurl = `${BASIC_URL}provider_status.php`;
+      });
 
-      const response = await fetch(apiurl, requestOptions);
       const result = await response.json();
-      if (result && result.booking_request) {
+      if (result?.booking_request) {
         setData(result.booking_request);
-      } else if (result && result.error) {
+      } else if (result?.error) {
         Toast.show(result.error);
       }
     } catch (error) {
       Alert.alert('Error', error?.message || String(error) || 'An error occurred');
     }
-  };
-  console.log(data, 'data');
+  }, [props?.value]);
+
+  useEffect(() => {
+    if (focus) {
+      getCompletedData();
+    }
+  }, [focus, getCompletedData]);
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{
-        paddingBottom: bottomPadding,
-      }}
-      showsVerticalScrollIndicator={false}>
-        <FlatList
+    <View style={styles.flexContainer}>
+      <FlatList
         data={data}
-        renderItem={({item}) => (
+        keyExtractor={(item, index) => item.booking_id?.toString() || index.toString()}
+        contentContainerStyle={[styles.container, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => (
           <FltLstCrd
             cardTitle={item.name}
             bookingId={`Booking ID - ${item.booking_id}`}
@@ -95,49 +85,23 @@ const ComplteTab = props => {
             filepress={item.file}
           />
         )}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No completed jobs found</Text>
+          </View>
+        }
       />
-      {/* <FlatListCard
-        cardTitle={data[0].name}
-        bookingId="Booking ID - 88745RE"
-        date="Oct 11, 2023"
-        time="1:00 PM"
-        status="28%"
-        iconName="ellipsis-v"
-        onPressShowProfile={toggleModal}
-      />
-      <FlatListCard
-        cardTitle="Hazle"
-        bookingId="Booking ID - 88745RE"
-        date="Oct 11, 2023"
-        time="1:00 PM"
-        status="28%"
-        iconName="ellipsis-v"
-        onPressShowProfile={toggleModal}
-      />
-      <FlatListCard
-        cardTitle="Hazle"
-        bookingId="Booking ID - 88745RE"
-        date="Oct 11, 2023"
-        time="1:00 PM"
-        status="28%"
-        iconName="ellipsis-v"
-        onPressShowProfile={toggleModal}
-      /> */}
+
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalContainer}>
+        onRequestClose={toggleModal}>
+        <View style={styles.modalOverlay}>
           <View style={styles.modalView}>
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={toggleModal}>
-                <Icons.FontAwesome5
-                  name="times"
-                  color={color.wite}
-                  size={20}
-                  style={styles.closeStyle}
-                />
+                <Icons.FontAwesome5 name="times" color={color.wite} size={20} />
               </TouchableOpacity>
             </View>
 
@@ -156,15 +120,70 @@ const ComplteTab = props => {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 };
 
 export default ComplteTab;
 
 const styles = StyleSheet.create({
+  flexContainer: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
   container: {
     paddingVertical: 10,
     paddingHorizontal: 20,
+    flexGrow: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: color.gry,
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalView: {
+    borderRadius: 12,
+    width: '85%',
+    backgroundColor: color.wite,
+    overflow: 'hidden',
+    elevation: 5,
+  },
+  modalHeader: {
+    backgroundColor: color.defalt,
+    alignItems: 'flex-end',
+    paddingVertical: 14,
+    paddingHorizontal: 15,
+  },
+  successmodalBody: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+  },
+  btnContainer: {
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  acceptStyle: {
+    width: '100%',
+  },
+  btnTextStyle: {
+    fontSize: 14,
   },
 });

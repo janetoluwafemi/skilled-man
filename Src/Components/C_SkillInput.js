@@ -1,53 +1,87 @@
-import React, {useState} from 'react';
-import {Dimensions, StyleSheet, TextInput, View} from 'react-native';
-
+import React, { useState, forwardRef } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 import color from '../Assets/colors/colors';
-const C_SkilInput = props => {
-  const {mode = 'outlined'} = props;
-  const [text, setText] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
 
-  const handleFocus = () => {
-    setIsFocused(true);
-  };
+const C_SkilInput = forwardRef(
+  (
+    {
+      placeholder,
+      placeholderTextColor = color.defalt,
+      value,
+      onChangeText,
+      onChange,
+      editable = true,
+      disabled = false,
+      keyboardType,
+      multiline,
+      numberOfLines,
+      secureTextEntry,
+      maxLength,
+      textAlign,
+      styles: customStyle,
+      containerStyle,
+      onFocus,
+      onBlur,
+      ...rest
+    },
+    ref
+  ) => {
+    const [isFocused, setIsFocused] = useState(false);
 
-  const handleBlur = () => {
-    setIsFocused(false);
-  };
-  return (
-    <View style={TextInputStyle.inputView}>
-      <TextInput
-        ref={props.ref}
-        placeholder={props.placeholder}
-        mode={mode}
-        color={color.defalt}
-        disabled={props.disabled}
-        value={props.value}
-        placeholderTextColor={props.placeholderTextColor}
-        // editable={false}
-        textAlign={props.textAlign}
-        keyboardType={props.keyboardType}
-        scrollEnabled={false}
-        multiline={props.multiline}
-        numberOfLines={props.numberOfLines}
-        // onChangeText={props.onChangeText}
-        onChange={props.onChange}
-        secureTextEntry={props.secureTextEntry}
-        maxLength={props.maxLength}
-        // theme={{color: {primary: color.Green, underlineColor: color.red}}}
-        outlineColor={props.outlineColor}
-        underlineColor={props.underlineColor}
-        editable={props?.editable}
-        // onTouchMove
-        style={[TextInputStyle.inputstyle, {...props.styles}]}
-        onChangeText={props.onChangeText}
-        onBlur={props.onBlur}
-      />
-    </View>
-  );
-};
+    const handleFocus = (e) => {
+      setIsFocused(true);
+      if (onFocus) onFocus(e);
+    };
 
-const TextInputStyle = StyleSheet.create({
+    const handleBlur = (e) => {
+      setIsFocused(false);
+      if (onBlur) onBlur(e);
+    };
+
+    return (
+      <View style={[styles.inputView, containerStyle]}>
+        <TextInput
+          {...rest}
+          ref={ref}
+          value={value}
+          placeholder={placeholder}
+          placeholderTextColor={placeholderTextColor}
+          editable={!disabled && editable}
+          textAlign={textAlign}
+          keyboardType={keyboardType}
+          scrollEnabled={false}
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+          secureTextEntry={secureTextEntry}
+          maxLength={maxLength}
+          onChangeText={onChangeText}
+          onChange={onChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          style={[
+            styles.inputstyle,
+            isFocused && styles.focusedBorder,
+            customStyle,
+          ]}
+        />
+      </View>
+    );
+  }
+);
+
+C_SkilInput.displayName = 'C_SkilInput';
+
+export default C_SkilInput;
+
+const styles = StyleSheet.create({
+  inputView: {
+    backgroundColor: 'transparent',
+    borderRadius: 6,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
+  },
   inputstyle: {
     width: '100%',
     paddingVertical: 10,
@@ -55,24 +89,13 @@ const TextInputStyle = StyleSheet.create({
     paddingHorizontal: 20,
     borderColor: color.defalt,
     borderWidth: 1,
-    borderBottomColor: color.defalt,
     backgroundColor: 'transparent',
     borderRadius: 6,
     fontWeight: 'bold',
+    color: color.defalt,
   },
-  inputView: {
-    backgroundColor: 'transparent',
-    borderRadius: 6,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginVertical: 5,
-    elevation: 0,
-  },
-  inputFocused: {
-    borderBottomWidth: 1.7,
+  focusedBorder: {
+    borderColor: color.defalt,
+    borderWidth: 1.5,
   },
 });
-
-export default C_SkilInput;

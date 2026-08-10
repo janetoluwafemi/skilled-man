@@ -1,28 +1,31 @@
-// Import required modules
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
-// Create an HTTP server
+const PORT = process.env.PORT || 4000;
 const httpServer = createServer();
 
-// Create a socket.io server and enable CORS
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000" // Specify the origin of your client application
-  }
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
 });
 
-// Set up event handlers when a client connects or disconnects
 io.on('connection', (socket) => {
-  console.log('A user connected');
+  console.log(`Client connected: ${socket.id}`);
 
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
+  socket.on('disconnect', (reason) => {
+    console.log(`Client disconnected (${socket.id}): ${reason}`);
   });
 });
 
-// Listen on port 4000
-httpServer.listen(4000, () => {
-  console.log('Server is running on http://localhost:4000');
+httpServer.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+process.on('SIGINT', () => {
+  httpServer.close(() => {
+    console.log('Server shut down cleanly');
+    process.exit(0);
+  });
 });

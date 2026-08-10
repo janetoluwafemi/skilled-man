@@ -1,76 +1,100 @@
-import React, {useState} from 'react';
-import {Dimensions, StyleSheet, TextInput, View} from 'react-native';
-
+import React, { useState, forwardRef } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 import color from '../Assets/colors/colors';
-const ChangPasInput = props => {
-  const {mode = 'outlined'} = props;
-  const [text, setText] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
 
-  const handleFocus = () => {
-    setIsFocused(true);
-  };
+const ChangPasInput = forwardRef(
+  (
+    {
+      placeholder,
+      placeholderTextColor = color.litGry,
+      value,
+      onChangeText,
+      onChange,
+      editable = true,
+      disabled = false,
+      keyboardType,
+      multiline,
+      numberOfLines,
+      secureTextEntry,
+      maxLength,
+      textAlign,
+      styles: customStyle,
+      containerStyle,
+      onFocus,
+      onBlur,
+      ...rest
+    },
+    ref
+  ) => {
+    const [isFocused, setIsFocused] = useState(false);
 
-  const handleBlur = () => {
-    setIsFocused(false);
-  };
-  return (
-    <View style={TextInputStyle.inputView}>
-      <TextInput
-        ref={props.ref}
-        placeholder={props.placeholder}
-        mode={mode}
-        color={color.defalt}
-        disabled={props.disabled}
-        value={props.value}
-        placeholderTextColor={props.placeholderTextColor}
-        // editable={false}
-        textAlign={props.textAlign}
-        keyboardType={props.keyboardType}
-        scrollEnabled={false}
-        multiline={props.multiline}
-        numberOfLines={props.numberOfLines}
-        // onChangeText={props.onChangeText}
-        onChange={props.onChange}
-        secureTextEntry={props.secureTextEntry}
-        maxLength={props.maxLength}
-        // theme={{color: {primary: color.Green, underlineColor: color.red}}}
-        outlineColor={props.outlineColor}
-        underlineColor={props.underlineColor}
-        editable={props?.editable}
-        // onTouchMove
-        style={[TextInputStyle.inputstyle, {...props.styles}]}
-        onChangeText={props.onChangeText}
-      />
-    </View>
-  );
-};
+    const handleFocus = (e) => {
+      setIsFocused(true);
+      if (onFocus) onFocus(e);
+    };
 
-const TextInputStyle = StyleSheet.create({
-  inputstyle: {
-    width: '100%',
-    paddingVertical: 10,
-    fontSize: 15,
-    paddingHorizontal: 15,
-    borderBottomColor: color.litGry,
-    borderWidth: 1,
-    borderColor: color.defalt,
-    backgroundColor: 'transparent',
-    borderRadius: 6,
-  },
+    const handleBlur = (e) => {
+      setIsFocused(false);
+      if (onBlur) onBlur(e);
+    };
+
+    return (
+      <View style={[styles.inputView, containerStyle]}>
+        <TextInput
+          {...rest}
+          ref={ref}
+          value={value}
+          placeholder={placeholder}
+          placeholderTextColor={placeholderTextColor}
+          editable={!disabled && editable}
+          textAlign={textAlign}
+          keyboardType={keyboardType}
+          scrollEnabled={false}
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+          secureTextEntry={secureTextEntry}
+          maxLength={maxLength}
+          onChangeText={onChangeText}
+          onChange={onChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          style={[
+            styles.inputstyle,
+            isFocused && styles.focusedBorder,
+            customStyle,
+          ]}
+        />
+      </View>
+    );
+  }
+);
+
+ChangPasInput.displayName = 'ChangPasInput';
+
+export default ChangPasInput;
+
+const styles = StyleSheet.create({
   inputView: {
     backgroundColor: 'transparent',
     borderRadius: 6,
     width: '100%',
     flexDirection: 'row',
-    justifyContent: 'flex-start',
     alignItems: 'center',
     marginVertical: 5,
-    elevation: 0,
   },
-  inputFocused: {
-    borderBottomWidth: 1.7,
+  inputstyle: {
+    width: '100%',
+    paddingVertical: 10,
+    fontSize: 15,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: color.defalt,
+    backgroundColor: 'transparent',
+    borderRadius: 6,
+    color: color.defalt,
+  },
+  focusedBorder: {
+    borderWidth: 1.5,
+    borderColor: color.defalt,
   },
 });
-
-export default ChangPasInput;
