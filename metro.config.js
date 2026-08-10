@@ -4,7 +4,6 @@ const config = getDefaultConfig(__dirname);
 
 config.resolver = config.resolver || {};
 
-// Safely stub out native/web-incompatible modules
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const currentPlatform = platform || context.platform || 'web';
 
