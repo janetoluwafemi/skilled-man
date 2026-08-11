@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import { launchImageLibrary } from 'react-native-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 import Toast from 'react-native-simple-toast';
 
 import color from '../../Assets/colors/colors';
@@ -108,9 +108,16 @@ const EdtUsrProfil = () => {
   }, [focus, getAddressFromCoords]);
 
   const onGalry = async () => {
-    const options = { mediaType: 'photo', includeBase64: false };
-    const result = await launchImageLibrary(options);
-    if (result.assets && result.assets[0]) {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Gallery permission is needed to select photos.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+    if (!result.canceled && result.assets && result.assets[0]) {
       setImage(result.assets[0]);
     }
   };
@@ -134,7 +141,7 @@ const EdtUsrProfil = () => {
         profileFormData.append('profile', {
           uri: image.uri,
           name: image.fileName || 'profile.jpg',
-          type: image.type || 'image/jpeg',
+          type: image.mimeType || 'image/jpeg',
         });
       }
 

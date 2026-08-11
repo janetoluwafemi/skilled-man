@@ -2,7 +2,8 @@
   "name": "skilledman",
   "displayName": "skilledman",
   "plugins": [
-    "expo-sharing"
+    "expo-sharing",
+    "@react-native-community/datetimepicker"
   ],
   "android": {
     "package": "com.janetoluwafemi.skilledman"

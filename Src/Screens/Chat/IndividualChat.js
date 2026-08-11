@@ -21,7 +21,7 @@ import {
   InputToolbar,
   Send,
 } from 'react-native-gifted-chat';
-import { launchCamera } from 'react-native-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 
 import color from '../../Assets/colors/colors';
@@ -123,14 +123,18 @@ const NewMessage = ({ userId, providerId }) => {
 
   const openCamera = async () => {
     try {
-      const result = await launchCamera({
-        mediaType: 'photo',
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera permission is needed to take photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.8,
-        maxWidth: 800,
-        maxHeight: 800,
       });
 
-      if (!result.didCancel && result.assets?.length > 0) {
+      if (!result.canceled && result.assets?.length > 0) {
         setUploading(true);
         await uploadImage(result.assets[0]);
       }

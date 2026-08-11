@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
@@ -33,28 +34,41 @@ const ConversationScreen = () => {
   const conversationId = [userId, providerId].sort().join('_');
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (Platform.OS === 'web' || !conversationId) return;
 
-    const unsubscribe = firestore()
-      .collection('chat')
-      .doc(conversationId)
-      .collection('message')
-      .orderBy('timestamp', 'asc')
-      .onSnapshot(querySnapshot => {
-        if (querySnapshot) {
-          const fetchedMessages = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setMessages(fetchedMessages);
-        }
-      });
+    let unsubscribe = () => {};
+
+    try {
+      unsubscribe = firestore()
+        .collection('chat')
+        .doc(conversationId)
+        .collection('message')
+        .orderBy('timestamp', 'asc')
+        .onSnapshot(querySnapshot => {
+          if (querySnapshot) {
+            const fetchedMessages = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
+            setMessages(fetchedMessages);
+          }
+        });
+    } catch (error) {
+      console.log('Firestore listener error:', error);
+    }
 
     return () => unsubscribe();
   }, [conversationId]);
 
   const sendMessage = async () => {
     if (messageText.trim() === '' && !attachment) return;
+
+    if (Platform.OS === 'web') {
+      console.log('Firebase storage/chat is native-only in this setup.');
+      setMessageText('');
+      setAttachment(null);
+      return;
+    }
 
     const messageData = {
       userId,
@@ -83,16 +97,19 @@ const ConversationScreen = () => {
       setAttachment(null);
     }
 
-    await firestore()
-      .collection('chat')
-      .doc(conversationId)
-      .collection('message')
-      .add(messageData);
+    try {
+      await firestore()
+        .collection('chat')
+        .doc(conversationId)
+        .collection('message')
+        .add(messageData);
+    } catch (err) {
+      console.log('Error sending message:', err);
+    }
 
     setMessageText('');
   };
 
-  // ✅ FIX: Updated to Expo DocumentPicker API
   const pickAttachment = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({

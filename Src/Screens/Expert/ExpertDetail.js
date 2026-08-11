@@ -15,8 +15,8 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import DatePicker from 'react-native-date-picker';
-import DocumentPicker from 'react-native-document-picker';
-import { launchCamera } from 'react-native-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import StarRating from 'react-native-star-rating';
 import Toast from 'react-native-simple-toast';
 
@@ -172,37 +172,41 @@ const ExprtDetails = () => {
 
   const handleFilePick = async () => {
     try {
-      const result = await DocumentPicker.pick({
-        type: [DocumentPicker.types.images],
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'image/*',
       });
 
-      if (result && result[0]) {
+      if (!result.canceled && result.assets && result.assets[0]) {
         setSelectedFile({
-          uri: result[0].uri,
-          name: result[0].name || `IMG_${Date.now()}.jpg`,
-          type: result[0].type || 'image/jpeg',
+          uri: result.assets[0].uri,
+          name: result.assets[0].name || `IMG_${Date.now()}.jpg`,
+          type: result.assets[0].mimeType || 'image/jpeg',
         });
       }
     } catch (error) {
-      if (!DocumentPicker.isCancel(error)) {
-        console.log('Error picking document', error);
-      }
+      console.log('Error picking document', error);
     }
   };
 
   const handleCamera = async () => {
     try {
-      const result = await launchCamera({
-        mediaType: 'photo',
-        cameraType: 'back',
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera permission is needed to take photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
       });
 
-      if (result.assets && result.assets.length > 0) {
+      if (!result.canceled && result.assets && result.assets.length > 0) {
         const camFile = result.assets[0];
         setSelectedFile({
           uri: camFile.uri,
           name: camFile.fileName || `IMG_${Date.now()}.jpg`,
-          type: camFile.type || 'image/jpeg',
+          type: camFile.mimeType || 'image/jpeg',
         });
       }
     } catch (error) {

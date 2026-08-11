@@ -10,7 +10,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import DocumentPicker from 'react-native-document-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-simple-toast';
 
 import color from '../../Assets/colors/colors';
@@ -32,16 +32,14 @@ const AdSkil = props => {
 
   const handleFilePick = async () => {
     try {
-      const result = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
       });
-      if (result && result[0]) {
-        setFile(result[0]);
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setFile(result.assets[0]);
       }
     } catch (error) {
-      if (!DocumentPicker.isCancel(error)) {
-        console.log('Error selecting file:', error);
-      }
+      console.log('Error selecting file:', error);
     }
   };
 
