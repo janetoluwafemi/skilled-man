@@ -14,7 +14,6 @@ import { useNavigation } from '@react-navigation/native';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 
-// Safe Platform Guards for Native-Only Modules
 let MapView, Marker, GetLocation;
 if (Platform.OS !== 'web') {
     MapView = require('react-native-maps').default;
@@ -26,7 +25,6 @@ const Mapltln = () => {
     const mapRef = useRef(null);
     const navigation = useNavigation();
 
-    // Use previously set global location or default coordinates
     const [location, setLocation] = useState({
         latitude: global.lat || 6.5244,
         longitude: global.long || 3.3792,
@@ -100,13 +98,11 @@ const Mapltln = () => {
         navigation.goBack();
     };
 
-    // Web Fallback Screen (With Back Button)
     if (Platform.OS === 'web' || !MapView) {
         return (
             <View style={styles.webContainer}>
                 <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-                {/* Top Header Bar */}
                 <View style={styles.topBarWeb}>
                     <TouchableOpacity
                         style={styles.backBtn}
@@ -135,7 +131,6 @@ const Mapltln = () => {
         );
     }
 
-    // Native Mobile Screen (Android & iOS)
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
@@ -154,7 +149,6 @@ const Mapltln = () => {
                 <Marker coordinate={location} />
             </MapView>
 
-            {/* Top Header Bar with Back Arrow */}
             <View style={styles.topBar}>
                 <TouchableOpacity
                     style={styles.backBtn}
@@ -165,7 +159,6 @@ const Mapltln = () => {
                 <Text style={styles.topBarTitle}>Select Location</Text>
             </View>
 
-            {/* Coordinates Badge */}
             <View style={styles.badgeCard}>
                 <View style={styles.badgeHeader}>
                     <Icons.Ionicons name="location-sharp" size={18} color={color.defalt} />
@@ -176,7 +169,6 @@ const Mapltln = () => {
                 </Text>
             </View>
 
-            {/* Bottom Action Buttons */}
             <View style={styles.bottomControls}>
                 <TouchableOpacity
                     activeOpacity={0.85}
@@ -334,7 +326,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
 
-    // Web Styles
     webContainer: {
         flex: 1,
         backgroundColor: '#F8FAFC',

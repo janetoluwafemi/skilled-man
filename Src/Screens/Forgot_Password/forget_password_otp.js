@@ -107,7 +107,6 @@ const FrgtpaswrdOtpScren = props => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Standard Top Header */}
       <View style={styles.headerBar}>
         <CstmHeaderIcon
           onPress={() => props.navigation.goBack()}
@@ -125,7 +124,6 @@ const FrgtpaswrdOtpScren = props => {
           duration={600}
           style={styles.formContainer}>
 
-          {/* App Logo */}
           <View style={styles.logoRow}>
             <Image
               source={require('../../Assets/Images/logo.png')}
@@ -139,7 +137,6 @@ const FrgtpaswrdOtpScren = props => {
             Enter the 4-digit code sent to your registered email address
           </Text>
 
-          {/* Form Card */}
           <View style={styles.formCard}>
             <View style={styles.otpRow}>
               <TextInput
@@ -214,7 +211,6 @@ const FrgtpaswrdOtpScren = props => {
             />
           </View>
 
-          {/* Footer Back Action */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Wrong email? </Text>
             <TouchableOpacity onPress={() => navigation.goBack()}>

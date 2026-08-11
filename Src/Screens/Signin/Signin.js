@@ -30,7 +30,6 @@ if (Platform.OS !== 'web') {
     SimpleToast = require('react-native-simple-toast').default;
 }
 
-// Safe platform guard for Google Sign-In native module
 let GoogleSignin;
 if (Platform.OS !== 'web') {
     GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;

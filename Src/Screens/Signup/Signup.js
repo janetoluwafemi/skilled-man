@@ -224,7 +224,6 @@ const Signup = props => {
             showsVerticalScrollIndicator={false}>
             <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
 
-              {/* Logo */}
               <View style={styles.logoRow}>
                 <Image
                   source={require('../../Assets/Images/logo.png')}
@@ -238,7 +237,6 @@ const Signup = props => {
                 Select your account type and fill in your details
               </Text>
 
-              {/* Segmented Account Role Toggle */}
               <View style={styles.segmentContainer}>
                 <TouchableOpacity
                   activeOpacity={0.9}
@@ -271,7 +269,6 @@ const Signup = props => {
                 </TouchableOpacity>
               </View>
 
-              {/* Form Input Fields */}
               <View style={styles.fieldGroup}>
                 <Text style={styles.fieldLabel}>Full Name</Text>
                 <C_TxtInput
@@ -299,7 +296,6 @@ const Signup = props => {
                 )}
               </View>
 
-              {/* Soft Phone Input Field */}
               <View style={styles.fieldGroup}>
                 <Text style={styles.fieldLabel}>Phone Number</Text>
                 <View style={styles.adaloPhoneBox}>
@@ -338,7 +334,6 @@ const Signup = props => {
                 )}
               </View>
 
-              {/* Country Selector */}
               <View style={styles.fieldGroup}>
                 <Text style={styles.fieldLabel}>Country</Text>
                 <TouchableOpacity
@@ -362,7 +357,6 @@ const Signup = props => {
                 </TouchableOpacity>
               </View>
 
-              {/* State Selector */}
               <View style={styles.fieldGroup}>
                 <Text style={styles.fieldLabel}>State</Text>
                 <TouchableOpacity
@@ -401,7 +395,6 @@ const Signup = props => {
                 </View>
               )}
 
-              {/* Location Selector */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 style={[
@@ -437,7 +430,6 @@ const Signup = props => {
                 />
               </TouchableOpacity>
 
-              {/* Submit Button */}
               <BotonComp
                 BtnStyle={styles.submitBtn}
                 btnText={
@@ -456,7 +448,6 @@ const Signup = props => {
                 <View style={styles.dividerLine} />
               </View>
 
-              {/* Google Button styled exactly like Signin */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={handleGoogleSignInFlow}
@@ -478,7 +469,6 @@ const Signup = props => {
         )}
       </Formik>
 
-      {/* Dial Code Bottom Sheet Modal */}
       <Modal
         visible={dialCodeModalVisible}
         animationType="slide"
@@ -529,7 +519,6 @@ const Signup = props => {
         </View>
       </Modal>
 
-      {/* Country Selection Bottom Sheet Modal */}
       <Modal
         visible={countryModalVisible}
         animationType="slide"
@@ -582,7 +571,6 @@ const Signup = props => {
         </View>
       </Modal>
 
-      {/* State Selection Bottom Sheet Modal */}
       <Modal
         visible={stateModalVisible}
         animationType="slide"
