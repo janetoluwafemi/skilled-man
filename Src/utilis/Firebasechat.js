@@ -11,7 +11,7 @@ import {
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import { useRoute } from '@react-navigation/native';
-import DocumentPicker from 'react-native-document-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import color from '../Assets/colors/colors';
 import { Icons } from '../Components/Icons';
 import { BASIC_URL } from '../Screens/Signin/Signin';
@@ -73,7 +73,7 @@ const ConversationScreen = () => {
         const downloadUrl = await storageRef.getDownloadURL();
 
         messageData.attachment = {
-          type: attachment.type,
+          type: attachment.mimeType || attachment.type,
           uri: downloadUrl,
           name: filename,
         };
@@ -92,18 +92,19 @@ const ConversationScreen = () => {
     setMessageText('');
   };
 
+  // ✅ FIX: Updated to Expo DocumentPicker API
   const pickAttachment = async () => {
     try {
-      const res = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
       });
-      if (res && res[0]) {
-        setAttachment(res[0]);
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setAttachment(result.assets[0]);
       }
     } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
-        console.log('Error picking file:', err);
-      }
+      console.log('Error picking file:', err);
     }
   };
 

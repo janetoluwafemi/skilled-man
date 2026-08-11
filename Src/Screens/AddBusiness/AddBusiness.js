@@ -11,7 +11,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import DocumentPicker from 'react-native-document-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-simple-toast';
 
 import color from '../../Assets/colors/colors';
@@ -44,20 +44,22 @@ const AdBusines = props => {
     { id: 7, select_bussiness: '6-7' },
   ];
 
+  // ✅ FIX: Updated to Expo DocumentPicker API
   const handleFilePick = async value => {
     try {
-      const result = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
       });
-      if (result && result[0]) {
-        if (value === 'Guarantor') setGuarantor(result[0]);
-        if (value === 'Job References') setJobReferences(result[0]);
-        if (value === 'Certificates') setCertificate(result[0]);
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const pickedFile = result.assets[0];
+        if (value === 'Guarantor') setGuarantor(pickedFile);
+        if (value === 'Job References') setJobReferences(pickedFile);
+        if (value === 'Certificates') setCertificate(pickedFile);
       }
     } catch (error) {
-      if (!DocumentPicker.isCancel(error)) {
-        console.log('File picker error:', error);
-      }
+      console.log('File picker error:', error);
     }
   };
 
@@ -91,22 +93,23 @@ const AdBusines = props => {
       formdata.append('select_bussiness', selectedBusiness);
       formdata.append('working_experience', selectedExperience);
 
+      // ✅ FIX: Expo DocumentPicker uses mimeType instead of type
       formdata.append('certificates', {
         uri: certificate.uri,
         name: certificate.name || 'certificate',
-        type: certificate.type || 'application/octet-stream',
+        type: certificate.mimeType || 'application/octet-stream',
       });
 
       formdata.append('job_references', {
         uri: jobReferences.uri,
         name: jobReferences.name || 'job_references',
-        type: jobReferences.type || 'application/octet-stream',
+        type: jobReferences.mimeType || 'application/octet-stream',
       });
 
       formdata.append('gurantor', {
         uri: guarantor.uri,
         name: guarantor.name || 'guarantor',
-        type: guarantor.type || 'application/octet-stream',
+        type: guarantor.mimeType || 'application/octet-stream',
       });
 
       formdata.append('provider_id', global.id);

@@ -11,8 +11,8 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import { launchImageLibrary } from 'react-native-image-picker';
-import DocumentPicker from 'react-native-document-picker';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-simple-toast';
 
 import color from '../../Assets/colors/colors';
@@ -132,6 +132,38 @@ const EdtProfilScren = props => {
     getSkills();
   }, [getProfileData, getSkills]);
 
+  // ✅ FIX: Expo Image Picker Handler
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.log('Image picking error:', error);
+    }
+  };
+
+  // ✅ FIX: Expo Document Picker Helper
+  const pickDocument = async setFileState => {
+    try {
+      const res = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (!res.canceled && res.assets && res.assets.length > 0) {
+        setFileState(res.assets[0]);
+      }
+    } catch (err) {
+      console.log('Document picker error:', err);
+    }
+  };
+
   const updateProfile = async () => {
     setLoad(true);
     try {
@@ -149,32 +181,32 @@ const EdtProfilScren = props => {
       if (image && image.uri) {
         formdata.append('profile', {
           uri: image.uri,
-          name: image.fileName || 'profile.jpg',
-          type: image.type || 'image/jpeg',
+          name: image.fileName || image.name || 'profile.jpg',
+          type: image.mimeType || image.type || 'image/jpeg',
         });
       }
 
       if (certificate && certificate.uri) {
         formdata.append('certificates', {
           uri: certificate.uri,
-          name: certificate.name,
-          type: certificate.type,
+          name: certificate.name || 'certificate',
+          type: certificate.mimeType || certificate.type || 'application/octet-stream',
         });
       }
 
       if (evidence && evidence.uri) {
         formdata.append('job_references', {
           uri: evidence.uri,
-          name: evidence.name,
-          type: evidence.type,
+          name: evidence.name || 'evidence',
+          type: evidence.mimeType || evidence.type || 'application/octet-stream',
         });
       }
 
       if (guarantor && guarantor.uri) {
         formdata.append('gurantor', {
           uri: guarantor.uri,
-          name: guarantor.name,
-          type: guarantor.type,
+          name: guarantor.name || 'guarantor',
+          type: guarantor.mimeType || guarantor.type || 'application/octet-stream',
         });
       }
 
@@ -224,14 +256,7 @@ const EdtProfilScren = props => {
               }
               style={styles.profileImgStyle}
             />
-            <TouchableOpacity
-              onPress={() =>
-                launchImageLibrary(
-                  { mediaType: 'photo' },
-                  r => r.assets && setImage(r.assets[0])
-                )
-              }
-              style={styles.cameraIcon}>
+            <TouchableOpacity onPress={pickImage} style={styles.cameraIcon}>
               <Icons.FontAwesome name="camera" color={color.wite} size={18} />
             </TouchableOpacity>
           </View>
@@ -285,17 +310,7 @@ const EdtProfilScren = props => {
           />
 
           <View style={styles.certContainer}>
-            <TouchableOpacity
-              onPress={async () => {
-                try {
-                  const res = await DocumentPicker.pick({
-                    type: [DocumentPicker.types.allFiles],
-                  });
-                  setCertificate(res[0]);
-                } catch (err) {
-                  if (!DocumentPicker.isCancel(err)) console.log(err);
-                }
-              }}>
+            <TouchableOpacity onPress={() => pickDocument(setCertificate)}>
               <Icons.FontAwesome5
                 name="file-upload"
                 size={35}
@@ -311,17 +326,7 @@ const EdtProfilScren = props => {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={async () => {
-                try {
-                  const res = await DocumentPicker.pick({
-                    type: [DocumentPicker.types.allFiles],
-                  });
-                  setEvidence(res[0]);
-                } catch (err) {
-                  if (!DocumentPicker.isCancel(err)) console.log(err);
-                }
-              }}>
+            <TouchableOpacity onPress={() => pickDocument(setEvidence)}>
               <Icons.FontAwesome5
                 name="file-upload"
                 size={35}
@@ -337,17 +342,7 @@ const EdtProfilScren = props => {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={async () => {
-                try {
-                  const res = await DocumentPicker.pick({
-                    type: [DocumentPicker.types.allFiles],
-                  });
-                  setGuarantor(res[0]);
-                } catch (err) {
-                  if (!DocumentPicker.isCancel(err)) console.log(err);
-                }
-              }}>
+            <TouchableOpacity onPress={() => pickDocument(setGuarantor)}>
               <Icons.FontAwesome5
                 name="file-upload"
                 size={35}
