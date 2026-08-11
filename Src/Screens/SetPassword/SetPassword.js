@@ -10,18 +10,18 @@ import {
   StatusBar,
   Platform,
   Alert,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import { Checkbox } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import C_InputScurEntry from '../../Components/C_InputSecureEntry';
-import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
 import BotonComp from '../../Components/BtnComp';
 import { BASIC_URL } from '../Signin/Signin';
+import { Icons } from '../../Components/Icons';
 
 const validationSchema = yup.object().shape({
   password: yup
@@ -48,14 +48,15 @@ const StPaswrd = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.headerBar}>
-        <CstmHeaderIcon
-          onPress={() => props.navigation.goBack()}
-          headerIconStyle={styles.headerBackIcon}
-        />
-        <Text style={styles.headerTitle}>Set Password</Text>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
       </View>
 
       <Formik
@@ -116,80 +117,98 @@ const StPaswrd = props => {
           }) => (
           <ScrollView
             contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}>
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
             <Animatable.View
               animation="fadeInUp"
               duration={600}
               style={styles.formContainer}>
+
+              <View style={styles.logoRow}>
+                <View style={styles.logoCircle}>
+                  <Image
+                    source={require('../../Assets/Images/logo.png')}
+                    style={styles.logoImage}
+                    resizeMode="contain"
+                  />
+                </View>
+              </View>
+
               <Text style={styles.welcomeTitle}>Create Your Password</Text>
               <Text style={styles.welcomeSubtitle}>
                 Choose a strong password with at least 10 characters, including an uppercase letter, lowercase letter, and a digit.
               </Text>
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Password</Text>
-                <C_InputScurEntry
-                  placeholder="Enter password"
-                  placeholderTextColor={color.litGry}
-                  secureTextEntry={hide}
-                  icon="eye-off"
-                  onChangeText={handleChange('password')}
-                  onBlur={handleBlur('password')}
-                  value={values.password}
-                  onPress={() => setHide(!hide)}
-                />
-                {touched.password && errors.password && (
-                  <Text style={styles.errorText}>{errors.password}</Text>
-                )}
-              </View>
+              <View style={styles.cardWrapper}>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Password</Text>
+                  <C_InputScurEntry
+                    placeholder="Enter password"
+                    placeholderTextColor={color.litGry}
+                    secureTextEntry={hide}
+                    icon="eye-off"
+                    onChangeText={handleChange('password')}
+                    onBlur={handleBlur('password')}
+                    value={values.password}
+                    onPress={() => setHide(!hide)}
+                  />
+                  {touched.password && errors.password && (
+                    <Text style={styles.errorText}>{errors.password}</Text>
+                  )}
+                </View>
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Confirm Password</Text>
-                <C_InputScurEntry
-                  placeholder="Confirm password"
-                  placeholderTextColor={color.litGry}
-                  onChangeText={handleChange('confirmPassword')}
-                  onBlur={handleBlur('confirmPassword')}
-                  value={values.confirmPassword}
-                  icon="eye-off"
-                  secureTextEntry={confirmHide}
-                  onPress={() => setConfirmHide(!confirmHide)}
-                />
-                {touched.confirmPassword && errors.confirmPassword && (
-                  <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-                )}
-              </View>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Confirm Password</Text>
+                  <C_InputScurEntry
+                    placeholder="Confirm password"
+                    placeholderTextColor={color.litGry}
+                    onChangeText={handleChange('confirmPassword')}
+                    onBlur={handleBlur('confirmPassword')}
+                    value={values.confirmPassword}
+                    icon="eye-off"
+                    secureTextEntry={confirmHide}
+                    onPress={() => setConfirmHide(!confirmHide)}
+                  />
+                  {touched.confirmPassword && errors.confirmPassword && (
+                    <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+                  )}
+                </View>
 
-              <View style={styles.termsWrapper}>
-                <Checkbox
-                  status={checked ? 'checked' : 'unchecked'}
-                  onPress={() => setChecked(!checked)}
-                  color={color.defalt}
-                />
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={styles.termsTextBtn}
-                  onPress={() => navigation.navigate('privacy_policy')}>
-                  <Text style={styles.termsText}>
-                    I agree with{' '}
-                    <Text style={styles.termsHighlight}>
-                      terms of use & privacy policy
+                <View style={styles.termsWrapper}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.checkboxWrapper}
+                    onPress={() => setChecked(!checked)}>
+                    <View style={[styles.customCheckbox, checked && styles.customCheckboxActive]}>
+                      {checked && <Icons.Feather name="check" size={12} color="#FFFFFF" />}
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.termsTextBtn}
+                    onPress={() => navigation.navigate('privacy_policy')}>
+                    <Text style={styles.termsText}>
+                      I agree with{' '}
+                      <Text style={styles.termsHighlight}>
+                        terms of use & privacy policy
+                      </Text>
                     </Text>
-                  </Text>
-                </TouchableOpacity>
-              </View>
+                  </TouchableOpacity>
+                </View>
 
-              <BotonComp
-                BtnStyle={styles.submitBtn}
-                btnText={
-                  load ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
-                    'Submit'
-                  )
-                }
-                onPressFunc={handleSubmit}
-              />
+                <BotonComp
+                  BtnStyle={styles.submitBtn}
+                  btnText={
+                    load ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      'Submit'
+                    )
+                  }
+                  onPressFunc={handleSubmit}
+                />
+              </View>
             </Animatable.View>
           </ScrollView>
         )}
@@ -203,24 +222,28 @@ export default StPaswrd;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
   headerBar: {
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 12 : 6,
-    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-  },
-  headerBackIcon: {
-    color: '#0F172A',
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginLeft: 12,
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   scrollContent: {
     flexGrow: 1,
@@ -228,22 +251,58 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 4,
+  },
+  logoRow: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  logoImage: {
+    width: 52,
+    height: 52,
   },
   welcomeTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 6,
+    textAlign: 'center',
+    letterSpacing: -0.3,
   },
   welcomeSubtitle: {
     fontSize: 14,
     color: '#64748B',
-    marginBottom: 28,
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: 4,
     lineHeight: 20,
   },
-  fieldGroup: {
+
+  cardWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
     marginBottom: 20,
+  },
+  fieldGroup: {
+    marginBottom: 14,
     width: '100%',
   },
   fieldLabel: {
@@ -255,12 +314,28 @@ const styles = StyleSheet.create({
   termsWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
-    marginTop: 4,
+    marginVertical: 14,
+  },
+  checkboxWrapper: {
+    paddingRight: 4,
+  },
+  customCheckbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  customCheckboxActive: {
+    backgroundColor: color.defalt,
+    borderColor: color.defalt,
   },
   termsTextBtn: {
     flex: 1,
-    marginLeft: 4,
+    marginLeft: 6,
   },
   termsText: {
     fontSize: 13,
@@ -268,14 +343,19 @@ const styles = StyleSheet.create({
   },
   termsHighlight: {
     color: color.defalt,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   submitBtn: {
     width: '100%',
-    marginTop: 10,
     backgroundColor: color.defalt,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 14,
+    marginTop: 6,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   errorText: {
     color: '#EF4444',

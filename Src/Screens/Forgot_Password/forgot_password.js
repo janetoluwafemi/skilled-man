@@ -15,11 +15,10 @@ import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import C_TxtInput from '../../Components/C_TextInput';
-import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
 import BotonComp from '../../Components/BtnComp';
 import { BASIC_URL } from '../Signin/Signin';
+import { Icons } from '../../Components/Icons';
 
-// Safe platform guard for react-native-simple-toast
 let SimpleToast;
 if (Platform.OS !== 'web') {
     SimpleToast = require('react-native-simple-toast').default;
@@ -89,13 +88,15 @@ const FrgtPaswrd = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
             <View style={styles.headerBar}>
-                <CstmHeaderIcon
+                <TouchableOpacity
+                    activeOpacity={0.7}
                     onPress={() => navigation.goBack()}
-                    headerIconStyle={styles.headerBackIcon}
-                />
+                    style={styles.backArrowBtn}>
+                    <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+                </TouchableOpacity>
             </View>
 
             <ScrollView
@@ -108,11 +109,13 @@ const FrgtPaswrd = ({ navigation }) => {
                     style={styles.formContainer}>
 
                     <View style={styles.logoRow}>
-                        <Image
-                            source={require('../../Assets/Images/logo.png')}
-                            style={styles.logoImage}
-                            resizeMode="contain"
-                        />
+                        <View style={styles.logoCircle}>
+                            <Image
+                                source={require('../../Assets/Images/logo.png')}
+                                style={styles.logoImage}
+                                resizeMode="contain"
+                            />
+                        </View>
                     </View>
 
                     <Text style={styles.welcomeTitle}>Reset Password</Text>
@@ -120,8 +123,7 @@ const FrgtPaswrd = ({ navigation }) => {
                         Enter your registered email address to receive an OTP code to reset your account password.
                     </Text>
 
-                    {/* Form Input Card */}
-                    <View style={styles.formCard}>
+                    <View style={styles.cardWrapper}>
                         <View style={styles.fieldGroup}>
                             <Text style={styles.fieldLabel}>Email Address</Text>
                             <C_TxtInput
@@ -152,7 +154,6 @@ const FrgtPaswrd = ({ navigation }) => {
                         />
                     </View>
 
-                    {/* Footer Back Link */}
                     <View style={styles.footerRow}>
                         <Text style={styles.footerText}>Remembered your password? </Text>
                         <TouchableOpacity onPress={() => navigation.navigate('Signin')}>
@@ -173,21 +174,25 @@ const styles = StyleSheet.create({
         backgroundColor: '#F8FAFC',
     },
     headerBar: {
-        paddingHorizontal: 16,
-        paddingTop: Platform.OS === 'android' ? 12 : 6,
-        paddingBottom: 10,
+        paddingHorizontal: 20,
+        paddingTop: Platform.OS === 'android' ? 12 : 8,
+        paddingBottom: 4,
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: '#F8FAFC',
+    },
+    backArrowBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
         backgroundColor: '#FFFFFF',
-    },
-    headerBackIcon: {
-        color: '#0F172A',
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '800',
-        color: '#0F172A',
-        marginLeft: 12,
+        elevation: 1,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
     },
     scrollContent: {
         flexGrow: 1,
@@ -195,44 +200,59 @@ const styles = StyleSheet.create({
     },
     formContainer: {
         paddingHorizontal: 20,
-        paddingTop: 16,
+        paddingTop: 4,
     },
     logoRow: {
         alignItems: 'center',
         marginBottom: 12,
     },
-    logoImage: {
+    logoCircle: {
         width: 80,
         height: 80,
+        borderRadius: 40,
+        backgroundColor: '#FFFFFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 2,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+    },
+    logoImage: {
+        width: 52,
+        height: 52,
     },
     welcomeTitle: {
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: '800',
         color: '#0F172A',
         textAlign: 'center',
+        letterSpacing: -0.3,
     },
     welcomeSubtitle: {
         fontSize: 14,
         color: '#64748B',
         textAlign: 'center',
-        marginBottom: 24,
+        marginBottom: 20,
         marginTop: 4,
         lineHeight: 20,
         paddingHorizontal: 10,
     },
-    formCard: {
+
+    cardWrapper: {
         backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 16,
-        elevation: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
-        shadowRadius: 3,
+        borderRadius: 20,
+        padding: 18,
+        elevation: 2,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+        marginBottom: 20,
     },
     fieldGroup: {
-        marginBottom: 20,
+        marginBottom: 16,
         width: '100%',
     },
     fieldLabel: {
@@ -250,9 +270,16 @@ const styles = StyleSheet.create({
     submitBtn: {
         width: '100%',
         backgroundColor: color.defalt,
-        borderRadius: 12,
+        borderRadius: 14,
         paddingVertical: 14,
+        marginTop: 6,
+        elevation: 3,
+        shadowColor: color.defalt,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
     },
+
     footerRow: {
         flexDirection: 'row',
         justifyContent: 'center',
