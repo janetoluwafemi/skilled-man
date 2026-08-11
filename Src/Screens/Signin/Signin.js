@@ -25,7 +25,6 @@ import { useAuth } from '../../context/AuthProvider';
 import { getToken } from '../../utilis/notification';
 import { Icons } from '../../Components/Icons';
 
-// Safe platform guard for react-native-simple-toast
 let SimpleToast;
 if (Platform.OS !== 'web') {
     SimpleToast = require('react-native-simple-toast').default;
@@ -157,7 +156,6 @@ const Signin = props => {
                     onPress={() => navigation.goBack()}
                     headerIconStyle={styles.headerBackIcon}
                 />
-                <Text style={styles.headerTitle}>Sign In</Text>
             </View>
 
             <ScrollView

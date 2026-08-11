@@ -5,20 +5,35 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  ImageBackground,
   SafeAreaView,
   StatusBar,
   ScrollView,
   ActivityIndicator,
+  Platform,
+  Image,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
-import Toast from 'react-native-simple-toast';
 
 import color from '../../Assets/colors/colors';
 import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
 import BotonComp from '../../Components/BtnComp';
 import { BASIC_URL } from '../Signin/Signin';
+
+let SimpleToast;
+if (Platform.OS !== 'web') {
+  SimpleToast = require('react-native-simple-toast').default;
+}
+
+const showToast = msg => {
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.alert) {
+      window.alert(msg);
+    }
+  } else if (SimpleToast) {
+    SimpleToast.show(msg, SimpleToast.SHORT);
+  }
+};
 
 const FrgtpaswrdOtpScren = props => {
   const navigation = useNavigation();
@@ -41,7 +56,7 @@ const FrgtpaswrdOtpScren = props => {
 
   const handleSubmit = () => {
     if (finalOtp.length < 4) {
-      Toast.show('Please enter complete 4-digit OTP.');
+      showToast('Please enter complete 4-digit OTP.');
       return;
     }
 
@@ -50,16 +65,16 @@ const FrgtpaswrdOtpScren = props => {
       finalOtp === '1234'
     ) {
       global.email = emailParam;
-      Toast.show('OTP verified successfully.');
+      showToast('OTP verified successfully.');
       navigation.navigate('SettingForgetPassword');
     } else {
-      Toast.show('Incorrect OTP. Please try again.');
+      showToast('Incorrect OTP. Please try again.');
     }
   };
 
   const handleResendOtp = async () => {
     if (!emailParam) {
-      Toast.show('Email address missing. Please go back.');
+      showToast('Email address missing. Please go back.');
       return;
     }
 
@@ -78,46 +93,59 @@ const FrgtpaswrdOtpScren = props => {
 
       if (result && result.otp) {
         global.forgetotp = result.otp;
-        Toast.show('A new OTP has been sent to your email.');
+        showToast('A new OTP has been sent to your email.');
       } else {
-        Toast.show(result.error || 'Failed to resend OTP.');
+        showToast(result.error || 'Failed to resend OTP.');
       }
     } catch (error) {
       setLoading(false);
-      Toast.show('Network error. Please try again.');
+      showToast('Network error. Please try again.');
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <ImageBackground
-        source={require('../../Assets/Images/bg.png')}
-        resizeMode="cover"
-        style={styles.backgroundImg}>
+
+      {/* Standard Top Header */}
+      <View style={styles.headerBar}>
         <CstmHeaderIcon
           onPress={() => props.navigation.goBack()}
-          headerIcon={styles.headerIcon}
+          headerIconStyle={styles.headerBackIcon}
         />
+        <Text style={styles.headerTitle}>Verification</Text>
+      </View>
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
-          <Animatable.View
-            animation="fadeInUp"
-            duration={600}
-            style={styles.formContainer}>
-            <Text style={styles.welcomeTitle}>Account Verification</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Enter the 4-digit code sent to your registered email address.
-            </Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <Animatable.View
+          animation="fadeInUp"
+          duration={600}
+          style={styles.formContainer}>
 
+          {/* App Logo */}
+          <View style={styles.logoRow}>
+            <Image
+              source={require('../../Assets/Images/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
+
+          <Text style={styles.welcomeTitle}>Account Verification</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Enter the 4-digit code sent to your registered email address
+          </Text>
+
+          {/* Form Card */}
+          <View style={styles.formCard}>
             <View style={styles.otpRow}>
               <TextInput
                 ref={firstInput}
-                style={styles.otpBox}
-                keyboardType="numeric"
+                style={[styles.otpBox, firstDigit ? styles.otpBoxActive : null]}
+                keyboardType="number-pad"
                 maxLength={1}
                 value={firstDigit}
                 onChangeText={text => {
@@ -127,8 +155,8 @@ const FrgtpaswrdOtpScren = props => {
               />
               <TextInput
                 ref={secondInput}
-                style={styles.otpBox}
-                keyboardType="numeric"
+                style={[styles.otpBox, secondDigit ? styles.otpBoxActive : null]}
+                keyboardType="number-pad"
                 maxLength={1}
                 value={secondDigit}
                 onChangeText={text => {
@@ -142,8 +170,8 @@ const FrgtpaswrdOtpScren = props => {
               />
               <TextInput
                 ref={thirdInput}
-                style={styles.otpBox}
-                keyboardType="numeric"
+                style={[styles.otpBox, thirdDigit ? styles.otpBoxActive : null]}
+                keyboardType="number-pad"
                 maxLength={1}
                 value={thirdDigit}
                 onChangeText={text => {
@@ -157,8 +185,8 @@ const FrgtpaswrdOtpScren = props => {
               />
               <TextInput
                 ref={fourthInput}
-                style={styles.otpBox}
-                keyboardType="numeric"
+                style={[styles.otpBox, fourthDigit ? styles.otpBoxActive : null]}
+                keyboardType="number-pad"
                 maxLength={1}
                 value={fourthDigit}
                 onChangeText={text => {
@@ -169,12 +197,12 @@ const FrgtpaswrdOtpScren = props => {
             </View>
 
             <View style={styles.resendRow}>
-              <Text style={styles.resendText}>Didn't receive any code?</Text>
+              <Text style={styles.resendText}>Didn't receive any code? </Text>
               <TouchableOpacity onPress={handleResendOtp} disabled={loading}>
                 {loading ? (
                   <ActivityIndicator size="small" color={color.defalt} />
                 ) : (
-                  <Text style={styles.resendBtnText}> Resend a new code</Text>
+                  <Text style={styles.resendBtnText}>Resend Code</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -184,9 +212,17 @@ const FrgtpaswrdOtpScren = props => {
               btnText="Verify OTP"
               onPressFunc={handleSubmit}
             />
-          </Animatable.View>
-        </ScrollView>
-      </ImageBackground>
+          </View>
+
+          {/* Footer Back Action */}
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Wrong email? </Text>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={styles.footerLink}>Change Email</Text>
+            </TouchableOpacity>
+          </View>
+        </Animatable.View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -196,67 +232,92 @@ export default FrgtpaswrdOtpScren;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  headerBar: {
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? 12 : 6,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
   },
-  backgroundImg: {
-    width: '100%',
-    height: '100%',
+  headerBackIcon: {
+    color: '#0F172A',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginLeft: 12,
   },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 40,
   },
-  headerIcon: {
-    paddingLeft: 20,
-    marginTop: 10,
-  },
   formContainer: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  logoRow: {
     alignItems: 'center',
-    width: '100%',
-    marginTop: 30,
+    marginBottom: 12,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
   },
   welcomeTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: color.defalt,
-    marginBottom: 6,
+    color: '#0F172A',
     textAlign: 'center',
   },
   welcomeSubtitle: {
     fontSize: 14,
     color: '#64748B',
-    marginBottom: 32,
-    lineHeight: 20,
     textAlign: 'center',
+    marginBottom: 24,
+    marginTop: 4,
+    paddingHorizontal: 10,
+  },
+  formCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
   },
   otpRow: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 28,
+    marginBottom: 24,
+    paddingHorizontal: 6,
   },
   otpBox: {
-    width: 60,
-    height: 60,
-    borderWidth: 1.5,
-    borderColor: color.defalt,
-    borderRadius: 12,
-    fontSize: 24,
+    width: 58,
+    height: 58,
+    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
+    fontSize: 22,
     fontWeight: '700',
-    color: color.defalt,
+    color: '#0F172A',
     textAlign: 'center',
-    backgroundColor: '#FFFFFF',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+  },
+  otpBoxActive: {
+    backgroundColor: '#E2E8F0',
+    color: color.defalt,
   },
   resendRow: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 24,
   },
   resendText: {
     fontSize: 14,
@@ -272,5 +333,20 @@ const styles = StyleSheet.create({
     backgroundColor: color.defalt,
     borderRadius: 12,
     paddingVertical: 14,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  footerText: {
+    color: '#64748B',
+    fontSize: 14,
+  },
+  footerLink: {
+    color: color.defalt,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
