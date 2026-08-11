@@ -10,8 +10,7 @@ import {
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
-import LinearGradient from 'react-native-linear-gradient';
-
+import { LinearGradient } from 'expo-linear-gradient';
 import Icon, { Icons } from '../Components/Icons';
 import color from '../Assets/colors/colors';
 import Dshbord from '../Screens/DashBoard/Dashboard';

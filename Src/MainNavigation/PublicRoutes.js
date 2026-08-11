@@ -32,7 +32,7 @@ const PblicRout = () => {
         headerShown: false,
         animation: 'slide_from_right',
         contentStyle: { backgroundColor: '#FFFFFF' },
-      }}>
+      }} id={''}>
       <Stack.Screen name="SplashScreen" component={SplshScren} />
       <Stack.Screen name="Forgetpassword1" component={Frgtpasword1} />
       <Stack.Screen name="ForgetpasswordOtpScreen" component={FrgtpaswrdOtpScren} />
