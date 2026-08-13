@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import CstmHeader from '../../Components/CustomHeader';
@@ -166,11 +166,11 @@ const EdtUsrProfil = () => {
       });
 
       setLoad(false);
-      Toast.show('Profile Updated Successfully');
+      showToast('Profile Updated Successfully');
       navigation.navigate('DashBoard');
     } catch (error) {
       setLoad(false);
-      Toast.show('Update failed');
+      showToast('Update failed');
     }
   };
 

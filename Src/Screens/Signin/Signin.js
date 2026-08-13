@@ -21,25 +21,16 @@ import C_InputScurEntrylogin from '../../Components/C_InputSecureEntrylogin';
 import BotonComp from '../../Components/BtnComp';
 import { useAuth } from '../../context/AuthProvider';
 import { getToken } from '../../utilis/notification';
+import { showToast } from '../../utilis/showToast';
 import { Icons } from '../../Components/Icons';
 
-let SimpleToast;
-if (Platform.OS !== 'web') {
-  SimpleToast = require('react-native-simple-toast').default;
-}
+const getGoogleSignin = () => {
+  if (Platform.OS === 'web') return null;
 
-let GoogleSignin;
-if (Platform.OS !== 'web') {
-  GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
-}
-
-const showToast = msg => {
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.alert) {
-      window.alert(msg);
-    }
-  } else if (SimpleToast) {
-    SimpleToast.show(msg, SimpleToast.SHORT);
+  try {
+    return require('@react-native-google-signin/google-signin').GoogleSignin;
+  } catch (error) {
+    return null;
   }
 };
 
@@ -57,7 +48,8 @@ const Signin = props => {
   const [googleRole, setGoogleRole] = useState(0);
 
   useEffect(() => {
-    if (Platform.OS !== 'web' && GoogleSignin) {
+    const GoogleSignin = getGoogleSignin();
+    if (GoogleSignin) {
       GoogleSignin.configure({
         webClientId:
           '336016778121-qiriu75af7hvitlu9g67naf6hqnl7dsi.apps.googleusercontent.com',
@@ -66,7 +58,8 @@ const Signin = props => {
   }, []);
 
   const handleGoogleSignInFlow = async role => {
-    if (Platform.OS === 'web' || !GoogleSignin) {
+    const GoogleSignin = getGoogleSignin();
+    if (!GoogleSignin) {
       showToast('Google Sign-In is configured for Mobile devices.');
       return;
     }

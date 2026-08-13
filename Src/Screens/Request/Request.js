@@ -14,8 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import Toast from 'react-native-simple-toast';
-
+import { showToast } from '../../utilis/showToast';
 import color from '../../Assets/colors/colors';
 import HomStakWSarch from '../../Components/HomeStackWithSearch';
 import { Icons } from '../../Components/Icons';
@@ -42,7 +41,7 @@ const ReqestScren = () => {
       setCurrentItem(item);
       setModalVisible(true);
     } else {
-      Toast.show('This request is already in progress and cannot be modified.');
+      showToast('This request is already in progress and cannot be modified.');
     }
   };
 
@@ -63,7 +62,7 @@ const ReqestScren = () => {
       if (result?.booking_request) {
         setBooklist(result.booking_request);
       } else if (result?.error) {
-        Toast.show(result.error);
+        showToast(result.error);
       }
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -89,12 +88,12 @@ const ReqestScren = () => {
 
       const result = await response.json();
       if (result?.success) {
-        Toast.show(result.success);
+        showToast(result.success);
         setModalVisible(false);
         setCurrentItem(null);
         getBookingRequests();
       } else if (result?.error) {
-        Toast.show(result.error);
+        showToast(result.error);
       }
     } catch (error) {
       Alert.alert('Error', error?.message || 'An error occurred');

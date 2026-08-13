@@ -9,13 +9,22 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
-import storage from '@react-native-firebase/storage';
 import { useRoute } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import color from '../Assets/colors/colors';
 import { Icons } from '../Components/Icons';
 import { BASIC_URL } from '../Screens/Signin/Signin';
+
+let firestore;
+let storage;
+if (Platform.OS !== 'web') {
+  try {
+    firestore = require('@react-native-firebase/firestore').default;
+    storage = require('@react-native-firebase/storage').default;
+  } catch (error) {
+    console.log('Native Firebase chat is unavailable in this runtime.');
+  }
+}
 
 const ConversationScreen = () => {
   const userId = global.id;
@@ -34,7 +43,7 @@ const ConversationScreen = () => {
   const conversationId = [userId, providerId].sort().join('_');
 
   useEffect(() => {
-    if (Platform.OS === 'web' || !conversationId) return;
+    if (Platform.OS === 'web' || !conversationId || !firestore) return;
 
     let unsubscribe = () => {};
 
@@ -63,7 +72,7 @@ const ConversationScreen = () => {
   const sendMessage = async () => {
     if (messageText.trim() === '' && !attachment) return;
 
-    if (Platform.OS === 'web') {
+    if (Platform.OS === 'web' || !firestore || !storage) {
       console.log('Firebase storage/chat is native-only in this setup.');
       setMessageText('');
       setAttachment(null);

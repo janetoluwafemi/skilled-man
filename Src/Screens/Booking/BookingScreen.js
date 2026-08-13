@@ -11,7 +11,7 @@ import {
   Share,
 } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import BookingCrd from '../../Components/BookingCard';
@@ -70,7 +70,7 @@ const BokngScren = () => {
       }
 
       if (result.error) {
-        Toast.show(result.error);
+        showToast(result.error);
       }
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to fetch booking data');

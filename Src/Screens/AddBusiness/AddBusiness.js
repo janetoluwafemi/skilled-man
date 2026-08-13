@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import BotonComp from '../../Components/BtnComp';
@@ -44,7 +44,7 @@ const AdBusines = props => {
     { id: 7, select_bussiness: '6-7' },
   ];
 
-  // ✅ FIX: Updated to Expo DocumentPicker API
+  // Ã¢Å“â€¦ FIX: Updated to Expo DocumentPicker API
   const handleFilePick = async value => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -79,11 +79,7 @@ const AdBusines = props => {
       !guarantor ||
       !jobReferences
     ) {
-      Toast.showWithGravity(
-        'Please fill the required fields',
-        Toast.LONG,
-        Toast.CENTER
-      );
+      showToast('Please fill the required fields');
       return;
     }
 
@@ -93,7 +89,7 @@ const AdBusines = props => {
       formdata.append('select_bussiness', selectedBusiness);
       formdata.append('working_experience', selectedExperience);
 
-      // ✅ FIX: Expo DocumentPicker uses mimeType instead of type
+      // Ã¢Å“â€¦ FIX: Expo DocumentPicker uses mimeType instead of type
       formdata.append('certificates', {
         uri: certificate.uri,
         name: certificate.name || 'certificate',

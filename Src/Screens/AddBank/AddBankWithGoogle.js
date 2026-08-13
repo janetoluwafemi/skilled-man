@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import C_TxtInput from '../../Components/C_TextInput';
 import color from '../../Assets/colors/colors';
@@ -61,11 +61,7 @@ const AdBnkGogl = props => {
     );
 
     if (isAnyBankEmpty || isAnyAccountNumberEmpty) {
-      Toast.showWithGravity(
-        'Please fill all bank names and account numbers.',
-        Toast.LONG,
-        Toast.CENTER
-      );
+      showToast('Please fill all bank names and account numbers.');
       return;
     }
 
@@ -74,11 +70,7 @@ const AdBnkGogl = props => {
     );
 
     if (invalidAccountNumber) {
-      Toast.showWithGravity(
-        'Account numbers should have exactly 10 digits.',
-        Toast.LONG,
-        Toast.CENTER
-      );
+      showToast('Account numbers should have exactly 10 digits.');
       return;
     }
 
@@ -101,12 +93,12 @@ const AdBnkGogl = props => {
       setLoad(false);
 
       if (result) {
-        Toast.show('Bank details added successfully.');
+        showToast('Bank details added successfully.');
         navigation.goBack();
       }
     } catch (error) {
       setLoad(false);
-      Toast.show('Failed to add bank details.');
+      showToast('Failed to add bank details.');
     }
   };
 

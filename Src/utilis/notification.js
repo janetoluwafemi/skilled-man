@@ -1,9 +1,27 @@
-import messaging from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 import NavigationService from '../MainNavigation/NavigationService';
 
+// Firebase Messaging is not included in Expo Go (and has no web runtime).
+// Loading it lazily keeps the app bootable on those platforms while preserving
+// the existing behavior in a custom native build where it is linked.
+const getMessaging = () => {
+  if (Platform.OS === 'web') {
+    return null;
+  }
+
+  try {
+    return require('@react-native-firebase/messaging').default;
+  } catch (error) {
+    console.log('Firebase Messaging is unavailable in this runtime.');
+    return null;
+  }
+};
+
 export const requestUserPermission = async () => {
   try {
+    const messaging = getMessaging();
+    if (!messaging) return false;
+
     const authStatus = await messaging().requestPermission();
     const enabled =
       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
@@ -23,6 +41,9 @@ export const reqestUsrPermision = requestUserPermission;
 
 export const getToken = async () => {
   try {
+    const messaging = getMessaging();
+    if (!messaging) return null;
+
     if (Platform.OS === 'ios') {
       await messaging().registerDeviceForRemoteMessages();
     }
@@ -37,6 +58,11 @@ export const getToken = async () => {
 };
 
 export const notificationListener = () => {
+  const messaging = getMessaging();
+  if (!messaging) {
+    return () => {};
+  }
+
   const unsubscribeOnMessage = messaging().onMessage(async (remoteMessage) => {
     console.log('Notification received in foreground:', remoteMessage);
   });

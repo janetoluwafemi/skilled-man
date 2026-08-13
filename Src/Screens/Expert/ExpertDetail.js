@@ -12,13 +12,13 @@ import {
   Linking,
   ScrollView,
   SafeAreaView,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import DatePicker from 'react-native-date-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import StarRating from 'react-native-star-rating';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import CstmHeader from '../../Components/CustomHeader';
@@ -28,6 +28,15 @@ import BtnDisable from '../../Components/BtnDisable';
 import InputBokServices from '../../Components/InputBookService';
 import C_TxtInput from '../../Components/C_TextInput';
 import { BASIC_URL } from '../Signin/Signin';
+
+let DatePicker = () => null;
+if (Platform.OS !== 'web') {
+  try {
+    DatePicker = require('react-native-date-picker').default;
+  } catch (error) {
+    console.log('Native date picker is unavailable in this runtime.');
+  }
+}
 
 const { height, width } = Dimensions.get('window');
 
@@ -157,13 +166,13 @@ const ExprtDetails = () => {
 
       const result = await response.json();
       if (result?.success) {
-        Toast.show(result.success);
+        showToast(result.success);
         setSubmitReviewVisible(false);
         setReviewVisible(false);
         setFeedback('');
         setRating(0);
       } else if (result?.error) {
-        Toast.show(result.error);
+        showToast(result.error);
       }
     } catch (error) {
       console.log('Error submitting review:', error);
@@ -587,7 +596,7 @@ const ExprtDetails = () => {
                   />
                   <Text style={styles.reviewNameText}>{selectedReview.name}</Text>
                   <Text style={styles.reviewRatingTextSub}>
-                    Rating (⭐{selectedReview.rating})
+                    Rating (Ã¢Â­Â{selectedReview.rating})
                   </Text>
                 </View>
                 <Text style={styles.reviewHeadingText}>Review:</Text>
@@ -638,7 +647,7 @@ const ExprtDetails = () => {
                       <View>
                         <Text style={styles.reviewName}>{reviewItem.name}</Text>
                         <Text style={styles.reviewRating}>
-                          Rating (⭐{reviewItem.rating})
+                          Rating (Ã¢Â­Â{reviewItem.rating})
                         </Text>
                         <Text numberOfLines={1} style={styles.reviewFeedback}>
                           {reviewItem.feedback}

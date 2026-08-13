@@ -13,7 +13,7 @@ import {
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import CstmHeader from '../../Components/CustomHeader';
@@ -132,7 +132,7 @@ const EdtProfilScren = props => {
     getSkills();
   }, [getProfileData, getSkills]);
 
-  // ✅ FIX: Expo Image Picker Handler
+  // Ã¢Å“â€¦ FIX: Expo Image Picker Handler
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -148,7 +148,7 @@ const EdtProfilScren = props => {
     }
   };
 
-  // ✅ FIX: Expo Document Picker Helper
+  // Ã¢Å“â€¦ FIX: Expo Document Picker Helper
   const pickDocument = async setFileState => {
     try {
       const res = await DocumentPicker.getDocumentAsync({
@@ -222,7 +222,7 @@ const EdtProfilScren = props => {
       const result = JSON.parse(textResponse);
 
       if (result) {
-        Toast.show('Profile Updated Successfully');
+        showToast('Profile Updated Successfully');
         setImage(null);
         setCertificate(null);
         setEvidence(null);
@@ -231,7 +231,7 @@ const EdtProfilScren = props => {
       }
     } catch (error) {
       console.log('Update Error:', error);
-      Toast.show('Update failed');
+      showToast('Update failed');
     } finally {
       setLoad(false);
     }

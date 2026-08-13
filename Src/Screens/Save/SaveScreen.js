@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import HeaderWSarchFiltr from '../../Components/HeaderWithSearchFilter';
@@ -43,7 +43,7 @@ const SavScren = () => {
 
       const result = await response.json();
       if (result?.error) {
-        Toast.show(result.error);
+        showToast(result.error);
       }
     } catch (error) {
       console.log('Error updating favorite status:', error);
@@ -65,7 +65,7 @@ const SavScren = () => {
         if (result?.favorite_providers) {
           setFavoriteList(result.favorite_providers);
         } else if (result?.error) {
-          Toast.show(result.error);
+          showToast(result.error);
         }
       } catch (error) {
         console.log('Error fetching favorite providers:', error);

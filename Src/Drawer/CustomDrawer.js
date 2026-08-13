@@ -10,7 +10,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 import color from '../Assets/colors/colors';
 import DrarCstmBtn from '../Components/DrawerCustomBtn';
@@ -20,6 +19,16 @@ import { useAuth } from '../context/AuthProvider';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const isSmallDevice = SCREEN_HEIGHT < 700;
 const isMediumDevice = SCREEN_HEIGHT >= 700 && SCREEN_HEIGHT < 900;
+
+const getGoogleSignin = () => {
+  if (Platform.OS === 'web') return null;
+
+  try {
+    return require('@react-native-google-signin/google-signin').GoogleSignin;
+  } catch (error) {
+    return null;
+  }
+};
 
 const getResponsiveSpacing = (small, medium, large) => {
   if (isSmallDevice) return small;
@@ -34,6 +43,9 @@ const CstmDrar = () => {
 
   const signOutGoogle = async () => {
     try {
+      const GoogleSignin = getGoogleSignin();
+      if (!GoogleSignin) return;
+
       await GoogleSignin.revokeAccess();
       await GoogleSignin.signOut();
     } catch (error) {

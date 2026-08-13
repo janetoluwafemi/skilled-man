@@ -1,11 +1,13 @@
 {
-  "name": "skilledman",
-  "displayName": "skilledman",
-  "plugins": [
-    "expo-sharing",
-    "@react-native-community/datetimepicker"
-  ],
-  "android": {
-    "package": "com.janetoluwafemi.skilledman"
+  "expo": {
+    "name": "Skilledman",
+    "slug": "skilledman",
+    "version": "1.0.0",
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ],
+    "android": {
+      "package": "com.intellitechltdng.skilledman"
+    }
   }
 }

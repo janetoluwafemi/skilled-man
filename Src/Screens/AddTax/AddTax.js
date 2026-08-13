@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import BotonComp from '../../Components/BtnComp';
@@ -24,7 +24,7 @@ const AdTax = props => {
 
   const adTxFun = async () => {
     if (!taxId.trim() || !description.trim()) {
-      Toast.show('Please fill the required fields.');
+      showToast('Please fill the required fields.');
       return;
     }
     try {
@@ -43,12 +43,12 @@ const AdTax = props => {
       setLoad(false);
 
       if (result) {
-        Toast.show('Tax details added successfully');
+        showToast('Tax details added successfully');
         navigation.navigate('Congratulations');
       }
     } catch (error) {
       setLoad(false);
-      Toast.show('Failed to add tax details.');
+      showToast('Failed to add tax details.');
     }
   };
 

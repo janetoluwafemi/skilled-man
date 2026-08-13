@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { WebView } from 'react-native-webview';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import CstmHeader from '../../Components/CustomHeader';
@@ -184,7 +184,7 @@ const CrdDetails = props => {
 
   const handlePaymentSuccess = () => {
     setModalVisible(false);
-    Toast.show('Payment Successful!');
+    showToast('Payment Successful!');
     navigation.navigate('PaymentCongratulations');
   };
 

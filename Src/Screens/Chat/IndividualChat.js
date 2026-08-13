@@ -11,9 +11,8 @@ import {
   Pressable,
   Dimensions,
   SafeAreaView,
+  Platform,
 } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
-import storage from '@react-native-firebase/storage';
 import {
   Bubble,
   Composer,
@@ -29,6 +28,17 @@ import { Icons } from '../../Components/Icons';
 import ChatUsrHeader from '../../Components/ChatUserHeader';
 import { BASIC_URL } from '../Signin/Signin';
 
+let firestore;
+let storage;
+if (Platform.OS !== 'web') {
+  try {
+    firestore = require('@react-native-firebase/firestore').default;
+    storage = require('@react-native-firebase/storage').default;
+  } catch (error) {
+    console.log('Native Firebase chat is unavailable in this runtime.');
+  }
+}
+
 const NewMessage = ({ userId, providerId }) => {
   const [messages, setMessages] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -39,7 +49,7 @@ const NewMessage = ({ userId, providerId }) => {
   const peerId = providerId;
 
   useEffect(() => {
-    if (!chatId) return;
+    if (!chatId || !firestore) return;
 
     const unsubscribe = firestore()
       .collection('chats')
@@ -98,6 +108,11 @@ const NewMessage = ({ userId, providerId }) => {
 
   const onSend = async (messagesList = []) => {
     try {
+      if (!firestore) {
+        Alert.alert('Unavailable', 'Chat is unavailable in this app runtime.');
+        return;
+      }
+
       const msg = messagesList[0];
       if (!msg?.text?.trim() && !msg?.image) return;
 
@@ -145,6 +160,11 @@ const NewMessage = ({ userId, providerId }) => {
 
   const uploadImage = async asset => {
     try {
+      if (!storage) {
+        Alert.alert('Unavailable', 'Image uploads are unavailable in this app runtime.');
+        return;
+      }
+
       const filename = `chat_images/${Date.now()}_${asset.fileName || 'image.jpg'}`;
       const reference = storage().ref(filename);
       const response = await fetch(asset.uri);
@@ -161,6 +181,8 @@ const NewMessage = ({ userId, providerId }) => {
 
   const sendImageMessage = async url => {
     try {
+      if (!firestore) return;
+
       const messageId = firestore().collection('chats').doc().id;
       const imageMessage = {
         _id: messageId,

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused } from '@react-navigation/native';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import FltLstCrd from '../../Components/FlatListCard';
 import color from '../../Assets/colors/colors';
@@ -54,7 +54,7 @@ const ComplteTab = props => {
       if (result?.booking_request) {
         setData(result.booking_request);
       } else if (result?.error) {
-        Toast.show(result.error);
+        showToast(result.error);
       }
     } catch (error) {
       Alert.alert('Error', error?.message || String(error) || 'An error occurred');

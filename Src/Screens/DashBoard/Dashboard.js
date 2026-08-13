@@ -17,7 +17,7 @@ import { BarChart } from 'react-native-chart-kit';
 import * as DocumentPicker from 'expo-document-picker';
 import { Picker } from '@react-native-picker/picker';
 import { Country, State } from 'country-state-city';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import HomStakwithoutsarch from '../../Components/HomeStackwithoutsearch';
@@ -126,7 +126,7 @@ const Dshbord = () => {
         setStates(countryStates);
     };
 
-    // ✅ FIX: Updated to use Expo DocumentPicker API
+    // Ã¢Å“â€¦ FIX: Updated to use Expo DocumentPicker API
     const handlFilPik = async value => {
         try {
             const result = await DocumentPicker.getDocumentAsync({
@@ -153,11 +153,7 @@ const Dshbord = () => {
             !guarantor ||
             !jobReferences
         ) {
-            Toast.showWithGravity(
-                'Please fill the required fields',
-                Toast.LONG,
-                Toast.CENTER
-            );
+            showToast('Please fill the required fields');
             return;
         }
 

@@ -1,8 +1,25 @@
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import auth from '@react-native-firebase/auth';
+import { Platform } from 'react-native';
+
+const getGoogleAuthModules = () => {
+  if (Platform.OS === 'web') return null;
+
+  try {
+    return {
+      GoogleSignin: require('@react-native-google-signin/google-signin').GoogleSignin,
+      auth: require('@react-native-firebase/auth').default,
+    };
+  } catch (error) {
+    console.log('Native Google Sign-In is unavailable in this runtime.');
+    return null;
+  }
+};
 
 export const signInWGoogle = async (webClientId = 'YOUR_WEB_CLIENT_ID') => {
   try {
+    const modules = getGoogleAuthModules();
+    if (!modules) return null;
+
+    const { GoogleSignin, auth } = modules;
     GoogleSignin.configure({
       webClientId,
       offlineAccess: false,

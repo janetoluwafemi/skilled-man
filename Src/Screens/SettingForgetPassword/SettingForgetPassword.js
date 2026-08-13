@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import * as Animatable from 'react-native-animatable';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import C_InputScurEntry from '../../Components/C_InputSecureEntry';
@@ -87,7 +87,7 @@ const SetingFrgtPaswrd = props => {
             setLoad(false);
 
             if (result.success) {
-              Toast.show(result.success);
+              showToast(result.success);
               navigation.navigate('Signin');
             } else if (result.error) {
               Alert.alert('Error', result.error);

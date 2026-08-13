@@ -12,7 +12,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import CstmHeader from '../../Components/CustomHeader';
 import color from '../../Assets/colors/colors';
@@ -60,7 +60,7 @@ const FndExprt = props => {
       if (result?.provider_location) {
         setLocations(result.provider_location);
       } else if (result?.error) {
-        Toast.show(result.error);
+        showToast(result.error);
       }
     } catch (error) {
       console.log('Error fetching locations:', error);

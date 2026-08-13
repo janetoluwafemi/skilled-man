@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import CstmHeader from '../../Components/CustomHeader';
@@ -49,7 +49,7 @@ const AdSkil = props => {
 
   const saveSkill = async () => {
     if (!numberOfExp || !phoneNumb) {
-      Toast.show('Please fill required fields', Toast.LONG);
+      showToast('Please fill required fields');
       return;
     }
 
@@ -78,7 +78,7 @@ const AdSkil = props => {
       setLoad(false);
 
       if (result.status) {
-        Toast.show(result.status, Toast.LONG);
+        showToast(result.status);
         navigation.goBack();
       } else if (result.error) {
         Alert.alert('Error', result.error);

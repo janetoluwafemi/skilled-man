@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
@@ -44,7 +44,7 @@ const OtpScren = props => {
 
   const handleSubmit = () => {
     if (finalOtp.length < 4) {
-      Toast.show('Please enter complete 4-digit OTP code');
+      showToast('Please enter complete 4-digit OTP code');
       return;
     }
 
@@ -53,7 +53,7 @@ const OtpScren = props => {
       global.phone_number = resultData.phone_number;
       navigation.navigate('SetPassword');
     } else {
-      Toast.show('Incorrect OTP. Please check and try again.');
+      showToast('Incorrect OTP. Please check and try again.');
     }
   };
 
@@ -74,7 +74,7 @@ const OtpScren = props => {
 
       if (result && result.otp) {
         setOtp(String(result.otp));
-        Toast.show('A new OTP has been sent to your email.');
+        showToast('A new OTP has been sent to your email.');
       } else if (result?.error) {
         Alert.alert('Resend Failed', result.error);
       }

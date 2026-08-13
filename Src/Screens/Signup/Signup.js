@@ -17,7 +17,7 @@ import {
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 import { Country, State } from 'country-state-city';
 import * as Animatable from 'react-native-animatable';
 
@@ -91,12 +91,12 @@ const Signup = props => {
             setLoad(true);
             const user = await signInWGoogle();
             if (user) {
-                Toast.show('Google Sign-In successful', Toast.SHORT);
+                showToast('Google Sign-In successful');
             }
             setLoad(false);
         } catch (error) {
             setLoad(false);
-            Toast.show('Google Sign-In failed', Toast.SHORT);
+            showToast('Google Sign-In failed');
         }
     };
 
@@ -202,7 +202,7 @@ const Signup = props => {
                             if (!result.error) {
                                 navigation.navigate('OtpScreen', { result });
                             } else {
-                                Toast.showWithGravity(result.error, Toast.LONG, Toast.CENTER);
+                                showToast(result.error);
                             }
                         } else {
                             setLoad(false);

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
-import Toast from 'react-native-simple-toast';
+import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import CstmHeader from '../../Components/CustomHeader';
@@ -33,12 +33,12 @@ const ChangPaswrd = props => {
 
   const handleUpdate = async () => {
     if (!password.trim() || !newPassword.trim() || !confirmPassword.trim()) {
-      Toast.show('All fields are required.');
+      showToast('All fields are required.');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Toast.show('New password and confirm password do not match.');
+      showToast('New password and confirm password do not match.');
       return;
     }
 
@@ -59,14 +59,14 @@ const ChangPaswrd = props => {
       setLoad(false);
 
       if (result.success === 'Password updated successfully.') {
-        Toast.show('Password updated successfully.');
+        showToast('Password updated successfully.');
         navigation.navigate('account_setting');
       } else {
-        Toast.show(result.error || 'Password Update Failed.');
+        showToast(result.error || 'Password Update Failed.');
       }
     } catch (error) {
       setLoad(false);
-      Toast.show('Network Error. Please try again.');
+      showToast('Network Error. Please try again.');
     }
   };
 

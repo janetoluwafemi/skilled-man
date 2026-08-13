@@ -1,9 +1,4 @@
-import { Platform, Alert } from 'react-native';
-
-let SimpleToast;
-if (Platform.OS !== 'web') {
-    SimpleToast = require('react-native-simple-toast').default;
-}
+import { Platform, Alert, ToastAndroid } from 'react-native';
 
 export const showToast = (message) => {
     if (Platform.OS === 'web') {
@@ -12,7 +7,9 @@ export const showToast = (message) => {
         } else {
             Alert.alert('Notice', message);
         }
-    } else if (SimpleToast) {
-        SimpleToast.show(message, SimpleToast.SHORT);
+    } else if (Platform.OS === 'android') {
+        ToastAndroid.show(String(message), ToastAndroid.SHORT);
+    } else {
+        Alert.alert('Notice', String(message));
     }
 };
