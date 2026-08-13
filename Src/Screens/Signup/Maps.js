@@ -3,7 +3,6 @@ import {
     View,
     Text,
     TouchableOpacity,
-    PermissionsAndroid,
     Alert,
     Platform,
     ActivityIndicator,
@@ -11,14 +10,14 @@ import {
     StatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import * as Location from 'expo-location';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 
-let MapView, Marker, GetLocation;
+let MapView, Marker;
 if (Platform.OS !== 'web') {
     MapView = require('react-native-maps').default;
     Marker = require('react-native-maps').Marker;
-    GetLocation = require('react-native-get-location').default;
 }
 
 const Mapltln = () => {
@@ -32,64 +31,55 @@ const Mapltln = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (Platform.OS !== 'web') {
-            requestPermission();
-        }
-    }, []);
+        requestPermission();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps -- request permission once on mount
 
     const requestPermission = async () => {
-        if (Platform.OS === 'android') {
-            try {
-                const granted = await PermissionsAndroid.request(
-                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-                );
-                if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                    getCurrentLocation();
-                } else {
-                    Alert.alert('Permission Denied', 'Location permission is required.');
-                }
-            } catch (err) {
-                console.warn(err);
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status === Location.PermissionStatus.GRANTED) {
+                getCurrentLocation();
+            } else {
+                Alert.alert('Permission Denied', 'Location permission is required.');
             }
-        } else {
-            getCurrentLocation();
+        } catch (err) {
+            console.warn(err);
         }
     };
 
-    const getCurrentLocation = () => {
-        if (loading || Platform.OS === 'web' || !GetLocation) return;
+    const getCurrentLocation = async () => {
+        if (loading) return;
         setLoading(true);
 
-        GetLocation.getCurrentPosition({
-            enableHighAccuracy: true,
-            timeout: 30000,
-        })
-            .then(loc => {
-                const newLoc = {
-                    latitude: loc.latitude,
-                    longitude: loc.longitude,
-                };
+        try {
+            const loc = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.High,
+            });
+            const newLoc = {
+                latitude: loc.coords.latitude,
+                longitude: loc.coords.longitude,
+            };
 
-                setLocation(newLoc);
-                global.lat = newLoc.latitude;
-                global.long = newLoc.longitude;
+            setLocation(newLoc);
+            global.lat = newLoc.latitude;
+            global.long = newLoc.longitude;
 
-                mapRef.current?.animateToRegion(
-                    {
-                        ...newLoc,
-                        latitudeDelta: 0.01,
-                        longitudeDelta: 0.01,
-                    },
-                    1000
-                );
-            })
-            .catch(err => {
-                Alert.alert(
-                    'Location Failed',
-                    err.message || 'Unable to fetch location.'
-                );
-            })
-            .finally(() => setLoading(false));
+            mapRef.current?.animateToRegion(
+                {
+                    ...newLoc,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                },
+                1000
+            );
+        } catch (err) {
+            Alert.alert(
+                'Location Failed',
+                err.message || 'Unable to fetch location.'
+            );
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleConfirmLocation = () => {
