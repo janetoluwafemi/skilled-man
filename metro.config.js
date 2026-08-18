@@ -7,9 +7,7 @@ const defaultResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
     if (
         platform === 'web' &&
-        (moduleName === 'react-native-simple-toast' ||
-            moduleName === '@react-native-google-signin/google-signin' ||
-            moduleName === 'react-native-maps' ||
+        (moduleName === 'react-native-maps' ||
             moduleName.startsWith('react-native-maps/'))
     ) {
         return { type: 'empty' };

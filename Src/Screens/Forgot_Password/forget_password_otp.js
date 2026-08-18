@@ -19,21 +19,7 @@ import color from '../../Assets/colors/colors';
 import BotonComp from '../../Components/BtnComp';
 import { BASIC_URL } from '../Signin/Signin';
 import { Icons } from '../../Components/Icons';
-
-let SimpleToast;
-if (Platform.OS !== 'web') {
-  SimpleToast = require('react-native-simple-toast').default;
-}
-
-const showToast = msg => {
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.alert) {
-      window.alert(msg);
-    }
-  } else if (SimpleToast) {
-    SimpleToast.show(msg, SimpleToast.SHORT);
-  }
-};
+import { showToast } from '../../utilis/showToast';
 
 const FrgtpaswrdOtpScren = props => {
   const navigation = useNavigation();

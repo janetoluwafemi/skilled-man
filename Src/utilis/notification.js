@@ -1,36 +1,17 @@
 import { Platform } from 'react-native';
+import { getMessaging, getToken as getMessagingToken, isSupported, onMessage } from 'firebase/messaging';
+import { app } from '../../firebase-config';
 import NavigationService from '../MainNavigation/NavigationService';
 
-// Firebase Messaging is not included in Expo Go (and has no web runtime).
-// Loading it lazily keeps the app bootable on those platforms while preserving
-// the existing behavior in a custom native build where it is linked.
-const getMessaging = () => {
-  if (Platform.OS === 'web') {
-    return null;
-  }
-
-  try {
-    return require('@react-native-firebase/messaging').default;
-  } catch (error) {
-    console.log('Firebase Messaging is unavailable in this runtime.');
-    return null;
-  }
+const getWebMessaging = async () => {
+  if (Platform.OS !== 'web' || !(await isSupported())) return null;
+  return getMessaging(app);
 };
 
 export const requestUserPermission = async () => {
   try {
-    const messaging = getMessaging();
-    if (!messaging) return false;
-
-    const authStatus = await messaging().requestPermission();
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-    if (enabled) {
-      console.log('FCM Authorization status:', authStatus);
-    }
-    return enabled;
+    if (Platform.OS !== 'web' || typeof window === 'undefined' || !window.Notification) return false;
+    return (await window.Notification.requestPermission()) === 'granted';
   } catch (error) {
     console.log('Error requesting FCM permission:', error);
     return false;
@@ -41,14 +22,9 @@ export const reqestUsrPermision = requestUserPermission;
 
 export const getToken = async () => {
   try {
-    const messaging = getMessaging();
+    const messaging = await getWebMessaging();
     if (!messaging) return null;
-
-    if (Platform.OS === 'ios') {
-      await messaging().registerDeviceForRemoteMessages();
-    }
-
-    const token = await messaging().getToken();
+    const token = await getMessagingToken(messaging);
     console.log('FCM Token:', token);
     return token;
   } catch (error) {
@@ -58,44 +34,21 @@ export const getToken = async () => {
 };
 
 export const notificationListener = () => {
-  const messaging = getMessaging();
-  if (!messaging) {
-    return () => {};
-  }
+  let unsubscribe = () => {};
 
-  const unsubscribeOnMessage = messaging().onMessage(async (remoteMessage) => {
-    console.log('Notification received in foreground:', remoteMessage);
-  });
-
-  const unsubscribeOnOpened = messaging().onNotificationOpenedApp((remoteMessage) => {
-    console.log('Notification opened app from background state:', remoteMessage?.notification);
-
-    if (remoteMessage?.data?.redirect_to === 'RequestScreen') {
-      setTimeout(() => {
-        NavigationService.navigate('RequestScreen', { data: remoteMessage?.data });
-      }, 800);
-    }
-  });
-
-  messaging()
-    .getInitialNotification()
-    .then((remoteMessage) => {
-      if (remoteMessage) {
-        console.log('Notification caused app to open from quit state:', remoteMessage?.notification);
-
+  getWebMessaging()
+    .then(messaging => {
+      if (!messaging) return;
+      unsubscribe = onMessage(messaging, remoteMessage => {
+        console.log('Notification received in foreground:', remoteMessage);
         if (remoteMessage?.data?.redirect_to === 'RequestScreen') {
-          setTimeout(() => {
-            NavigationService.navigate('RequestScreen', { data: remoteMessage?.data });
-          }, 1200);
+          NavigationService.navigate('RequestScreen', { data: remoteMessage.data });
         }
-      }
+      });
     })
-    .catch((error) => console.log('Error fetching initial notification:', error));
+    .catch(error => console.log('Error starting Firebase Messaging:', error));
 
-  return () => {
-    unsubscribeOnMessage();
-    unsubscribeOnOpened();
-  };
+  return () => unsubscribe();
 };
 
 export const notifiListener = notificationListener;

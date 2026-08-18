@@ -2,12 +2,18 @@
   "expo": {
     "name": "Skilledman",
     "slug": "skilledman",
+    "scheme": "skilledman",
     "version": "1.0.0",
     "plugins": [
       "@react-native-community/datetimepicker"
     ],
     "android": {
       "package": "com.intellitechltdng.skilledman"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "efa24f90-7dec-41aa-a352-29405e641a03"
+      }
     }
   }
 }

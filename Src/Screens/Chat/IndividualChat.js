@@ -11,7 +11,6 @@ import {
   Pressable,
   Dimensions,
   SafeAreaView,
-  Platform,
 } from 'react-native';
 import {
   Bubble,
@@ -21,23 +20,15 @@ import {
   Send,
 } from 'react-native-gifted-chat';
 import * as ImagePicker from 'expo-image-picker';
+import { collection, doc, onSnapshot, orderBy, query, setDoc } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 import ChatUsrHeader from '../../Components/ChatUserHeader';
 import { BASIC_URL } from '../Signin/Signin';
-
-let firestore;
-let storage;
-if (Platform.OS !== 'web') {
-  try {
-    firestore = require('@react-native-firebase/firestore').default;
-    storage = require('@react-native-firebase/storage').default;
-  } catch (error) {
-    console.log('Native Firebase chat is unavailable in this runtime.');
-  }
-}
+import { db, storage } from '../../../firebase-config';
 
 const NewMessage = ({ userId, providerId }) => {
   const [messages, setMessages] = useState([]);
@@ -49,23 +40,20 @@ const NewMessage = ({ userId, providerId }) => {
   const peerId = providerId;
 
   useEffect(() => {
-    if (!chatId || !firestore) return;
+    if (!chatId) return;
 
-    const unsubscribe = firestore()
-      .collection('chats')
-      .doc(chatId)
-      .collection('messages')
-      .orderBy('createdAt', 'desc')
-      .onSnapshot(snapshot => {
+    const unsubscribe = onSnapshot(
+      query(collection(db, 'chats', chatId, 'messages'), orderBy('createdAt', 'desc')),
+      snapshot => {
         if (!snapshot || snapshot.empty) {
           setMessages([]);
           return;
         }
 
-        const allMessages = snapshot.docs.map(doc => {
-          const data = doc.data();
+        const allMessages = snapshot.docs.map(snapshotDoc => {
+          const data = snapshotDoc.data();
           return {
-            _id: data._id || doc.id,
+            _id: data._id || snapshotDoc.id,
             text: data.text || '',
             createdAt: data.createdAt?.toDate?.() || new Date(),
             user: data.user || { _id: data.senderId },
@@ -74,7 +62,8 @@ const NewMessage = ({ userId, providerId }) => {
         });
 
         setMessages(allMessages);
-      });
+      },
+    );
 
     return () => unsubscribe();
   }, [chatId]);
@@ -108,11 +97,6 @@ const NewMessage = ({ userId, providerId }) => {
 
   const onSend = async (messagesList = []) => {
     try {
-      if (!firestore) {
-        Alert.alert('Unavailable', 'Chat is unavailable in this app runtime.');
-        return;
-      }
-
       const msg = messagesList[0];
       if (!msg?.text?.trim() && !msg?.image) return;
 
@@ -126,9 +110,9 @@ const NewMessage = ({ userId, providerId }) => {
         image: msg.image || '',
       };
 
-      const chatRef = firestore().collection('chats').doc(chatId);
-      await chatRef.set({ participants: [userId, peerId] }, { merge: true });
-      await chatRef.collection('messages').doc(newMessage._id).set(newMessage);
+      const chatRef = doc(db, 'chats', chatId);
+      await setDoc(chatRef, { participants: [userId, peerId] }, { merge: true });
+      await setDoc(doc(chatRef, 'messages', newMessage._id), newMessage);
 
       await triggerParallelAPIs(msg.text);
     } catch (error) {
@@ -160,18 +144,13 @@ const NewMessage = ({ userId, providerId }) => {
 
   const uploadImage = async asset => {
     try {
-      if (!storage) {
-        Alert.alert('Unavailable', 'Image uploads are unavailable in this app runtime.');
-        return;
-      }
-
       const filename = `chat_images/${Date.now()}_${asset.fileName || 'image.jpg'}`;
-      const reference = storage().ref(filename);
+      const reference = ref(storage, filename);
       const response = await fetch(asset.uri);
       const blob = await response.blob();
 
-      await reference.put(blob);
-      const url = await reference.getDownloadURL();
+      await uploadBytes(reference, blob);
+      const url = await getDownloadURL(reference);
       setUploading(false);
       await sendImageMessage(url);
     } catch {
@@ -181,9 +160,7 @@ const NewMessage = ({ userId, providerId }) => {
 
   const sendImageMessage = async url => {
     try {
-      if (!firestore) return;
-
-      const messageId = firestore().collection('chats').doc().id;
+      const messageId = doc(collection(db, 'chats')).id;
       const imageMessage = {
         _id: messageId,
         text: '',
@@ -194,9 +171,9 @@ const NewMessage = ({ userId, providerId }) => {
         image: url,
       };
 
-      const chatRef = firestore().collection('chats').doc(chatId);
-      await chatRef.set({ participants: [userId, peerId] }, { merge: true });
-      await chatRef.collection('messages').doc(messageId).set(imageMessage);
+      const chatRef = doc(db, 'chats', chatId);
+      await setDoc(chatRef, { participants: [userId, peerId] }, { merge: true });
+      await setDoc(doc(chatRef, 'messages', messageId), imageMessage);
 
       await triggerParallelAPIs('');
     } catch (error) {

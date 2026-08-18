@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -14,6 +14,9 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 
 import color from '../../Assets/colors/colors';
 import C_TxtInput from '../../Components/C_TextInput';
@@ -23,16 +26,12 @@ import { useAuth } from '../../context/AuthProvider';
 import { getToken } from '../../utilis/notification';
 import { showToast } from '../../utilis/showToast';
 import { Icons } from '../../Components/Icons';
+import { auth } from '../../../firebase-config';
 
-const getGoogleSignin = () => {
-  if (Platform.OS === 'web') return null;
+WebBrowser.maybeCompleteAuthSession();
 
-  try {
-    return require('@react-native-google-signin/google-signin').GoogleSignin;
-  } catch (error) {
-    return null;
-  }
-};
+const GOOGLE_WEB_CLIENT_ID =
+    '336016778121-qiriu75af7hvitlu9g67naf6hqnl7dsi.apps.googleusercontent.com';
 
 export const BASIC_URL = 'https://theskilledman.com/api/';
 
@@ -47,39 +46,30 @@ const Signin = props => {
   const [load, setLoad] = useState(false);
   const [googleRole, setGoogleRole] = useState(0);
 
-  useEffect(() => {
-    const GoogleSignin = getGoogleSignin();
-    if (GoogleSignin) {
-      GoogleSignin.configure({
-        webClientId:
-          '336016778121-qiriu75af7hvitlu9g67naf6hqnl7dsi.apps.googleusercontent.com',
+  // useIdTokenAuthRequest ensures Google returns an id_token for Firebase Auth
+  const [googleRequest, googleResponse, promptGoogle] =
+      Google.useIdTokenAuthRequest({
+        clientId: GOOGLE_WEB_CLIENT_ID,
+        webClientId: GOOGLE_WEB_CLIENT_ID,
+        scopes: ['profile', 'email'],
       });
-    }
-  }, []);
 
-  const handleGoogleSignInFlow = async role => {
-    const GoogleSignin = getGoogleSignin();
-    if (!GoogleSignin) {
-      showToast('Google Sign-In is configured for Mobile devices.');
-      return;
-    }
-
+  const completeFirebaseGoogleLogin = useCallback(async (idToken, role) => {
     try {
       setLoad(true);
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      const { idToken } = await GoogleSignin.getTokens();
+      const credential = GoogleAuthProvider.credential(idToken);
+      const { user } = await signInWithCredential(auth, credential);
       const token = await getToken();
 
       const formdata = new FormData();
-      formdata.append('identifier', userInfo.user.email);
-      formdata.append('google_id', userInfo.user.id);
+      formdata.append('identifier', user.email || '');
+      formdata.append('google_id', user.uid);
       formdata.append('google_token', idToken);
-      formdata.append('name', userInfo.user.name);
-      formdata.append('photo', userInfo.user.photo);
+      formdata.append('name', user.displayName || '');
+      formdata.append('photo', user.photoURL || '');
       formdata.append('role', role);
       formdata.append('password', 'googleuser');
-      formdata.append('token', token);
+      formdata.append('token', token || '');
 
       const response = await fetch(`${BASIC_URL}google_login.php`, {
         method: 'POST',
@@ -87,7 +77,7 @@ const Signin = props => {
       });
       const result = await response.json();
 
-      if (result.success) {
+      if (result.success || !result.error) {
         await AsyncStorage.setItem('user', JSON.stringify(result));
         await AsyncStorage.setItem('role', role.toString());
         dispatch({ type: 'LOGIN', payload: { user: result, role } });
@@ -100,6 +90,27 @@ const Signin = props => {
     } finally {
       setLoad(false);
     }
+  }, [dispatch, navigation]);
+
+  useEffect(() => {
+    if (googleResponse?.type === 'success') {
+      const { id_token } = googleResponse.params;
+      if (id_token) {
+        completeFirebaseGoogleLogin(id_token, googleRole.toString());
+      }
+    } else if (googleResponse?.type === 'error') {
+      showToast('Google authentication failed');
+      setLoad(false);
+    }
+  }, [googleResponse, googleRole, completeFirebaseGoogleLogin]);
+
+  const handleGoogleSignInFlow = async () => {
+    if (!googleRequest) {
+      showToast('Google Sign-In is initializing. Please tap again.');
+      return;
+    }
+    setLoad(true);
+    await promptGoogle();
   };
 
   const handleSignIn = async () => {
@@ -114,7 +125,7 @@ const Signin = props => {
       const formdata = new FormData();
       formdata.append('identifier', userName.trim());
       formdata.append('password', password);
-      formdata.append('token', token);
+      formdata.append('token', token || '');
 
       const response = await fetch(`${BASIC_URL}google_login.php`, {
         method: 'POST',
@@ -124,8 +135,8 @@ const Signin = props => {
 
       if (result && !result.error) {
         await AsyncStorage.setItem('user', JSON.stringify(result));
-        await AsyncStorage.setItem('role', result.role.toString());
-        dispatch({ type: 'LOGIN', payload: { user: result, role: result.role } });
+        await AsyncStorage.setItem('role', (result.role ?? 0).toString());
+        dispatch({ type: 'LOGIN', payload: { user: result, role: result.role ?? 0 } });
         navigation.navigate('Parent');
       } else {
         showToast('Invalid credentials, please try again');
@@ -138,147 +149,147 @@ const Signin = props => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <View style={styles.headerBar}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => navigation.goBack()}
-          style={styles.backArrowBtn}>
-          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-        <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
-
-          <View style={styles.logoRow}>
-            <View style={styles.logoCircle}>
-              <Image
-                source={require('../../Assets/Images/logo.png')}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
-
-          <Text style={styles.welcomeTitle}>Welcome Back</Text>
-          <Text style={styles.welcomeSubtitle}>Sign in to access your account</Text>
-
-          <View style={styles.cardWrapper}>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Email or Phone Number</Text>
-              <C_TxtInput
-                placeholder="name@example.com or phone"
-                onChangeText={setUserName}
-                value={userName}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Password</Text>
-              <C_InputScurEntrylogin
-                placeholder="••••••••"
-                secureTextEntry={hide}
-                onChangeText={setPassword}
-                value={password}
-                onPress={() => setHide(!hide)}
-              />
-            </View>
-
-            <View style={styles.optionsRow}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={styles.checkboxWrapper}
-                onPress={() => setChecked(!checked)}>
-                <View style={[styles.customCheckbox, checked && styles.customCheckboxActive]}>
-                  {checked && <Icons.Feather name="check" size={12} color="#FFFFFF" />}
-                </View>
-                <Text style={styles.checkboxText}>Remember me</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate('ForgotPassword')}>
-                <Text style={styles.forgotLink}>Forgot Password?</Text>
-              </TouchableOpacity>
-            </View>
-
-            <BotonComp
-              BtnStyle={styles.submitBtn}
-              btnText={
-                load ? (
-                  <ActivityIndicator color="#FFF" size="small" />
-                ) : (
-                  'Sign In'
-                )
-              }
-              onPressFunc={handleSignIn}
-            />
-          </View>
-
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or continue with</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <Text style={styles.googleRoleLabel}>Account Type for Google Sign-In</Text>
-          <View style={styles.segmentContainer}>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() => setGoogleRole(0)}
-              style={[styles.segmentBtn, googleRole === 0 && styles.segmentActive]}>
-              <Icons.FontAwesome5
-                name="user"
-                size={13}
-                color={googleRole === 0 ? color.defalt : '#64748B'}
-                style={styles.segmentIcon}
-              />
-              <Text style={[styles.segmentText, googleRole === 0 && styles.segmentTextActive]}>
-                User
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() => setGoogleRole(1)}
-              style={[styles.segmentBtn, googleRole === 1 && styles.segmentActive]}>
-              <Icons.FontAwesome5
-                name="briefcase"
-                size={13}
-                color={googleRole === 1 ? color.defalt : '#64748B'}
-                style={styles.segmentIcon}
-              />
-              <Text style={[styles.segmentText, googleRole === 1 && styles.segmentTextActive]}>
-                Provider
-              </Text>
-            </TouchableOpacity>
-          </View>
-
+        <View style={styles.headerBar}>
           <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => handleGoogleSignInFlow(googleRole.toString())}
-            style={styles.googleBtn}>
-            <Icons.FontAwesome name="google" size={18} color="#DB4437" />
-            <Text style={styles.googleBtnText}>
-              Continue with Google ({googleRole === 0 ? 'User' : 'Provider'})
-            </Text>
+              activeOpacity={0.7}
+              onPress={() => navigation.goBack()}
+              style={styles.backArrowBtn}>
+            <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
           </TouchableOpacity>
+        </View>
 
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
-              <Text style={styles.footerLink}>Create Account</Text>
+        <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
+          <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
+
+            <View style={styles.logoRow}>
+              <View style={styles.logoCircle}>
+                <Image
+                    source={require('../../Assets/Images/logo.png')}
+                    style={styles.logoImage}
+                    resizeMode="contain"
+                />
+              </View>
+            </View>
+
+            <Text style={styles.welcomeTitle}>Welcome Back</Text>
+            <Text style={styles.welcomeSubtitle}>Sign in to access your account</Text>
+
+            <View style={styles.cardWrapper}>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Email or Phone Number</Text>
+                <C_TxtInput
+                    placeholder="name@example.com or phone"
+                    onChangeText={setUserName}
+                    value={userName}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Password</Text>
+                <C_InputScurEntrylogin
+                    placeholder="••••••••"
+                    secureTextEntry={hide}
+                    onChangeText={setPassword}
+                    value={password}
+                    onPress={() => setHide(!hide)}
+                />
+              </View>
+
+              <View style={styles.optionsRow}>
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.checkboxWrapper}
+                    onPress={() => setChecked(!checked)}>
+                  <View style={[styles.customCheckbox, checked && styles.customCheckboxActive]}>
+                    {checked && <Icons.Feather name="check" size={12} color="#FFFFFF" />}
+                  </View>
+                  <Text style={styles.checkboxText}>Remember me</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => navigation.navigate('ForgotPassword')}>
+                  <Text style={styles.forgotLink}>Forgot Password?</Text>
+                </TouchableOpacity>
+              </View>
+
+              <BotonComp
+                  BtnStyle={styles.submitBtn}
+                  btnText={
+                    load ? (
+                        <ActivityIndicator color="#FFF" size="small" />
+                    ) : (
+                        'Sign In'
+                    )
+                  }
+                  onPressFunc={handleSignIn}
+              />
+            </View>
+
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or continue with</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <Text style={styles.googleRoleLabel}>Account Type for Google Sign-In</Text>
+            <View style={styles.segmentContainer}>
+              <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={() => setGoogleRole(0)}
+                  style={[styles.segmentBtn, googleRole === 0 && styles.segmentActive]}>
+                <Icons.FontAwesome5
+                    name="user"
+                    size={13}
+                    color={googleRole === 0 ? color.defalt : '#64748B'}
+                    style={styles.segmentIcon}
+                />
+                <Text style={[styles.segmentText, googleRole === 0 && styles.segmentTextActive]}>
+                  User
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={() => setGoogleRole(1)}
+                  style={[styles.segmentBtn, googleRole === 1 && styles.segmentActive]}>
+                <Icons.FontAwesome5
+                    name="briefcase"
+                    size={13}
+                    color={googleRole === 1 ? color.defalt : '#64748B'}
+                    style={styles.segmentIcon}
+                />
+                <Text style={[styles.segmentText, googleRole === 1 && styles.segmentTextActive]}>
+                  Provider
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleGoogleSignInFlow}
+                style={styles.googleBtn}>
+              <Icons.FontAwesome name="google" size={18} color="#DB4437" />
+              <Text style={styles.googleBtnText}>
+                Continue with Google ({googleRole === 0 ? 'User' : 'Provider'})
+              </Text>
             </TouchableOpacity>
-          </View>
-        </Animatable.View>
-      </ScrollView>
-    </SafeAreaView>
+
+            <View style={styles.footerRow}>
+              <Text style={styles.footerText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
+                <Text style={styles.footerLink}>Create Account</Text>
+              </TouchableOpacity>
+            </View>
+          </Animatable.View>
+        </ScrollView>
+      </SafeAreaView>
   );
 };
 
@@ -517,6 +528,5 @@ const styles = StyleSheet.create({
   footerLink: {
     color: color.defalt,
     fontSize: 14,
-    fontWeight: '700',
   },
 });

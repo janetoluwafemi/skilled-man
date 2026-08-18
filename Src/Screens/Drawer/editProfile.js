@@ -132,7 +132,6 @@ const EdtProfilScren = props => {
     getSkills();
   }, [getProfileData, getSkills]);
 
-  // Ã¢Å“â€¦ FIX: Expo Image Picker Handler
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -148,7 +147,6 @@ const EdtProfilScren = props => {
     }
   };
 
-  // Ã¢Å“â€¦ FIX: Expo Document Picker Helper
   const pickDocument = async setFileState => {
     try {
       const res = await DocumentPicker.getDocumentAsync({

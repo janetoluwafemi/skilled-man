@@ -7,24 +7,15 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  Platform,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
+import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import color from '../Assets/colors/colors';
 import { Icons } from '../Components/Icons';
 import { BASIC_URL } from '../Screens/Signin/Signin';
-
-let firestore;
-let storage;
-if (Platform.OS !== 'web') {
-  try {
-    firestore = require('@react-native-firebase/firestore').default;
-    storage = require('@react-native-firebase/storage').default;
-  } catch (error) {
-    console.log('Native Firebase chat is unavailable in this runtime.');
-  }
-}
+import { db, storage } from '../../firebase-config';
 
 const ConversationScreen = () => {
   const userId = global.id;
@@ -43,25 +34,23 @@ const ConversationScreen = () => {
   const conversationId = [userId, providerId].sort().join('_');
 
   useEffect(() => {
-    if (Platform.OS === 'web' || !conversationId || !firestore) return;
+    if (!conversationId) return;
 
     let unsubscribe = () => {};
 
     try {
-      unsubscribe = firestore()
-        .collection('chat')
-        .doc(conversationId)
-        .collection('message')
-        .orderBy('timestamp', 'asc')
-        .onSnapshot(querySnapshot => {
+      unsubscribe = onSnapshot(
+        query(collection(db, 'chat', conversationId, 'message'), orderBy('timestamp', 'asc')),
+        querySnapshot => {
           if (querySnapshot) {
-            const fetchedMessages = querySnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data(),
+            const fetchedMessages = querySnapshot.docs.map(snapshotDoc => ({
+              id: snapshotDoc.id,
+              ...snapshotDoc.data(),
             }));
             setMessages(fetchedMessages);
           }
-        });
+        },
+      );
     } catch (error) {
       console.log('Firestore listener error:', error);
     }
@@ -72,18 +61,11 @@ const ConversationScreen = () => {
   const sendMessage = async () => {
     if (messageText.trim() === '' && !attachment) return;
 
-    if (Platform.OS === 'web' || !firestore || !storage) {
-      console.log('Firebase storage/chat is native-only in this setup.');
-      setMessageText('');
-      setAttachment(null);
-      return;
-    }
-
     const messageData = {
       userId,
       providerId,
       text: messageText.trim(),
-      timestamp: firestore.FieldValue.serverTimestamp(),
+      timestamp: serverTimestamp(),
     };
 
     if (attachment) {
@@ -91,9 +73,9 @@ const ConversationScreen = () => {
         const response = await fetch(attachment.uri);
         const blob = await response.blob();
         const filename = attachment.name || `file_${Date.now()}`;
-        const storageRef = storage().ref(`attachments/${filename}`);
-        await storageRef.put(blob);
-        const downloadUrl = await storageRef.getDownloadURL();
+        const storageRef = ref(storage, `attachments/${filename}`);
+        await uploadBytes(storageRef, blob);
+        const downloadUrl = await getDownloadURL(storageRef);
 
         messageData.attachment = {
           type: attachment.mimeType || attachment.type,
@@ -107,11 +89,7 @@ const ConversationScreen = () => {
     }
 
     try {
-      await firestore()
-        .collection('chat')
-        .doc(conversationId)
-        .collection('message')
-        .add(messageData);
+      await addDoc(collection(db, 'chat', conversationId, 'message'), messageData);
     } catch (err) {
       console.log('Error sending message:', err);
     }

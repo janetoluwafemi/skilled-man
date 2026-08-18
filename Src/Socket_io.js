@@ -1,7 +1,7 @@
 import { io } from 'socket.io-client';
 import { Platform } from 'react-native';
 
-const LOCAL_IP = '192.168.1.145';
+const LOCAL_IP = '192.168.94.221';
 
 const DEV_URL = Platform.OS === 'web' ? 'http://localhost:4000' : `http://${LOCAL_IP}:4000`;
 

@@ -10,7 +10,6 @@ import {
     StatusBar,
     ActivityIndicator,
     ScrollView,
-    Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -20,21 +19,7 @@ import C_TxtInput from '../../Components/C_TextInput';
 import BotonComp from '../../Components/BtnComp';
 import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
 import { BASIC_URL } from '../Signin/Signin';
-
-let SimpleToast;
-if (Platform.OS !== 'web') {
-    SimpleToast = require('react-native-simple-toast').default;
-}
-
-const showToast = msg => {
-    if (Platform.OS === 'web') {
-        if (typeof window !== 'undefined' && window.alert) {
-            window.alert(msg);
-        }
-    } else if (SimpleToast) {
-        SimpleToast.show(msg, SimpleToast.SHORT);
-    }
-};
+import { showToast } from '../../utilis/showToast';
 
 const { width, height } = Dimensions.get('window');
 
