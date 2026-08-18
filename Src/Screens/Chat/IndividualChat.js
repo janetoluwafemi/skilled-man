@@ -11,6 +11,7 @@ import {
   Pressable,
   Dimensions,
   SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import {
   Bubble,
@@ -233,16 +234,16 @@ const NewMessage = ({ userId, providerId }) => {
               <TouchableOpacity
                 style={styles.cameraIconBtn}
                 onPress={openCamera}>
-                <Icons.AntDesign name="camera" size={26} color={color.defalt} />
+                <Icons.Feather name="camera" size={20} color={color.defalt} />
               </TouchableOpacity>
             )}
 
             {uploading ? (
-              <ActivityIndicator size="small" color={color.defalt} />
+              <ActivityIndicator size="small" color={color.defalt} style={{ marginRight: 8 }} />
             ) : (
-              <Send {...props}>
+              <Send {...props} containerStyle={styles.sendComponentWrapper}>
                 <View style={styles.sendButton}>
-                  <Icons.FontAwesome name="send" size={18} color={color.wite} />
+                  <Icons.Feather name="send" size={16} color="#FFFFFF" />
                 </View>
               </Send>
             )}
@@ -252,12 +253,14 @@ const NewMessage = ({ userId, providerId }) => {
           <InputToolbar
             {...props}
             containerStyle={styles.inputToolbar}
+            primaryStyle={styles.inputToolbarPrimary}
           />
         )}
         renderComposer={props => (
           <Composer
             {...props}
             placeholder="Type a message..."
+            placeholderTextColor="#94A3B8"
             textInputStyle={styles.composerInput}
           />
         )}
@@ -265,8 +268,30 @@ const NewMessage = ({ userId, providerId }) => {
           <Bubble
             {...props}
             wrapperStyle={{
-              left: { backgroundColor: '#F1F5F9' },
-              right: { backgroundColor: color.defalt },
+              left: {
+                backgroundColor: '#FFFFFF',
+                borderRadius: 16,
+                padding: 4,
+                elevation: 1,
+                shadowColor: '#0F172A',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 3,
+              },
+              right: {
+                backgroundColor: color.defalt,
+                borderRadius: 16,
+                padding: 4,
+                elevation: 2,
+                shadowColor: color.defalt,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+              },
+            }}
+            textStyle={{
+              left: { color: '#0F172A', fontSize: 14 },
+              right: { color: '#FFFFFF', fontSize: 14 },
             }}
           />
         )}
@@ -275,7 +300,7 @@ const NewMessage = ({ userId, providerId }) => {
   );
 };
 
-const IndvidualCht = () => {
+const IndividualChat = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const currentprovider = route.params?.currentuser;
@@ -312,6 +337,7 @@ const IndvidualCht = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <ChatUsrHeader
         recieverdata={currentprovider}
         onPress={() => navigation.goBack()}
@@ -332,6 +358,7 @@ const IndvidualCht = () => {
           <NewMessage userId={userId} providerId={peerId} />
         ) : (
           <View style={styles.missingUserBox}>
+            <Icons.Feather name="user-x" size={40} color="#CBD5E1" />
             <Text style={styles.missingUserText}>
               Missing user information. Please log in again.
             </Text>
@@ -342,55 +369,82 @@ const IndvidualCht = () => {
   );
 };
 
-export default IndvidualCht;
+export default IndividualChat;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8FAFC',
   },
   chatWrapper: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8FAFC',
   },
   chatViewContainer: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8FAFC',
   },
   chatMsgImage: {
-    width: 150,
-    height: 100,
-    borderRadius: 12,
-    margin: 5,
+    width: 180,
+    height: 120,
+    borderRadius: 14,
+    margin: 4,
   },
   sendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 48,
+    height: 44,
   },
   cameraIconBtn: {
-    marginHorizontal: 8,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F8FAFC',
+    marginRight: 6,
+  },
+  sendComponentWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 4,
   },
   sendButton: {
-    marginRight: 10,
     backgroundColor: color.defalt,
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   inputToolbar: {
-    marginHorizontal: 8,
-    marginBottom: 8,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 20,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
     borderTopWidth: 0,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  inputToolbarPrimary: {
+    alignItems: 'center',
   },
   composerInput: {
     color: '#0F172A',
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 20,
+    paddingTop: 8,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)',
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -402,10 +456,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   missingUserText: {
     textAlign: 'center',
-    color: color.defalt,
+    color: '#64748B',
     fontSize: 15,
+    fontWeight: '600',
+    marginTop: 12,
   },
 });

@@ -8,6 +8,7 @@ import {
   Dimensions,
   Platform,
   SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -112,6 +113,8 @@ const ChatScreen = props => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
       <ProflHader
         rightIcon="search"
         screenTitle="Chat"
@@ -121,7 +124,7 @@ const ChatScreen = props => {
 
       {isToggled ? (
         <View style={styles.searchContainer}>
-          <Icons.FontAwesome
+          <Icons.Feather
             name="search"
             size={getResponsiveSize(16, 17, 18)}
             color={color.defalt}
@@ -132,8 +135,8 @@ const ChatScreen = props => {
               { fontSize: getResponsiveSize(14, 15, 16) },
             ]}
             value={searchTerm}
-            placeholder="Search for Chats"
-            placeholderTextColor={color.defalt}
+            placeholder="Search conversations..."
+            placeholderTextColor="#94A3B8"
             onChangeText={setSearchTerm}
           />
         </View>
@@ -142,10 +145,14 @@ const ChatScreen = props => {
       <FlatList
         data={sortedData}
         keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        contentContainerStyle={{ paddingBottom: bottomPadding }}
+        contentContainerStyle={[
+          styles.listContainer,
+          { paddingBottom: bottomPadding },
+        ]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
+            <Icons.Feather name="message-square" size={40} color="#CBD5E1" />
             <Text style={styles.emptyText}>No chats found</Text>
           </View>
         }
@@ -171,38 +178,46 @@ export default ChatScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
   },
   searchContainer: {
     flexDirection: 'row',
-    height: getResponsiveSize(45, 48, 50),
+    height: getResponsiveSize(46, 48, 50),
     alignItems: 'center',
-    paddingHorizontal: getResponsiveSpacing(8, 10, 12),
-    borderRadius: 10,
-    backgroundColor: color.wite,
-    marginHorizontal: getResponsiveSpacing(10, 12, 15),
+    paddingHorizontal: getResponsiveSpacing(12, 14, 16),
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: getResponsiveSpacing(16, 18, 20),
     marginTop: getResponsiveSpacing(8, 10, 12),
-    marginBottom: getResponsiveSpacing(4, 6, 8),
-    elevation: 2,
-    shadowColor: '#000',
+    marginBottom: getResponsiveSpacing(8, 10, 12),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 1,
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.04,
     shadowRadius: 4,
   },
   searchInput: {
     flex: 1,
     paddingLeft: 10,
-    color: color.defalt,
+    color: '#0F172A',
+    fontWeight: '500',
+  },
+  listContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 50,
+    paddingVertical: 60,
   },
   emptyText: {
-    fontSize: getResponsiveSize(14, 16, 18),
-    color: color.gry,
-    fontWeight: '500',
+    fontSize: getResponsiveSize(14, 15, 16),
+    color: '#94A3B8',
+    fontWeight: '600',
+    marginTop: 10,
   },
 });

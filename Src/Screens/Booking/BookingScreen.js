@@ -8,6 +8,7 @@ import {
   FlatList,
   Modal,
   SafeAreaView,
+  StatusBar,
   Share,
 } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -21,7 +22,7 @@ import C_TxtInput from '../../Components/C_TextInput';
 import BotonComp from '../../Components/BtnComp';
 import { BASIC_URL } from '../Signin/Signin';
 
-const BokngScren = () => {
+const BookingScreen = () => {
   const focus = useIsFocused();
   const navigation = useNavigation();
 
@@ -145,7 +146,7 @@ const BokngScren = () => {
             <Icons.FontAwesome
               name={starIndex <= rating ? 'star' : 'star-o'}
               size={32}
-              color={starIndex <= rating ? 'gold' : 'lightgray'}
+              color={starIndex <= rating ? '#F59E0B' : '#CBD5E1'}
             />
           </TouchableOpacity>
         ))}
@@ -155,19 +156,21 @@ const BokngScren = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={submitReviewVisible}
         onRequestClose={() => setSubmitReviewVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalView}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Your Opinion matters to us!</Text>
+              <Text style={styles.modalTitle}>Your Opinion Matters</Text>
               <TouchableOpacity
                 style={styles.cancelCont}
                 onPress={toggleSubmitReview}>
-                <Icons.FontAwesome5 name="times" color={color.wite} size={20} />
+                <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
               </TouchableOpacity>
             </View>
 
@@ -179,7 +182,7 @@ const BokngScren = () => {
                 numberOfLines={4}
                 multiline={true}
                 placeholder="Give your feedback"
-                placeholderTextColor={color.litGry}
+                placeholderTextColor="#94A3B8"
                 onChangeText={(val) => setFeedback(val)}
               />
 
@@ -188,8 +191,8 @@ const BokngScren = () => {
                   sendRating();
                   setSubmitReviewVisible(false);
                 }}
-                BtnStyle={{ marginTop: 20, width: '100%' }}
-                btnText="Submit"
+                BtnStyle={styles.submitBtn}
+                btnText="Submit Review"
               />
             </View>
           </View>
@@ -197,42 +200,42 @@ const BokngScren = () => {
       </Modal>
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={reviewVisible}
         onRequestClose={() => setReviewVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalView}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Book Service</Text>
+              <Text style={styles.modalTitle}>Options</Text>
               <TouchableOpacity
                 style={styles.cancelCont}
                 onPress={() => setReviewVisible(false)}>
-                <Icons.FontAwesome5 name="times" color={color.wite} size={20} />
+                <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.modalBody}>
               <TouchableOpacity style={styles.attachCont}>
-                <Icons.FontAwesome5
-                  name="exclamation-circle"
+                <Icons.Feather
+                  name="alert-circle"
                   size={20}
                   style={styles.attachIcon}
-                  color={color.defalt}
+                  color="#EF4444"
                 />
-                <Text style={styles.labelStyle}>Report</Text>
+                <Text style={[styles.labelStyle, { color: '#EF4444' }]}>Report</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={toggleSubmitReview}
                 style={styles.attachCont}>
-                <Icons.FontAwesome5
-                  name="edit"
+                <Icons.Feather
+                  name="edit-3"
                   size={20}
                   style={styles.attachIcon}
                   color={color.defalt}
                 />
-                <Text style={styles.labelStyle}>Review</Text>
+                <Text style={styles.labelStyle}>Write Review</Text>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={handleShare} style={styles.attachCont}>
@@ -242,7 +245,7 @@ const BokngScren = () => {
                   style={styles.attachIcon}
                   color={color.defalt}
                 />
-                <Text style={styles.labelStyle}>Share</Text>
+                <Text style={styles.labelStyle}>Share Details</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -259,6 +262,7 @@ const BokngScren = () => {
       <FlatList
         data={bookData}
         contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
         keyExtractor={(item, index) =>
           item.booking_id ? item.booking_id.toString() : index.toString()
         }
@@ -282,54 +286,60 @@ const BokngScren = () => {
   );
 };
 
-export default BokngScren;
+export default BookingScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8FAFC',
   },
   listContainer: {
-    paddingHorizontal: 15,
-    paddingTop: 15,
+    paddingHorizontal: 20,
+    paddingTop: 14,
     paddingBottom: 30,
   },
   dateCont: {
-    fontWeight: '400',
-    color: color.gry,
+    fontWeight: '500',
+    color: '#64748B',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   modalView: {
-    borderRadius: 12,
-    width: '85%',
-    backgroundColor: color.wite,
+    borderRadius: 20,
+    width: '100%',
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
-    elevation: 5,
+    elevation: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
   },
   modalHeader: {
-    backgroundColor: color.defalt,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 10,
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   modalTitle: {
-    fontSize: 18,
-    color: color.wite,
-    fontWeight: '600',
+    fontSize: 17,
+    color: '#0F172A',
+    fontWeight: '800',
   },
   cancelCont: {
-    position: 'absolute',
-    right: 15,
+    padding: 2,
   },
   modalBody: {
-    paddingVertical: 20,
+    paddingVertical: 18,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
@@ -337,7 +347,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 15,
+    marginVertical: 14,
   },
   starTouch: {
     paddingHorizontal: 6,
@@ -346,15 +356,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    paddingVertical: 12,
+    paddingVertical: 14,
     width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   attachIcon: {
-    marginRight: 12,
+    marginRight: 14,
   },
   labelStyle: {
-    fontSize: 16,
-    color: color.blak,
-    fontWeight: '500',
+    fontSize: 15,
+    color: '#0F172A',
+    fontWeight: '600',
+  },
+  submitBtn: {
+    width: '100%',
+    backgroundColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginTop: 16,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
 });

@@ -289,7 +289,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 20,
   },
-
   cardWrapper: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,

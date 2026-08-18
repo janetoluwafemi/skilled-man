@@ -3,20 +3,24 @@ import {
   StyleSheet,
   Text,
   View,
-  ImageBackground,
   SafeAreaView,
+  StatusBar,
+  ScrollView,
+  TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import BotonComp from '../../Components/BtnComp';
-import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
 import C_TaxInput from '../../Components/C_Taxinput';
+import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
 
-const AdTax = props => {
+const AddTax = props => {
   const navigation = useNavigation();
   const [description, setDescription] = useState('');
   const [taxId, setTaxId] = useState('');
@@ -54,84 +58,180 @@ const AdTax = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ImageBackground
-        source={require('../../Assets/Images/bg.png')}
-        resizeMode="cover"
-        style={styles.backgroundImg}>
-        <CstmHeaderIcon
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
           onPress={() => props.navigation.goBack()}
-          headerIcon={styles.headerIcon}
-        />
-        <View style={styles.container}>
-          <Text style={styles.accountVer}>Add Tax Detail</Text>
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
+      </View>
 
-          <View style={styles.inputContainer}>
-            <C_TaxInput
-              placeholder="Tax Id"
-              placeholderTextColor={color.defalt}
-              value={taxId}
-              onChangeText={setTaxId}
-            />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <Animatable.View
+          animation="fadeInUp"
+          duration={600}
+          style={styles.formContainer}>
+
+          <View style={styles.badgeRow}>
+            <View style={styles.badgeCircle}>
+              <Icons.Ionicons
+                name="receipt-outline"
+                size={34}
+                color={color.defalt}
+              />
+            </View>
           </View>
 
-          <View style={styles.inputContainer}>
-            <C_TaxInput
-              placeholder="Description"
-              placeholderTextColor={color.defalt}
-              value={description}
-              onChangeText={setDescription}
+          <Text style={styles.welcomeTitle}>Add Tax Detail</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Provide your tax identification number and registration details
+          </Text>
+
+          <View style={styles.cardWrapper}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Tax ID / Identification Number</Text>
+              <C_TaxInput
+                placeholder="e.g. TIN-12345678"
+                placeholderTextColor={color.litGry}
+                value={taxId}
+                onChangeText={setTaxId}
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Description</Text>
+              <C_TaxInput
+                placeholder="e.g. Registered Business Tax Information"
+                placeholderTextColor={color.litGry}
+                value={description}
+                onChangeText={setDescription}
+              />
+            </View>
+
+            <BotonComp
+              BtnStyle={styles.submitBtn}
+              btnText={
+                load ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  'Register'
+                )
+              }
+              onPressFunc={adTxFun}
             />
           </View>
-
-          <BotonComp
-            BtnStyle={styles.BtnStyle}
-            btnText={
-              load ? <ActivityIndicator size="small" color="#fff" /> : 'Register'
-            }
-            onPressFunc={adTxFun}
-          />
-        </View>
-      </ImageBackground>
+        </Animatable.View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
-export default AdTax;
+export default AddTax;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: '#F8FAFC',
   },
-  backgroundImg: {
-    width: '100%',
-    height: '100%',
-  },
-  container: {
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingBottom: 4,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    flexDirection: 'column',
-    width: '80%',
-    flex: 0.8,
+    backgroundColor: '#F8FAFC',
   },
-  inputContainer: {
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  formContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+  },
+  badgeRow: {
+    alignItems: 'center',
     marginBottom: 12,
   },
-  BtnStyle: {
-    marginTop: 25,
+  badgeCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  welcomeTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: 4,
+    lineHeight: 20,
+    paddingHorizontal: 12,
+  },
+  cardWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    marginBottom: 20,
+  },
+  fieldGroup: {
+    marginBottom: 14,
     width: '100%',
   },
-  headerIcon: {
-    paddingLeft: 20,
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 6,
   },
-  accountVer: {
-    color: color.defalt,
-    fontSize: 25,
-    marginBottom: 30,
-    fontWeight: 'bold',
-    marginTop: 20,
+  submitBtn: {
+    width: '100%',
+    backgroundColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginTop: 10,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
 });

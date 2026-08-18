@@ -13,6 +13,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { showToast } from '../../utilis/showToast';
 
 import FltLstCrd from '../../Components/FlatListCard';
+import { Icons } from '../../Components/Icons';
 import color from '../../Assets/colors/colors';
 import { BASIC_URL } from '../Signin/Signin';
 
@@ -77,7 +78,11 @@ const OngoingTabs = props => {
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No ongoing jobs in progress</Text>
+            <Icons.Feather name="clock" size={48} color="#CBD5E1" />
+            <Text style={styles.emptyTitle}>No Ongoing Jobs</Text>
+            <Text style={styles.emptySubtitle}>
+              Jobs currently marked as in progress will appear here.
+            </Text>
           </View>
         }
       />
@@ -90,7 +95,7 @@ export default OngoingTabs;
 const styles = StyleSheet.create({
   flexContainer: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8FAFC',
   },
   container: {
     paddingVertical: 10,
@@ -101,11 +106,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 50,
+    paddingVertical: 80,
   },
-  emptyText: {
+  emptyTitle: {
     fontSize: 16,
-    color: color.gry,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 14,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });

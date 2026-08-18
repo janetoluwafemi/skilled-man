@@ -4,15 +4,16 @@ import {
   Text,
   View,
   Image,
-  ImageBackground,
   Dimensions,
   SafeAreaView,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 import color from '../../Assets/colors/colors';
 import BotonComp from '../../Components/BtnComp';
-import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
+import { Icons } from '../../Components/Icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -21,16 +22,23 @@ const PaymentCongrats = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <ImageBackground
-        source={require('../../Assets/Images/cong.png')}
-        resizeMode="cover"
-        style={styles.backgroundImg}>
-        <CstmHeaderIcon
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
           onPress={() => props.navigation.goBack()}
-          headerIconStyle={styles.headerBackIcon}
-        />
-        <View style={styles.container}>
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.content}>
+        <Animatable.View
+          animation="fadeInUp"
+          duration={600}
+          style={styles.cardWrapper}>
+
           <View style={styles.logoStyle}>
             <Image
               style={styles.logoImg}
@@ -38,17 +46,19 @@ const PaymentCongrats = props => {
               source={require('../../Assets/icons/cong.png')}
             />
           </View>
+
           <Text style={styles.CongText}>Congratulations</Text>
           <Text style={styles.successText}>
             Your request has been successfully completed!
           </Text>
+
           <BotonComp
             BtnStyle={styles.BtnStyle}
             btnText="Ok"
             onPressFunc={() => navigation.navigate('Parent')}
           />
-        </View>
-      </ImageBackground>
+        </Animatable.View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -58,49 +68,81 @@ export default PaymentCongrats;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
-  backgroundImg: {
-    width: '100%',
-    height: '100%',
-  },
-  headerBackIcon: {
-    color: '#0F172A',
-  },
-  container: {
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
-    alignSelf: 'center',
-    flexDirection: 'column',
-    width: '85%',
-    flex: 0.85,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  cardWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    alignItems: 'center',
   },
   logoStyle: {
     justifyContent: 'center',
     width: '100%',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   logoImg: {
-    width: width / 3.5,
-    height: height / 7,
-  },
-  BtnStyle: {
-    marginTop: 45,
-    width: '100%',
+    width: width / 3.2,
+    height: height / 6.5,
   },
   CongText: {
-    color: color.defalt,
+    color: '#0F172A',
     fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontWeight: '800',
+    marginBottom: 8,
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   successText: {
-    fontSize: 16,
+    fontSize: 14,
     textAlign: 'center',
-    color: '#475569',
-    fontWeight: '500',
-    lineHeight: 22,
+    color: '#64748B',
+    lineHeight: 20,
+    paddingHorizontal: 10,
+  },
+  BtnStyle: {
+    marginTop: 30,
+    width: '100%',
+    backgroundColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 14,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
 });

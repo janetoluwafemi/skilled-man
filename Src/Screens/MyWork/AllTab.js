@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
@@ -23,7 +24,7 @@ import { BASIC_URL } from '../Signin/Signin';
 
 const { height } = Dimensions.get('window');
 
-const AlTabs = props => {
+const AllTabs = props => {
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
 
@@ -116,36 +117,43 @@ const AlTabs = props => {
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No bookings available</Text>
+            <Icons.Feather name="inbox" size={48} color="#CBD5E1" />
+            <Text style={styles.emptyTitle}>No Bookings Available</Text>
+            <Text style={styles.emptySubtitle}>
+              All incoming service bookings will appear here.
+            </Text>
           </View>
         }
       />
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={modalVisible}
         onRequestClose={toggleModal}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
+          <Animatable.View animation="zoomIn" duration={300} style={styles.modalView}>
             <View style={styles.modalHeader}>
+              <Text style={styles.modalTitleText}>Update Booking Status</Text>
               <TouchableOpacity onPress={toggleModal}>
-                <Icons.FontAwesome5 name="times" color={color.wite} size={20} />
+                <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.successmodalBody}>
-              <OngoingDrpdwn
-                selectedBusiness={selectedBusiness}
-                setselectedBusiness={setSelectedBusiness}
-              />
+              <View style={styles.dropdownWrapper}>
+                <OngoingDrpdwn
+                  selectedBusiness={selectedBusiness}
+                  setselectedBusiness={setSelectedBusiness}
+                />
+              </View>
             </View>
 
             <View style={styles.btnContainer}>
               <BotonComp
                 BtnStyle={styles.acceptStyle}
                 btnTextStyle={styles.btnTextStyle}
-                btnText="Submit"
+                btnText="Update Status"
                 onPressFunc={() => {
                   if (selectedBookingId) {
                     changeStatus(selectedBookingId);
@@ -156,19 +164,19 @@ const AlTabs = props => {
                 }}
               />
             </View>
-          </View>
+          </Animatable.View>
         </View>
       </Modal>
     </View>
   );
 };
 
-export default AlTabs;
+export default AllTabs;
 
 const styles = StyleSheet.create({
   flexContainer: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8FAFC',
   },
   container: {
     paddingVertical: 10,
@@ -179,50 +187,80 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 50,
+    paddingVertical: 80,
   },
-  emptyText: {
+  emptyTitle: {
     fontSize: 16,
-    color: color.gry,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 14,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   modalView: {
-    borderRadius: 12,
-    width: '85%',
-    backgroundColor: color.wite,
+    borderRadius: 20,
+    width: '100%',
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
-    elevation: 5,
+    elevation: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
   },
   modalHeader: {
-    backgroundColor: color.defalt,
-    alignItems: 'flex-end',
-    paddingVertical: 14,
-    paddingHorizontal: 15,
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  modalTitleText: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   successmodalBody: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingVertical: 20,
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
+    width: '100%',
+  },
+  dropdownWrapper: {
+    width: '100%',
   },
   btnContainer: {
     width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
     paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   acceptStyle: {
     width: '100%',
+    backgroundColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 14,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   btnTextStyle: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

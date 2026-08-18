@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, Image, StyleSheet, Text, View } from 'react-native';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import { FlatList, Image, StyleSheet, Text, View, StatusBar } from 'react-native';
 import color from '../../Assets/colors/colors';
+import { Icons } from '../../Components/Icons';
 import SearchHeader from './SearchHeader';
 
 const dummyData = [
@@ -47,21 +47,19 @@ const Cash = () => {
         />
         <View style={styles.infoCol}>
           <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.balance}>{item.date}</Text>
+          <Text style={styles.dateText}>{item.date}</Text>
         </View>
       </View>
       <View style={styles.rightCol}>
-        <Text style={styles.name}>Balance:</Text>
-        <Text style={styles.balance}>
-          <FontAwesome6 name="registered" color={color.defalt} size={15} />{' '}
-          {item.balance}
-        </Text>
+        <Text style={styles.balanceLabel}>Balance</Text>
+        <Text style={styles.balance}>₦ {item.balance}</Text>
       </View>
     </View>
   );
 
   return (
     <View style={styles.flexFill}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <SearchHeader
         onSearch={handleSearch}
         searchQuery={searchQuery}
@@ -76,7 +74,11 @@ const Cash = () => {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyBox}>
-              <Text style={styles.emptyText}>No cash records found</Text>
+              <Icons.Feather name="dollar-sign" size={48} color="#CBD5E1" />
+              <Text style={styles.emptyTitle}>No Cash Records Found</Text>
+              <Text style={styles.emptySubtitle}>
+                No transactions matched your search query.
+              </Text>
             </View>
           }
         />
@@ -90,37 +92,44 @@ export default Cash;
 const styles = StyleSheet.create({
   flexFill: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
   },
   listWrapper: {
     flex: 1,
-    marginTop: 10,
   },
   listContent: {
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 30,
+    flexGrow: 1,
   },
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'white',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     elevation: 2,
-    marginBottom: 8,
-    marginTop: 8,
-    alignSelf: 'center',
-    width: '90%',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    marginBottom: 12,
   },
   leftRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    marginRight: 10,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#E2E8F0',
   },
   infoCol: {
     marginLeft: 12,
@@ -132,19 +141,42 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '700',
-    color: color.defalt,
-    marginBottom: 4,
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  balanceLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: 2,
   },
   balance: {
-    fontSize: 14,
-    fontWeight: '400',
+    fontSize: 15,
+    fontWeight: '800',
+    color: color.defalt,
+  },
+  dateText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '500',
   },
   emptyBox: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 80,
   },
-  emptyText: {
-    fontSize: 14,
-    color: color.gry,
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 14,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });

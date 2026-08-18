@@ -8,23 +8,21 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Dimensions,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
-import CstmHeader from '../../Components/CustomHeader';
 import { Icons } from '../../Components/Icons';
 import BotonComp from '../../Components/BtnComp';
 import InputEdtProfil from '../../Components/InputEditProfile';
 import { BASIC_URL } from '../Signin/Signin';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const EdtUsrProfil = () => {
+const EditUserProfile = () => {
   const navigation = useNavigation();
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
@@ -176,95 +174,155 @@ const EdtUsrProfil = () => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <CstmHeader
-        title="Edit Profile"
-        onPressBack={() => navigation.goBack()}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: insets.bottom + 20 },
         ]}
-        keyboardShouldPersistTaps="handled">
-        <View style={styles.container}>
-          <View style={styles.imageContainer}>
-            <Image
-              source={
-                image
-                  ? { uri: image.uri }
-                  : profileData?.profile
-                    ? { uri: `${BASIC_URL}uploads/${profileData.profile}` }
-                    : require('../../Assets/Images/user.jpg')
-              }
-              style={styles.profileImage}
-            />
-            <TouchableOpacity onPress={onGalry} style={styles.cameraButton}>
-              <Icons.FontAwesome name="camera" color={color.wite} size={18} />
-            </TouchableOpacity>
-          </View>
-
-          <InputEdtProfil
-            value={name}
-            placeholder="Name"
-            onChangeText={setName}
-            icon="user"
-          />
-          <InputEdtProfil
-            value={email}
-            placeholder="Email"
-            editable={false}
-            icon="mail"
-          />
-          <InputEdtProfil
-            value={phone}
-            placeholder="Phone Number"
-            onChangeText={setPhone}
-            icon="phone"
-          />
-
-          <View style={styles.relativeBox}>
-            <InputEdtProfil
-              value={address}
-              placeholder="Address"
-              onChangeText={setAddress}
-              icon="map-pin"
-              multiline={true}
-            />
-            {addressLoading && (
-              <ActivityIndicator
-                size="small"
-                color={color.defalt}
-                style={styles.addressLoader}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <Animatable.View animation="fadeInUp" duration={600} style={styles.container}>
+          <View style={styles.cardWrapper}>
+            <View style={styles.imageContainer}>
+              <Image
+                source={
+                  image
+                    ? { uri: image.uri }
+                    : profileData?.profile
+                      ? { uri: `${BASIC_URL}uploads/${profileData.profile}` }
+                      : require('../../Assets/Images/user.jpg')
+                }
+                style={styles.profileImage}
               />
-            )}
+              <TouchableOpacity activeOpacity={0.8} onPress={onGalry} style={styles.cameraButton}>
+                <Icons.Feather name="camera" color="#FFFFFF" size={16} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Full Name</Text>
+              <InputEdtProfil
+                value={name}
+                placeholder="Name"
+                placeholderTextColor="#94A3B8"
+                onChangeText={setName}
+                icon="user"
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Email Address</Text>
+              <InputEdtProfil
+                value={email}
+                placeholder="Email"
+                placeholderTextColor="#94A3B8"
+                editable={false}
+                icon="mail"
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Phone Number</Text>
+              <InputEdtProfil
+                value={phone}
+                placeholder="Phone Number"
+                placeholderTextColor="#94A3B8"
+                onChangeText={setPhone}
+                keyboardType="numeric"
+                icon="phone"
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Address</Text>
+              <View style={styles.relativeBox}>
+                <InputEdtProfil
+                  value={address}
+                  placeholder="Address"
+                  placeholderTextColor="#94A3B8"
+                  onChangeText={setAddress}
+                  icon="map-pin"
+                  multiline={true}
+                />
+                {addressLoading && (
+                  <ActivityIndicator
+                    size="small"
+                    color={color.defalt}
+                    style={styles.addressLoader}
+                  />
+                )}
+              </View>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.mapBtnStyle}
+              onPress={() => navigation.navigate('Maplatln')}>
+              <Icons.Feather name="map" size={16} color={color.defalt} style={{ marginRight: 8 }} />
+              <Text style={styles.mapBtnText}>Select Location from Map</Text>
+            </TouchableOpacity>
+
+            <BotonComp
+              BtnStyle={styles.BtnStyle}
+              onPressFunc={handleUpdate}
+              btnText={
+                load ? <ActivityIndicator color="#fff" size="small" /> : 'Update Profile'
+              }
+            />
           </View>
-
-          <BotonComp
-            BtnStyle={styles.mapBtnStyle}
-            onPressFunc={() => navigation.navigate('Maplatln')}
-            btnText="Select Location from Map"
-          />
-
-          <BotonComp
-            BtnStyle={styles.BtnStyle}
-            onPressFunc={handleUpdate}
-            btnText={
-              load ? <ActivityIndicator color="#fff" /> : 'Update Profile'
-            }
-          />
-        </View>
+        </Animatable.View>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-export default EdtUsrProfil;
+export default EditUserProfile;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
+  },
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+  },
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   scrollView: {
     flex: 1,
@@ -273,48 +331,98 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   container: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 20,
+  },
+  cardWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    marginBottom: 16,
   },
   imageContainer: {
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
     position: 'relative',
+    alignSelf: 'center',
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     borderWidth: 3,
-    borderColor: color.defalt,
-    marginVertical: 15,
+    borderColor: '#FFFFFF',
+    backgroundColor: '#E2E8F0',
   },
   cameraButton: {
     position: 'absolute',
-    backgroundColor: color.drkGry,
-    width: 36,
-    height: 36,
+    bottom: 2,
+    right: 2,
+    backgroundColor: color.defalt,
     borderRadius: 18,
-    alignItems: 'center',
+    width: 32,
+    height: 32,
     justifyContent: 'center',
-    bottom: 15,
-    right: SCREEN_WIDTH * 0.35,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  fieldGroup: {
+    marginBottom: 12,
+    width: '100%',
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 6,
   },
   relativeBox: {
     position: 'relative',
   },
+  addressLoader: {
+    position: 'absolute',
+    right: 14,
+    top: 14,
+  },
   mapBtnStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingVertical: 12,
+    marginVertical: 8,
     width: '100%',
-    marginTop: 20,
-    backgroundColor: 'orange',
-    borderWidth: 0,
+  },
+  mapBtnText: {
+    color: color.defalt,
+    fontSize: 14,
+    fontWeight: '700',
   },
   BtnStyle: {
     width: '100%',
-    marginTop: 25,
-  },
-  addressLoader: {
-    position: 'absolute',
-    right: 15,
-    top: 22,
+    backgroundColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginTop: 12,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
 });

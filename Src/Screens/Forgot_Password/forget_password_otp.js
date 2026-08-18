@@ -10,7 +10,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
-  Image,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -21,7 +20,7 @@ import { BASIC_URL } from '../Signin/Signin';
 import { Icons } from '../../Components/Icons';
 import { showToast } from '../../utilis/showToast';
 
-const FrgtpaswrdOtpScren = props => {
+const ForgotPasswordOtpScreen = props => {
   const navigation = useNavigation();
   const route = useRoute();
 
@@ -111,19 +110,20 @@ const FrgtpaswrdOtpScren = props => {
           duration={600}
           style={styles.formContainer}>
 
-          <View style={styles.logoRow}>
-            <View style={styles.logoCircle}>
-              <Image
-                source={require('../../Assets/Images/logo.png')}
-                style={styles.logoImage}
-                resizeMode="contain"
+          <View style={styles.badgeRow}>
+            <View style={styles.badgeCircle}>
+              <Icons.Ionicons
+                name="shield-checkmark"
+                size={36}
+                color={color.defalt}
               />
             </View>
           </View>
 
-          <Text style={styles.welcomeTitle}>Account Verification</Text>
+          <Text style={styles.welcomeTitle}>Enter Security Code</Text>
           <Text style={styles.welcomeSubtitle}>
-            Enter the 4-digit code sent to your registered email address
+            Enter the 4-digit code sent to{' '}
+            <Text style={styles.highlightText}>{emailParam || 'your email'}</Text>
           </Text>
 
           <View style={styles.cardWrapper}>
@@ -182,6 +182,12 @@ const FrgtpaswrdOtpScren = props => {
               />
             </View>
 
+            <BotonComp
+              BtnStyle={styles.submitBtn}
+              btnText="Verify OTP"
+              onPressFunc={handleSubmit}
+            />
+
             <View style={styles.resendRow}>
               <Text style={styles.resendText}>Didn't receive any code? </Text>
               <TouchableOpacity onPress={handleResendOtp} disabled={loading}>
@@ -192,12 +198,6 @@ const FrgtpaswrdOtpScren = props => {
                 )}
               </TouchableOpacity>
             </View>
-
-            <BotonComp
-              BtnStyle={styles.submitBtn}
-              btnText="Verify OTP"
-              onPressFunc={handleSubmit}
-            />
           </View>
 
           <View style={styles.footerRow}>
@@ -212,7 +212,7 @@ const FrgtpaswrdOtpScren = props => {
   );
 };
 
-export default FrgtpaswrdOtpScren;
+export default ForgotPasswordOtpScreen;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -248,14 +248,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 4,
   },
-  logoRow: {
+  badgeRow: {
     alignItems: 'center',
     marginBottom: 12,
   },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  badgeCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -264,10 +264,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
-  },
-  logoImage: {
-    width: 52,
-    height: 52,
   },
   welcomeTitle: {
     fontSize: 26,
@@ -285,47 +281,66 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     lineHeight: 20,
   },
-
+  highlightText: {
+    color: '#0F172A',
+    fontWeight: '700',
+  },
   cardWrapper: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 18,
+    padding: 20,
     elevation: 2,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
     marginBottom: 20,
+    alignItems: 'center',
   },
   otpRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginVertical: 10,
-    paddingHorizontal: 4,
+    marginVertical: 12,
   },
   otpBox: {
-    width: 56,
-    height: 56,
+    width: 58,
+    height: 58,
     borderRadius: 14,
     backgroundColor: '#F8FAFC',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
   },
   otpBoxActive: {
-    backgroundColor: '#FFFFFF',
     borderColor: color.defalt,
-    color: color.defalt,
+    backgroundColor: '#FFFFFF',
+    elevation: 2,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  submitBtn: {
+    width: '100%',
+    backgroundColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginTop: 18,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   resendRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 18,
+    marginTop: 22,
   },
   resendText: {
     fontSize: 13,
@@ -336,24 +351,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: color.defalt,
   },
-  submitBtn: {
-    width: '100%',
-    backgroundColor: color.defalt,
-    borderRadius: 14,
-    paddingVertical: 14,
-    marginTop: 4,
-    elevation: 3,
-    shadowColor: color.defalt,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-  },
-
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 8,
   },
   footerText: {
     color: '#64748B',

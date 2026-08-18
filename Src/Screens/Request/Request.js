@@ -11,15 +11,16 @@ import {
     Linking,
     Platform,
     Modal,
+    StatusBar,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
 import color from '../../Assets/colors/colors';
-import HomStakWSarch from '../../Components/HomeStackWithSearch';
+import HomeStakWSearch from '../../Components/HomeStackWithSearch';
 import { Icons } from '../../Components/Icons';
 import FltLstCrd from '../../Components/FlatListCard';
-import BotonComp from '../../Components/BtnComp';
 import { BASIC_URL } from '../Signin/Signin';
 
 const { height, width } = Dimensions.get('window');
@@ -115,7 +116,9 @@ const RequestScreen = () => {
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-            <HomStakWSarch
+            <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+            <HomeStakWSearch
                 onPress={() => navigation.openDrawer()}
                 onPressnotification={() => navigation.navigate('edit_profile')}
                 onChangeText={val => setSearchTerm(val)}
@@ -147,24 +150,29 @@ const RequestScreen = () => {
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>No requests found</Text>
+                        <Icons.Feather name="inbox" size={48} color="#CBD5E1" />
+                        <Text style={styles.emptyTitle}>No Booking Requests</Text>
+                        <Text style={styles.emptySubtitle}>
+                            New customer service requests will appear here.
+                        </Text>
                     </View>
                 }
             />
 
             <Modal
-                animationType="slide"
+                animationType="fade"
                 transparent={true}
                 visible={modalVisible}
                 onRequestClose={() => setModalVisible(false)}>
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalView}>
+                    <Animatable.View animation="zoomIn" duration={300} style={styles.modalView}>
                         <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitleText}>Request Details</Text>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <Icons.FontAwesome5
-                                    name="times"
-                                    color={color.wite}
-                                    size={20}
+                                <Icons.Ionicons
+                                    name="close-circle"
+                                    color="#94A3B8"
+                                    size={24}
                                 />
                             </TouchableOpacity>
                         </View>
@@ -189,6 +197,12 @@ const RequestScreen = () => {
                             </Text>
 
                             <View style={styles.dateTimeCont}>
+                                <Icons.Feather
+                                    name="calendar"
+                                    size={14}
+                                    color={color.defalt}
+                                    style={{ marginRight: 6 }}
+                                />
                                 <Text style={styles.dateStyle}>
                                     {currentItem?.service_date}
                                 </Text>
@@ -201,44 +215,50 @@ const RequestScreen = () => {
                             </View>
 
                             {currentItem?.file ? (
-                                <View style={styles.dateTimeCont}>
+                                <View style={styles.fileRowCont}>
                                     <TouchableOpacity
                                         onPress={openFile}
                                         style={styles.fileBtn}>
-                                        <Icons.FontAwesome
-                                            name="file-text"
-                                            size={20}
-                                            color={color.drkGry}
+                                        <Icons.Feather
+                                            name="paperclip"
+                                            size={15}
+                                            color={color.defalt}
+                                            style={{ marginRight: 6 }}
                                         />
-
-                                        <Text style={styles.bookingStyle}>
-                                            {' '}Service Detail
+                                        <Text style={styles.fileBtnText}>
+                                            View Service Attachment
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
                             ) : null}
 
-                            <TouchableOpacity>
+                            <TouchableOpacity activeOpacity={0.7} style={styles.getDirBtn}>
+                                <Icons.Feather
+                                    name="navigation"
+                                    size={14}
+                                    color={color.defalt}
+                                    style={{ marginRight: 6 }}
+                                />
                                 <Text style={styles.getDir}>Get Direction</Text>
                             </TouchableOpacity>
                         </View>
 
                         <View style={styles.btnContainer}>
-                            <BotonComp
-                                BtnStyle={styles.acceptStyle}
-                                btnTextStyle={styles.btnTextStyle}
-                                btnText="Accept"
-                                onPressFunc={() => changeStatus('progress')}
-                            />
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                style={styles.acceptBtn}
+                                onPress={() => changeStatus('progress')}>
+                                <Text style={styles.acceptBtnText}>Accept</Text>
+                            </TouchableOpacity>
 
-                            <BotonComp
-                                BtnStyle={styles.rejectStyle}
-                                btnTextStyle={styles.btnTextStyle}
-                                btnText="Reject"
-                                onPressFunc={() => changeStatus('reject')}
-                            />
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                style={styles.rejectBtn}
+                                onPress={() => changeStatus('reject')}>
+                                <Text style={styles.rejectBtnText}>Reject</Text>
+                            </TouchableOpacity>
                         </View>
-                    </View>
+                    </Animatable.View>
                 </View>
             </Modal>
         </SafeAreaView>
@@ -250,107 +270,173 @@ export default RequestScreen;
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#F8FAFC',
     },
     cardContainer: {
-        paddingHorizontal: 15,
-        paddingTop: 40,
+        paddingHorizontal: 20,
+        paddingTop: 16,
         flexGrow: 1,
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 50,
+        paddingVertical: 80,
     },
-    emptyText: {
+    emptyTitle: {
         fontSize: 16,
-        color: color.gry,
-        fontWeight: '500',
+        fontWeight: '700',
+        color: '#0F172A',
+        marginTop: 14,
+    },
+    emptySubtitle: {
+        fontSize: 13,
+        color: '#64748B',
+        marginTop: 4,
+        textAlign: 'center',
+        paddingHorizontal: 20,
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(15, 23, 42, 0.4)',
         justifyContent: 'center',
         alignItems: 'center',
+        paddingHorizontal: 20,
     },
     modalView: {
-        borderRadius: 12,
-        width: '85%',
-        backgroundColor: color.wite,
+        borderRadius: 20,
+        width: '100%',
+        backgroundColor: '#FFFFFF',
         overflow: 'hidden',
-        elevation: 5,
+        elevation: 4,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
     },
     modalHeader: {
-        backgroundColor: color.defalt,
-        alignItems: 'flex-end',
+        backgroundColor: '#FFFFFF',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         paddingVertical: 14,
-        paddingHorizontal: 15,
+        paddingHorizontal: 18,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F1F5F9',
+    },
+    modalTitleText: {
+        fontSize: 16,
+        fontWeight: '800',
+        color: '#0F172A',
     },
     successmodalBody: {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 15,
-        paddingHorizontal: 15,
+        paddingVertical: 18,
+        paddingHorizontal: 18,
     },
     logoImg: {
-        width: width / 4,
-        height: width / 4,
-        marginTop: -40,
-        borderRadius: (width / 4) / 2,
-        borderWidth: 2,
-        borderColor: color.wite,
+        width: 76,
+        height: 76,
+        borderRadius: 38,
+        borderWidth: 3,
+        borderColor: '#F8FAFC',
+        backgroundColor: '#E2E8F0',
+        marginBottom: 8,
     },
     pendAppr: {
-        fontWeight: 'bold',
-        fontSize: 17,
-        color: color.blak,
-        paddingVertical: 5,
+        fontWeight: '800',
+        fontSize: 18,
+        color: '#0F172A',
+        marginTop: 4,
     },
     bookingStyle: {
-        fontSize: 14,
-        color: color.gry,
-        fontWeight: '400',
+        fontSize: 13,
+        color: '#64748B',
+        fontWeight: '500',
+        marginTop: 2,
     },
     dateTimeCont: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
         paddingVertical: 6,
+        marginTop: 4,
     },
     dateStyle: {
-        fontSize: 14,
-        color: color.ylow,
-        fontWeight: '400',
+        fontSize: 13,
+        color: '#0F172A',
+        fontWeight: '700',
+    },
+    fileRowCont: {
+        marginVertical: 6,
     },
     fileBtn: {
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: '#F8FAFC',
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    fileBtnText: {
+        fontSize: 12,
+        color: color.defalt,
+        fontWeight: '700',
+    },
+    getDirBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 6,
+        paddingVertical: 4,
+    },
+    getDir: {
+        color: color.defalt,
+        fontWeight: '700',
+        fontSize: 13,
     },
     btnContainer: {
         width: '100%',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 18,
         flexDirection: 'row',
-        paddingHorizontal: 20,
+        paddingHorizontal: 18,
     },
-    btnTextStyle: {
-        fontSize: 13,
+    acceptBtn: {
+        width: '48%',
+        backgroundColor: color.defalt,
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 2,
+        shadowColor: color.defalt,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
     },
-    acceptStyle: {
-        width: '47%',
-    },
-    rejectStyle: {
-        backgroundColor: color.rd,
-        borderColor: color.rd,
-        borderWidth: 2,
-        width: '47%',
-    },
-    getDir: {
-        color: color.defalt,
+    acceptBtnText: {
+        color: '#FFFFFF',
         fontWeight: '700',
-        paddingTop: 5,
+        fontSize: 14,
+    },
+    rejectBtn: {
+        width: '48%',
+        backgroundColor: '#FEF2F2',
+        borderWidth: 1,
+        borderColor: '#FCA5A5',
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    rejectBtnText: {
+        color: '#EF4444',
+        fontWeight: '700',
+        fontSize: 14,
     },
 });

@@ -8,9 +8,11 @@ import {
   ScrollView,
   Alert,
   Modal,
+  StatusBar,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import HeaderWSarchFiltr from '../../Components/HeaderWithSearchFilter';
@@ -21,7 +23,7 @@ import { BASIC_URL } from '../Signin/Signin';
 
 const { height } = Dimensions.get('window');
 
-const UsrDshbord = () => {
+const UserDashboard = () => {
   const isFocused = useIsFocused();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -95,7 +97,9 @@ const UsrDshbord = () => {
     height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
 
   return (
-    <View style={styles.flexContainer}>
+    <SafeAreaView style={styles.flexContainer} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
       <HeaderWSarchFiltr
         onPress={() => navigation.openDrawer()}
         onPressNotifiction={() => navigation.navigate('notification_screen')}
@@ -114,31 +118,34 @@ const UsrDshbord = () => {
           { paddingBottom: bottomPadding },
         ]}
         showsVerticalScrollIndicator={false}>
-        <View style={styles.gridContainer}>
-          {filteredData.map((itemdata, ind) => (
-            <SrvicCrd
-              key={ind}
-              showProfile={() => fetchSpecificData(itemdata.select_bussiness)}
-              serviceTitle={itemdata.select_bussiness}
-              iconUrl={`${BASIC_URL}uploads/${itemdata.image}`}
-            />
-          ))}
-        </View>
+        <Animatable.View animation="fadeInUp" duration={600}>
+          <View style={styles.gridContainer}>
+            {filteredData.map((itemdata, ind) => (
+              <SrvicCrd
+                key={ind}
+                showProfile={() => fetchSpecificData(itemdata.select_bussiness)}
+                serviceTitle={itemdata.select_bussiness}
+                iconUrl={`${BASIC_URL}uploads/${itemdata.image}`}
+              />
+            ))}
+          </View>
+        </Animatable.View>
       </ScrollView>
 
+      {/* Disclaimer Modal */}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
+          <Animatable.View animation="zoomIn" duration={300} style={styles.modalView}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Disclaimer Notice</Text>
             </View>
 
             <View style={styles.modalBody}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} style={styles.disclaimerScroll}>
                 <Text style={styles.disclaimerText}>
                   The following disclaimer outlines the terms of use for the
                   Skilledman App, a platform designed to connect artisans and
@@ -178,28 +185,28 @@ const UsrDshbord = () => {
                 <BotonComp
                   BtnStyle={styles.acceptStyle}
                   btnTextStyle={styles.btnTextStyle}
-                  btnText="Agree"
+                  btnText="I Understand & Agree"
                   onPressFunc={() => setModalVisible(false)}
                 />
               </View>
             </View>
-          </View>
+          </Animatable.View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
-export default UsrDshbord;
+export default UserDashboard;
 
 const styles = StyleSheet.create({
   flexContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
   },
   scrollStyle: {
-    paddingHorizontal: 15,
-    paddingTop: 15,
+    paddingHorizontal: 20,
+    paddingTop: 12,
   },
   scrollContent: {
     flexGrow: 1,
@@ -212,50 +219,66 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
   },
   modalView: {
-    borderRadius: 12,
+    borderRadius: 20,
     width: '100%',
     maxHeight: '75%',
-    backgroundColor: color.wite,
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
-    elevation: 5,
+    elevation: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
   },
   modalHeader: {
-    backgroundColor: color.defalt,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   modalTitle: {
     fontSize: 18,
-    color: color.wite,
-    fontWeight: '700',
+    color: '#0F172A',
+    fontWeight: '800',
   },
   modalBody: {
-    padding: 15,
+    padding: 18,
     flex: 1,
   },
+  disclaimerScroll: {
+    maxHeight: height * 0.4,
+  },
   disclaimerText: {
-    color: '#334155',
-    textAlign: 'justify',
+    color: '#475569',
+    textAlign: 'left',
     lineHeight: 22,
     fontSize: 13,
   },
   btnContainer: {
     width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 15,
+    marginTop: 16,
   },
   acceptStyle: {
     width: '100%',
+    backgroundColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 14,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   btnTextStyle: {
     fontSize: 14,
+    fontWeight: '700',
   },
 });

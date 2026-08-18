@@ -6,32 +6,16 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
-  Dimensions,
   ScrollView,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Switch } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 
 import { Icons } from '../../Components/Icons';
 import color from '../../Assets/colors/colors';
-import CstmHeader from '../../Components/CustomHeader';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const isSmallDevice = SCREEN_HEIGHT < 700;
-const isMediumDevice = SCREEN_HEIGHT >= 700 && SCREEN_HEIGHT < 900;
-
-const getResponsiveSize = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
-
-const getResponsiveSpacing = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
 
 const AccSetting = props => {
   const [isSwitchOn, setIsSwitchOn] = useState(false);
@@ -66,72 +50,87 @@ const AccSetting = props => {
     }
   };
 
-  const iconSize = getResponsiveSize(26, 28, 30);
-  const arrowIconSize = getResponsiveSize(24, 26, 28);
   const bottomPadding =
-    Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 20;
+    Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 24;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <CstmHeader
-        title="Settings"
-        onPressBack={() => props.navigation.goBack()}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => props.navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={22} color="#0F172A" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Settings</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView
-        style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: bottomPadding },
         ]}
         showsVerticalScrollIndicator={false}>
-        <View style={styles.accountContainer}>
-          <Icons.FontAwesome
-            name="user-circle-o"
-            size={iconSize}
-            color={color.defalt}
-          />
-          <Text style={styles.headStyle}>Account</Text>
-        </View>
+        <Animatable.View animation="fadeInUp" duration={500}>
 
-        <View style={styles.settingsSection}>
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={() => navigation.navigate('editUserProfile')}
-            activeOpacity={0.7}>
-            <Text style={styles.subTitle}>Edit Profile</Text>
-            <Icons.FontAwesome
-              name="angle-right"
-              color={color.gry}
-              size={arrowIconSize}
-            />
-          </TouchableOpacity>
+          {/* Account Section */}
+          <Text style={styles.sectionLabel}>Account</Text>
+          <View style={styles.cardWrapper}>
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => navigation.navigate('editUserProfile')}
+              activeOpacity={0.7}>
+              <View style={styles.settingLeft}>
+                <View style={styles.iconCircle}>
+                  <Icons.Feather name="user" size={18} color={color.defalt} />
+                </View>
+                <Text style={styles.settingTitle}>Edit Profile</Text>
+              </View>
+              <Icons.Feather name="chevron-right" color="#94A3B8" size={18} />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.settingButton}
-            onPress={() => navigation.navigate('ChangePassword')}
-            activeOpacity={0.7}>
-            <Text style={styles.subTitle}>Change Password</Text>
-            <Icons.FontAwesome
-              name="angle-right"
-              color={color.gry}
-              size={arrowIconSize}
-            />
-          </TouchableOpacity>
-        </View>
+            <View style={styles.divider} />
 
-        <View style={[styles.accountContainer, styles.notificationHeader]}>
-          <Icons.FontAwesome name="bell" size={iconSize} color={color.defalt} />
-          <Text style={styles.headStyle}>Notification</Text>
-        </View>
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => navigation.navigate('ChangePassword')}
+              activeOpacity={0.7}>
+              <View style={styles.settingLeft}>
+                <View style={styles.iconCircle}>
+                  <Icons.Feather name="lock" size={18} color={color.defalt} />
+                </View>
+                <Text style={styles.settingTitle}>Change Password</Text>
+              </View>
+              <Icons.Feather name="chevron-right" color="#94A3B8" size={18} />
+            </TouchableOpacity>
+          </View>
 
-        <View style={[styles.settingButton, styles.notificationSetting]}>
-          <Text style={styles.subTitle}>Notification</Text>
-          <Switch
-            color="#c07a50"
-            value={isSwitchOn}
-            onValueChange={toggleSwitch}
-          />
-        </View>
+          {/* Notifications Section */}
+          <Text style={styles.sectionLabel}>Preferences</Text>
+          <View style={styles.cardWrapper}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingLeft}>
+                <View style={styles.iconCircle}>
+                  <Icons.Feather name="bell" size={18} color={color.defalt} />
+                </View>
+                <View>
+                  <Text style={styles.settingTitle}>Push Notifications</Text>
+                  <Text style={styles.settingSubtitle}>
+                    Receive job updates and alerts
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                color={color.defalt}
+                value={isSwitchOn}
+                onValueChange={toggleSwitch}
+              />
+            </View>
+          </View>
+        </Animatable.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -142,48 +141,96 @@ export default AccSetting;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  accountContainer: {
-    padding: getResponsiveSpacing(15, 18, 20),
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 0.3,
-    borderColor: color.gry,
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
   },
-  notificationHeader: {
-    marginTop: getResponsiveSpacing(15, 18, 20),
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  settingsSection: {
-    paddingHorizontal: getResponsiveSpacing(15, 18, 20),
-    paddingVertical: getResponsiveSpacing(4, 5, 6),
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  settingButton: {
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    marginTop: 12,
+    marginLeft: 4,
+  },
+  cardWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    marginBottom: 12,
+  },
+  settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: getResponsiveSpacing(15, 18, 20),
-    paddingVertical: getResponsiveSpacing(8, 10, 12),
+    paddingVertical: 12,
   },
-  notificationSetting: {
-    paddingHorizontal: getResponsiveSpacing(15, 18, 20),
-    marginTop: 0,
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
-  headStyle: {
-    fontSize: getResponsiveSize(18, 19, 20),
-    fontWeight: '600',
-    color: color.defalt,
-    paddingLeft: getResponsiveSpacing(6, 8, 10),
+  iconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
-  subTitle: {
-    fontSize: getResponsiveSize(16, 18, 20),
-    fontWeight: '500',
-    color: color.drkGry,
+  settingTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  settingSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginLeft: 50,
   },
 });

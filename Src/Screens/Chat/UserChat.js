@@ -1,14 +1,15 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView, SafeAreaView } from 'react-native';
+import { StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ProflHader from '../../Components/ProfileHeader';
 import ProflCrd from '../../Components/ProfileCard';
 
-const UsrCht = () => {
+const UserChat = () => {
   const navigation = useNavigation();
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <ProflHader
         rightIcon="search"
         screenTitle="Chat"
@@ -59,18 +60,19 @@ const UsrCht = () => {
   );
 };
 
-export default UsrCht;
+export default UserChat;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 15,
-    paddingVertical: 15,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 30,
   },
 });

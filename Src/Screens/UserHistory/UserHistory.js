@@ -6,12 +6,15 @@ import {
   Dimensions,
   FlatList,
   Platform,
+  StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 import color from '../../Assets/colors/colors';
 import BookingCrd from '../../Components/BookingCard';
-import CstmHeader from '../../Components/CustomHeader';
+import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
 
 const { height } = Dimensions.get('window');
@@ -31,7 +34,7 @@ const getResponsiveSpacing = (small, medium, large) => {
   return large;
 };
 
-const UsrHstry = () => {
+const UserHistory = () => {
   const navigation = useNavigation();
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
@@ -66,10 +69,19 @@ const UsrHstry = () => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <CstmHeader
-        title="History"
-        onPressBack={() => navigation.goBack()}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Booking History</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <FlatList
         data={bookData}
         keyExtractor={(item, index) => item.booking_id?.toString() || index.toString()}
@@ -91,7 +103,11 @@ const UsrHstry = () => {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No booking history found</Text>
+            <Icons.Feather name="clock" size={48} color="#CBD5E1" />
+            <Text style={styles.emptyTitle}>No Booking History</Text>
+            <Text style={styles.emptySubtitle}>
+              Completed and previous service bookings will appear here.
+            </Text>
           </View>
         }
       />
@@ -99,31 +115,66 @@ const UsrHstry = () => {
   );
 };
 
-export default UsrHstry;
+export default UserHistory;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
+  },
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+  },
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   cardContainer: {
-    paddingHorizontal: getResponsiveSpacing(12, 15, 18),
-    paddingTop: getResponsiveSpacing(8, 10, 12),
+    paddingHorizontal: getResponsiveSpacing(16, 20, 24),
+    paddingTop: getResponsiveSpacing(10, 14, 16),
     flexGrow: 1,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 50,
+    paddingVertical: 80,
   },
-  emptyText: {
-    fontSize: getResponsiveSize(14, 16, 18),
-    color: color.gry,
-    fontWeight: '500',
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 14,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   dateCont: {
-    fontWeight: '400',
-    color: color.gry,
+    fontWeight: '500',
+    color: '#64748B',
   },
 });

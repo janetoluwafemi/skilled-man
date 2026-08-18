@@ -9,6 +9,7 @@ import {
   StatusBar,
   Platform,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Formik } from 'formik';
@@ -18,8 +19,8 @@ import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import C_InputScurEntry from '../../Components/C_InputSecureEntry';
-import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
 import BotonComp from '../../Components/BtnComp';
+import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
 
 const validationSchema = yup.object().shape({
@@ -37,7 +38,7 @@ const validationSchema = yup.object().shape({
     .oneOf([yup.ref('password'), null], 'Passwords must match'),
 });
 
-const SetingFrgtPaswrd = props => {
+const SettingForgotPassword = props => {
   const navigation = useNavigation();
   const [hide, setHide] = useState(true);
   const [confirmHide, setConfirmHide] = useState(true);
@@ -45,14 +46,17 @@ const SetingFrgtPaswrd = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.headerBar}>
-        <CstmHeaderIcon
+        <TouchableOpacity
+          activeOpacity={0.7}
           onPress={() => props.navigation.goBack()}
-          headerIconStyle={styles.headerBackIcon}
-        />
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Reset Password</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       <Formik
@@ -109,61 +113,75 @@ const SetingFrgtPaswrd = props => {
           }) => (
           <ScrollView
             contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}>
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
             <Animatable.View
               animation="fadeInUp"
               duration={600}
               style={styles.formContainer}>
+
+              <View style={styles.badgeRow}>
+                <View style={styles.badgeCircle}>
+                  <Icons.Feather
+                    name="lock"
+                    size={34}
+                    color={color.defalt}
+                  />
+                </View>
+              </View>
+
               <Text style={styles.welcomeTitle}>Set New Password</Text>
               <Text style={styles.welcomeSubtitle}>
                 Create a strong password with at least 10 characters, including uppercase and lowercase letters.
               </Text>
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>New Password</Text>
-                <C_InputScurEntry
-                  placeholder="Enter new password"
-                  placeholderTextColor={color.litGry}
-                  secureTextEntry={hide}
-                  icon="eye-off"
-                  onChangeText={handleChange('password')}
-                  onBlur={handleBlur('password')}
-                  value={values.password}
-                  onPress={() => setHide(!hide)}
-                />
-                {touched.password && errors.password && (
-                  <Text style={styles.errorText}>{errors.password}</Text>
-                )}
-              </View>
+              <View style={styles.cardWrapper}>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>New Password</Text>
+                  <C_InputScurEntry
+                    placeholder="Enter new password"
+                    placeholderTextColor={color.litGry}
+                    secureTextEntry={hide}
+                    icon="eye-off"
+                    onChangeText={handleChange('password')}
+                    onBlur={handleBlur('password')}
+                    value={values.password}
+                    onPress={() => setHide(!hide)}
+                  />
+                  {touched.password && errors.password && (
+                    <Text style={styles.errorText}>{errors.password}</Text>
+                  )}
+                </View>
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Confirm New Password</Text>
-                <C_InputScurEntry
-                  placeholder="Confirm new password"
-                  placeholderTextColor={color.litGry}
-                  onChangeText={handleChange('confirmPassword')}
-                  onBlur={handleBlur('confirmPassword')}
-                  value={values.confirmPassword}
-                  icon="eye-off"
-                  secureTextEntry={confirmHide}
-                  onPress={() => setConfirmHide(!confirmHide)}
-                />
-                {touched.confirmPassword && errors.confirmPassword && (
-                  <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-                )}
-              </View>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Confirm New Password</Text>
+                  <C_InputScurEntry
+                    placeholder="Confirm new password"
+                    placeholderTextColor={color.litGry}
+                    onChangeText={handleChange('confirmPassword')}
+                    onBlur={handleBlur('confirmPassword')}
+                    value={values.confirmPassword}
+                    icon="eye-off"
+                    secureTextEntry={confirmHide}
+                    onPress={() => setConfirmHide(!confirmHide)}
+                  />
+                  {touched.confirmPassword && errors.confirmPassword && (
+                    <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+                  )}
+                </View>
 
-              <BotonComp
-                BtnStyle={styles.submitBtn}
-                btnText={
-                  load ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
-                    'Reset Password'
-                  )
-                }
-                onPressFunc={handleSubmit}
-              />
+                <BotonComp
+                  BtnStyle={styles.submitBtn}
+                  btnText={
+                    load ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      'Reset Password'
+                    )
+                  }
+                  onPressFunc={handleSubmit}
+                />
+              </View>
             </Animatable.View>
           </ScrollView>
         )}
@@ -172,29 +190,39 @@ const SetingFrgtPaswrd = props => {
   );
 };
 
-export default SetingFrgtPaswrd;
+export default SettingForgotPassword;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
   headerBar: {
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 12 : 6,
-    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
   },
-  headerBackIcon: {
-    color: '#0F172A',
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
-    marginLeft: 12,
   },
   scrollContent: {
     flexGrow: 1,
@@ -202,22 +230,54 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 4,
+  },
+  badgeRow: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  badgeCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
   },
   welcomeTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 6,
+    textAlign: 'center',
+    letterSpacing: -0.3,
   },
   welcomeSubtitle: {
     fontSize: 14,
     color: '#64748B',
-    marginBottom: 28,
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: 4,
     lineHeight: 20,
+    paddingHorizontal: 12,
+  },
+  cardWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    marginBottom: 20,
   },
   fieldGroup: {
-    marginBottom: 20,
+    marginBottom: 14,
     width: '100%',
   },
   fieldLabel: {
@@ -228,10 +288,15 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     width: '100%',
-    marginTop: 10,
     backgroundColor: color.defalt,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 14,
+    marginTop: 10,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   errorText: {
     color: '#EF4444',

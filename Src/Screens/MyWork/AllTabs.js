@@ -19,26 +19,31 @@ const getResponsiveSize = (small, medium, large) => {
 
 const Tab = createMaterialTopTabNavigator();
 
-const MyWrkTab = props => {
+const MyWorkTab = props => {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: color.ylow,
-        tabBarInactiveTintColor: color.defalt,
+        tabBarActiveTintColor: color.defalt,
+        tabBarInactiveTintColor: '#64748B',
+        tabBarPressColor: '#EFF6FF',
         tabBarLabelStyle: {
-          fontSize: getResponsiveSize(12, 13, 14),
-          fontWeight: '600',
-          textTransform: 'capitalize',
+          fontSize: getResponsiveSize(13, 14, 15),
+          fontWeight: '700',
+          textTransform: 'none',
         },
         tabBarStyle: {
-          backgroundColor: color.bdyClr,
+          backgroundColor: '#F8FAFC',
           elevation: 0,
-          marginTop: getResponsiveSize(20, 25, 30),
-          paddingVertical: getResponsiveSize(4, 6, 8),
+          shadowOpacity: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: '#E2E8F0',
+          marginTop: getResponsiveSize(4, 6, 8),
+          paddingHorizontal: 12,
         },
         tabBarIndicatorStyle: {
           height: 3,
-          backgroundColor: color.ylow,
+          backgroundColor: color.defalt,
+          borderRadius: 3,
         },
       }}>
       <Tab.Screen name="Complete" options={{ title: 'Complete' }}>
@@ -56,4 +61,4 @@ const MyWrkTab = props => {
   );
 };
 
-export default MyWrkTab;
+export default MyWorkTab;

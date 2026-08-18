@@ -6,8 +6,10 @@ import {
   Text,
   View,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import color from '../../Assets/colors/colors';
+import { Icons } from '../../Components/Icons';
 import SearchHeader from './SearchHeader';
 import { BASIC_URL } from '../Signin/Signin';
 
@@ -81,7 +83,7 @@ const Balance = () => {
       </View>
 
       <View style={styles.rightCol}>
-        <Text style={styles.name}>Balance:</Text>
+        <Text style={styles.balanceLabel}>Balance</Text>
         <Text style={styles.balance}>₦ {item.amount || 0}</Text>
       </View>
     </View>
@@ -89,6 +91,7 @@ const Balance = () => {
 
   return (
     <View style={styles.flexFill}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <SearchHeader
         onSearch={handleSearch}
         searchQuery={searchQuery}
@@ -112,7 +115,11 @@ const Balance = () => {
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
               <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>No transaction records found</Text>
+                <Icons.Feather name="credit-card" size={48} color="#CBD5E1" />
+                <Text style={styles.emptyTitle}>No Transactions Found</Text>
+                <Text style={styles.emptySubtitle}>
+                  Your completed earnings and transaction history will appear here.
+                </Text>
               </View>
             }
           />
@@ -127,27 +134,32 @@ export default Balance;
 const styles = StyleSheet.create({
   flexFill: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
   },
   listWrapper: {
     flex: 1,
-    marginTop: 10,
   },
   listContent: {
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 30,
+    flexGrow: 1,
   },
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'white',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     elevation: 2,
-    marginBottom: 8,
-    marginTop: 8,
-    alignSelf: 'center',
-    width: '90%',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    marginBottom: 12,
   },
   leftRow: {
     flexDirection: 'row',
@@ -156,9 +168,10 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#E2E8F0',
   },
   infoCol: {
     marginLeft: 12,
@@ -168,29 +181,47 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   name: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
-    color: color.defalt,
-    marginBottom: 4,
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  balanceLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: 2,
   },
   balance: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '800',
     color: color.defalt,
   },
   dateText: {
-    color: color.defalt,
-    fontSize: 11,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '500',
   },
   loader: {
     marginTop: 40,
   },
   emptyBox: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 80,
   },
-  emptyText: {
-    fontSize: 14,
-    color: color.gry,
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 14,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 4,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });

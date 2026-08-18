@@ -4,16 +4,19 @@ import {
   Text,
   View,
   TouchableOpacity,
-  ImageBackground,
   SafeAreaView,
+  StatusBar,
+  ScrollView,
   Alert,
 } from 'react-native';
+import * as Animatable from 'react-native-animatable';
+
 import color from '../../Assets/colors/colors';
-import CstmHeader from '../../Components/CustomHeader';
+import { Icons } from '../../Components/Icons';
 import ProfileInput from '../../Components/ProfileInput';
 import MultiLineInput from '../../Components/MultiLineInput';
 
-const CntctUs = props => {
+const ContactUs = props => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -32,86 +35,216 @@ const CntctUs = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <CstmHeader
-        title="Contact Us"
-        onPressBack={() => props.navigation.goBack()}
-      />
-      <ImageBackground
-        source={require('../../Assets/Images/background.jpeg')}
-        resizeMode="cover"
-        style={styles.backgroundImg}>
-        <View style={styles.container}>
-          <ProfileInput
-            style={styles.inputStyle}
-            placeholder="Name"
-            placeholderTextColor={color.gry}
-            value={name}
-            onChangeText={setName}
-            icon="user-circle"
-          />
-          <ProfileInput
-            style={styles.inputStyle}
-            placeholder="Email"
-            placeholderTextColor={color.gry}
-            value={email}
-            onChangeText={setEmail}
-            icon="envelope"
-          />
-          <MultiLineInput
-            style={styles.inputStyle}
-            placeholder="Message..."
-            placeholderTextColor={color.gry}
-            value={message}
-            onChangeText={setMessage}
-            numberOfLines={8}
-            styles={styles.multiLineExtra}
-          />
-          <TouchableOpacity
-            style={styles.loginBtn}
-            activeOpacity={0.8}
-            onPress={handleSubmit}>
-            <Text style={styles.btnText}>Submit</Text>
-          </TouchableOpacity>
-        </View>
-      </ImageBackground>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => props.navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Contact Us</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <Animatable.View
+          animation="fadeInUp"
+          duration={600}
+          style={styles.formContainer}>
+
+          <View style={styles.badgeRow}>
+            <View style={styles.badgeCircle}>
+              <Icons.Feather
+                name="mail"
+                size={34}
+                color={color.defalt}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.welcomeTitle}>Get In Touch</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Have questions or need assistance? Send us a message and our support team will reply promptly.
+          </Text>
+
+          <View style={styles.cardWrapper}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Your Name</Text>
+              <ProfileInput
+                style={styles.inputStyle}
+                placeholder="Enter your name"
+                placeholderTextColor="#94A3B8"
+                value={name}
+                onChangeText={setName}
+                icon="user-circle"
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Email Address</Text>
+              <ProfileInput
+                style={styles.inputStyle}
+                placeholder="Enter your email"
+                placeholderTextColor="#94A3B8"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                icon="envelope"
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Message</Text>
+              <MultiLineInput
+                style={styles.inputStyle}
+                placeholder="Type your message here..."
+                placeholderTextColor="#94A3B8"
+                value={message}
+                onChangeText={setMessage}
+                numberOfLines={5}
+                styles={styles.multiLineExtra}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.submitBtn}
+              activeOpacity={0.85}
+              onPress={handleSubmit}>
+              <Text style={styles.btnText}>Send Message</Text>
+            </TouchableOpacity>
+          </View>
+        </Animatable.View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
-export default CntctUs;
+export default ContactUs;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
   },
-  container: {
-    paddingHorizontal: 15,
-    paddingVertical: 20,
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
   },
-  inputStyle: {
-    color: color.gry,
-  },
-  multiLineExtra: {
-    marginTop: 18,
-    textAlignVertical: 'top',
-  },
-  backgroundImg: {
-    flex: 1,
-  },
-  loginBtn: {
-    borderRadius: 5,
-    backgroundColor: color.drkgren,
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
-    width: '100%',
-    paddingVertical: 12,
-    marginTop: 35,
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  btnText: {
-    color: 'white',
+  headerTitle: {
     fontSize: 18,
     fontWeight: '800',
+    color: '#0F172A',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  formContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+  },
+  badgeRow: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  badgeCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  welcomeTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: 4,
+    lineHeight: 20,
+    paddingHorizontal: 12,
+  },
+  cardWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    marginBottom: 20,
+  },
+  fieldGroup: {
+    marginBottom: 14,
+    width: '100%',
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 6,
+  },
+  inputStyle: {
+    color: '#0F172A',
+  },
+  multiLineExtra: {
+    textAlignVertical: 'top',
+    paddingTop: 12,
+  },
+  submitBtn: {
+    borderRadius: 14,
+    backgroundColor: color.defalt,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    marginTop: 8,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+  },
+  btnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

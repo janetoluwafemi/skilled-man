@@ -17,7 +17,6 @@ import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
-import CstmHeaderIcon from '../../Components/CustomHeaderIcon';
 import BotonComp from '../../Components/BtnComp';
 import { BASIC_URL } from '../Signin/Signin';
 import { Icons } from '../../Components/Icons';
@@ -86,25 +85,37 @@ const OtpScren = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.headerBar}>
-        <CstmHeaderIcon
+        <TouchableOpacity
+          activeOpacity={0.7}
           onPress={() => props.navigation.goBack()}
-          headerIconStyle={styles.headerBackIcon}
-        />
-        <Text style={styles.headerTitle}>Account Verification</Text>
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
-          <View style={styles.iconCircle}>
-            <Icons.Ionicons name="shield-checkmark" size={32} color={color.defalt} />
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <Animatable.View
+          animation="fadeInUp"
+          duration={600}
+          style={styles.formContainer}>
+
+          <View style={styles.badgeRow}>
+            <View style={styles.badgeCircle}>
+              <Icons.Ionicons
+                name="shield-checkmark"
+                size={36}
+                color={color.defalt}
+              />
+            </View>
           </View>
 
-          <Text style={styles.welcomeTitle}>Enter Security Code</Text>
+          <Text style={styles.welcomeTitle}>Account Verification</Text>
           <Text style={styles.welcomeSubtitle}>
             We have sent a 4-digit verification code to{' '}
             <Text style={styles.highlightText}>
@@ -112,93 +123,95 @@ const OtpScren = props => {
             </Text>
           </Text>
 
-          <View style={styles.otpInputRow}>
-            <TextInput
-              ref={firstInput}
-              style={[
-                styles.otpBox,
-                firstDigit !== '' && styles.otpBoxActive,
-              ]}
-              keyboardType="number-pad"
-              maxLength={1}
-              value={firstDigit}
-              onChangeText={text => {
-                setFirstDigit(text);
-                if (text) secondInput.current?.focus();
-              }}
-            />
-            <TextInput
-              ref={secondInput}
-              style={[
-                styles.otpBox,
-                secondDigit !== '' && styles.otpBoxActive,
-              ]}
-              keyboardType="number-pad"
-              maxLength={1}
-              value={secondDigit}
-              onChangeText={text => {
-                setSecondDigit(text);
-                if (text) {
-                  thirdInput.current?.focus();
-                } else {
-                  firstInput.current?.focus();
-                }
-              }}
-            />
-            <TextInput
-              ref={thirdInput}
-              style={[
-                styles.otpBox,
-                thirdDigit !== '' && styles.otpBoxActive,
-              ]}
-              keyboardType="number-pad"
-              maxLength={1}
-              value={thirdDigit}
-              onChangeText={text => {
-                setThirdDigit(text);
-                if (text) {
-                  fourthInput.current?.focus();
-                } else {
-                  secondInput.current?.focus();
-                }
-              }}
-            />
-            <TextInput
-              ref={fourthInput}
-              style={[
-                styles.otpBox,
-                fourthDigit !== '' && styles.otpBoxActive,
-              ]}
-              keyboardType="number-pad"
-              maxLength={1}
-              value={fourthDigit}
-              onChangeText={text => {
-                setFourthDigit(text);
-                if (!text) {
-                  thirdInput.current?.focus();
-                }
-              }}
-            />
-          </View>
+          <View style={styles.cardWrapper}>
+            <View style={styles.otpInputRow}>
+              <TextInput
+                ref={firstInput}
+                style={[
+                  styles.otpBox,
+                  firstDigit !== '' && styles.otpBoxActive,
+                ]}
+                keyboardType="number-pad"
+                maxLength={1}
+                value={firstDigit}
+                onChangeText={text => {
+                  setFirstDigit(text);
+                  if (text) secondInput.current?.focus();
+                }}
+              />
+              <TextInput
+                ref={secondInput}
+                style={[
+                  styles.otpBox,
+                  secondDigit !== '' && styles.otpBoxActive,
+                ]}
+                keyboardType="number-pad"
+                maxLength={1}
+                value={secondDigit}
+                onChangeText={text => {
+                  setSecondDigit(text);
+                  if (text) {
+                    thirdInput.current?.focus();
+                  } else {
+                    firstInput.current?.focus();
+                  }
+                }}
+              />
+              <TextInput
+                ref={thirdInput}
+                style={[
+                  styles.otpBox,
+                  thirdDigit !== '' && styles.otpBoxActive,
+                ]}
+                keyboardType="number-pad"
+                maxLength={1}
+                value={thirdDigit}
+                onChangeText={text => {
+                  setThirdDigit(text);
+                  if (text) {
+                    fourthInput.current?.focus();
+                  } else {
+                    secondInput.current?.focus();
+                  }
+                }}
+              />
+              <TextInput
+                ref={fourthInput}
+                style={[
+                  styles.otpBox,
+                  fourthDigit !== '' && styles.otpBoxActive,
+                ]}
+                keyboardType="number-pad"
+                maxLength={1}
+                value={fourthDigit}
+                onChangeText={text => {
+                  setFourthDigit(text);
+                  if (!text) {
+                    thirdInput.current?.focus();
+                  }
+                }}
+              />
+            </View>
 
-          <BotonComp
-            BtnStyle={styles.submitBtn}
-            btnText="Verify Code"
-            onPressFunc={handleSubmit}
-          />
+            <BotonComp
+              BtnStyle={styles.submitBtn}
+              btnText="Verify Code"
+              onPressFunc={handleSubmit}
+            />
 
-          <View style={styles.resendRow}>
-            <Text style={styles.resendText}>Didn't receive code? </Text>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={resendOtp}
-              disabled={load}>
-              {load ? (
-                <ActivityIndicator color={color.defalt} size="small" />
-              ) : (
-                <Text style={styles.resendLink}>Resend Code</Text>
-              )}
-            </TouchableOpacity>
+            <View style={styles.resendRow}>
+              <Text style={styles.resendText}>Didn't receive code? </Text>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={resendOtp}
+                disabled={load}>
+                {load ? (
+                  <ActivityIndicator color={color.defalt} size="small" />
+                ) : (
+                  <Text style={styles.resendLink}>Resend Code</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </Animatable.View>
       </ScrollView>
@@ -211,24 +224,28 @@ export default OtpScren;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
   headerBar: {
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 12 : 6,
-    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-  },
-  headerBackIcon: {
-    color: '#0F172A',
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginLeft: 12,
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   scrollContent: {
     flexGrow: 1,
@@ -236,47 +253,66 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     paddingHorizontal: 20,
-    paddingTop: 16,
-    alignItems: 'center',
+    paddingTop: 4,
   },
-  iconCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#F0FDF4',
+  badgeRow: {
     alignItems: 'center',
+    marginBottom: 14,
+  },
+  badgeCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
-    marginBottom: 20,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
   },
   welcomeTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   welcomeSubtitle: {
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-    marginTop: 6,
-    marginBottom: 32,
-    paddingHorizontal: 10,
+    marginBottom: 20,
+    marginTop: 4,
     lineHeight: 20,
+    paddingHorizontal: 12,
   },
   highlightText: {
     color: '#0F172A',
     fontWeight: '700',
   },
+  cardWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
   otpInputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    paddingHorizontal: 20,
-    marginBottom: 32,
+    marginVertical: 12,
   },
   otpBox: {
-    width: 60,
-    height: 60,
+    width: 58,
+    height: 58,
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
@@ -298,14 +334,20 @@ const styles = StyleSheet.create({
   submitBtn: {
     width: '100%',
     backgroundColor: color.defalt,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 14,
+    marginTop: 18,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   resendRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 28,
+    marginTop: 22,
   },
   resendText: {
     color: '#64748B',

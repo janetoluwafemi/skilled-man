@@ -9,20 +9,21 @@ import {
   ActivityIndicator,
   Modal,
   SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
-import CstmHeader from '../../Components/CustomHeader';
 import { Icons } from '../../Components/Icons';
 import BotonComp from '../../Components/BtnComp';
 import InputEdtProfil from '../../Components/InputEditProfile';
 import { BASIC_URL } from '../Signin/Signin';
 
-const EdtProfilScren = props => {
+const EditProfileScreen = props => {
   const navigation = useNavigation();
   const focus = useIsFocused();
 
@@ -237,188 +238,259 @@ const EdtProfilScren = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <CstmHeader
-        title="Edit Profile"
-        onPressBack={() => props.navigation.goBack()}
-      />
-      <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <View style={styles.container}>
-          <View style={styles.imageWrapper}>
-            <Image
-              source={
-                image
-                  ? { uri: image.uri }
-                  : profileImg
-                    ? { uri: `${BASIC_URL}uploads/${profileImg}` }
-                    : require('../../Assets/Images/user.jpg')
-              }
-              style={styles.profileImgStyle}
-            />
-            <TouchableOpacity onPress={pickImage} style={styles.cameraIcon}>
-              <Icons.FontAwesome name="camera" color={color.wite} size={18} />
-            </TouchableOpacity>
-          </View>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-          <InputEdtProfil
-            value={name}
-            placeholder="Name"
-            onChangeText={setName}
-            icon="user"
-          />
-
-          <InputEdtProfil
-            value={email}
-            placeholder="Email"
-            editable={false}
-            icon="mail"
-          />
-          <InputEdtProfil
-            value={phone}
-            placeholder="Phone Number"
-            onChangeText={setPhone}
-            icon="phone"
-          />
-          <InputEdtProfil
-            value={experience}
-            placeholder="Experience"
-            onChangeText={setExperience}
-            icon="star"
-          />
-          <View style={styles.relativeBox}>
-            <InputEdtProfil
-              value={address}
-              placeholder="Address"
-              onChangeText={setAddress}
-              multiline={true}
-              icon="map-pin"
-            />
-            {addressLoading && (
-              <ActivityIndicator
-                size="small"
-                color={color.defalt}
-                style={styles.addressLoader}
-              />
-            )}
-          </View>
-
-          <BotonComp
-            BtnStyle={styles.mapBtn}
-            onPressFunc={() => navigation.navigate('Maplatln')}
-            btnText="Select Location from Map"
-          />
-
-          <View style={styles.certContainer}>
-            <TouchableOpacity onPress={() => pickDocument(setCertificate)}>
-              <Icons.FontAwesome5
-                name="file-upload"
-                size={35}
-                color={color.defalt}
-                style={styles.iconCont}
-              />
-              <Text style={styles.certiStyle}>
-                {certificate
-                  ? certificate.name
-                  : profileData?.certificates
-                    ? 'Cert. Attached'
-                    : 'Certificate'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => pickDocument(setEvidence)}>
-              <Icons.FontAwesome5
-                name="file-upload"
-                size={35}
-                color={color.defalt}
-                style={styles.iconCont}
-              />
-              <Text style={styles.certiStyle}>
-                {evidence
-                  ? evidence.name
-                  : profileData?.job_references
-                    ? 'Evid. Attached'
-                    : 'Evidence'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => pickDocument(setGuarantor)}>
-              <Icons.FontAwesome5
-                name="file-upload"
-                size={35}
-                color={color.defalt}
-                style={styles.iconCont}
-              />
-              <Text style={styles.certiStyle}>
-                {guarantor
-                  ? guarantor.name
-                  : profileData?.gurantor
-                    ? 'Gua. Attached'
-                    : 'Guarantor'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <BotonComp
-            BtnStyle={styles.BtnStyle}
-            onPressFunc={updateProfile}
-            btnText={
-              load ? (
-                <ActivityIndicator size={24} color="#fff" />
-              ) : (
-                'Save changes'
-              )
-            }
-          />
-        </View>
-
-        {skills.length > 0 && (
-          <View style={styles.skillsSection}>
-            <Text style={styles.skillsHeading}>All Skills:</Text>
-            <View style={styles.skillsRow}>
-              {skills.map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => {
-                    setSelectedSkill(item);
-                    setModalVisible(true);
-                  }}
-                  style={styles.skillPill}>
-                  <Text style={styles.skillPillText}>
-                    {item.select_bussiness}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-
+      <View style={styles.headerBar}>
         <TouchableOpacity
-          style={styles.addSkill}
-          onPress={() => navigation.navigate('AddSkill')}>
-          <Icons.FontAwesome
-            name="plus-square"
-            size={32}
-            color={color.defalt}
-            style={styles.plusCont}
-          />
-          <Text style={styles.addMore}>Add More Skill</Text>
+          activeOpacity={0.7}
+          onPress={() => props.navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <Animatable.View animation="fadeInUp" duration={600}>
+
+          <View style={styles.cardWrapper}>
+            <View style={styles.imageWrapper}>
+              <Image
+                source={
+                  image
+                    ? { uri: image.uri }
+                    : profileImg
+                      ? { uri: `${BASIC_URL}uploads/${profileImg}` }
+                      : require('../../Assets/Images/user.jpg')
+                }
+                style={styles.profileImgStyle}
+              />
+              <TouchableOpacity activeOpacity={0.8} onPress={pickImage} style={styles.cameraIcon}>
+                <Icons.Feather name="camera" color="#FFFFFF" size={16} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Full Name</Text>
+              <InputEdtProfil
+                value={name}
+                placeholder="Name"
+                placeholderTextColor="#94A3B8"
+                onChangeText={setName}
+                icon="user"
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Email Address</Text>
+              <InputEdtProfil
+                value={email}
+                placeholder="Email"
+                placeholderTextColor="#94A3B8"
+                editable={false}
+                icon="mail"
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Phone Number</Text>
+              <InputEdtProfil
+                value={phone}
+                placeholder="Phone Number"
+                placeholderTextColor="#94A3B8"
+                onChangeText={setPhone}
+                keyboardType="numeric"
+                icon="phone"
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Working Experience (Years)</Text>
+              <InputEdtProfil
+                value={experience}
+                placeholder="Experience"
+                placeholderTextColor="#94A3B8"
+                onChangeText={setExperience}
+                keyboardType="numeric"
+                icon="star"
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Address</Text>
+              <View style={styles.relativeBox}>
+                <InputEdtProfil
+                  value={address}
+                  placeholder="Address"
+                  placeholderTextColor="#94A3B8"
+                  onChangeText={setAddress}
+                  multiline={true}
+                  icon="map-pin"
+                />
+                {addressLoading && (
+                  <ActivityIndicator
+                    size="small"
+                    color={color.defalt}
+                    style={styles.addressLoader}
+                  />
+                )}
+              </View>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.mapBtn}
+              onPress={() => navigation.navigate('Maplatln')}>
+              <Icons.Feather name="map" size={16} color={color.defalt} style={{ marginRight: 8 }} />
+              <Text style={styles.mapBtnText}>Select Location from Map</Text>
+            </TouchableOpacity>
+
+            <Text style={[styles.fieldLabel, { marginTop: 10, marginBottom: 8 }]}>
+              Verification Documents
+            </Text>
+            <View style={styles.certContainer}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={styles.docUploadCard}
+                onPress={() => pickDocument(setCertificate)}>
+                <View style={styles.docIconCircle}>
+                  <Icons.Feather
+                    name="file-text"
+                    size={22}
+                    color={color.defalt}
+                  />
+                </View>
+                <Text style={styles.certiStyle} numberOfLines={2}>
+                  {certificate
+                    ? certificate.name
+                    : profileData?.certificates
+                      ? 'Cert. Attached'
+                      : 'Certificate'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={styles.docUploadCard}
+                onPress={() => pickDocument(setEvidence)}>
+                <View style={styles.docIconCircle}>
+                  <Icons.Feather
+                    name="award"
+                    size={22}
+                    color={color.defalt}
+                  />
+                </View>
+                <Text style={styles.certiStyle} numberOfLines={2}>
+                  {evidence
+                    ? evidence.name
+                    : profileData?.job_references
+                      ? 'Evid. Attached'
+                      : 'Job Evidence'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={styles.docUploadCard}
+                onPress={() => pickDocument(setGuarantor)}>
+                <View style={styles.docIconCircle}>
+                  <Icons.Feather
+                    name="shield"
+                    size={22}
+                    color={color.defalt}
+                  />
+                </View>
+                <Text style={styles.certiStyle} numberOfLines={2}>
+                  {guarantor
+                    ? guarantor.name
+                    : profileData?.gurantor
+                      ? 'Gua. Attached'
+                      : 'Guarantor'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <BotonComp
+              BtnStyle={styles.BtnStyle}
+              onPressFunc={updateProfile}
+              btnText={
+                load ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  'Save Changes'
+                )
+              }
+            />
+          </View>
+
+          {skills.length > 0 && (
+            <View style={styles.cardWrapper}>
+              <Text style={styles.skillsHeading}>Registered Skills</Text>
+              <View style={styles.skillsRow}>
+                {skills.map((item, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      setSelectedSkill(item);
+                      setModalVisible(true);
+                    }}
+                    style={styles.skillPill}>
+                    <Icons.Feather
+                      name="check-circle"
+                      size={13}
+                      color="#FFFFFF"
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={styles.skillPillText}>
+                      {item.select_bussiness}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.addSkillBtn}
+            onPress={() => navigation.navigate('AddSkill')}>
+            <Icons.Feather
+              name="plus-circle"
+              size={18}
+              color={color.defalt}
+              style={styles.plusCont}
+            />
+            <Text style={styles.addMore}>Add More Skills</Text>
+          </TouchableOpacity>
+        </Animatable.View>
       </ScrollView>
 
+      {/* Skill Modal */}
       <Modal
         visible={modalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             {selectedSkill && (
               <>
-                <Text style={styles.skillTitle}>
-                  {selectedSkill.select_bussiness}
-                </Text>
+                <View style={styles.modalHeaderRow}>
+                  <Text style={styles.skillTitle}>
+                    {selectedSkill.select_bussiness}
+                  </Text>
+                  <TouchableOpacity onPress={() => setModalVisible(false)}>
+                    <Icons.Ionicons name="close-circle" size={24} color="#94A3B8" />
+                  </TouchableOpacity>
+                </View>
 
                 <Text style={styles.skillExp}>
-                  Experience: {selectedSkill.working_experience} years
+                  Experience: {selectedSkill.working_experience} Years
                 </Text>
 
                 {selectedSkill.certificates ? (
@@ -432,6 +504,7 @@ const EdtProfilScren = props => {
                 ) : null}
 
                 <TouchableOpacity
+                  activeOpacity={0.8}
                   onPress={() => setModalVisible(false)}
                   style={styles.modalCloseBtn}>
                   <Text style={styles.modalCloseText}>Close</Text>
@@ -445,80 +518,170 @@ const EdtProfilScren = props => {
   );
 };
 
-export default EdtProfilScren;
+export default EditProfileScreen;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
   },
-  container: {
-    padding: 20,
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+  },
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 40,
+  },
+  cardWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    marginBottom: 16,
   },
   imageWrapper: {
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
     position: 'relative',
+    alignSelf: 'center',
   },
   profileImgStyle: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
-    marginVertical: 10,
-    borderRadius: 50,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     borderWidth: 3,
-    borderColor: color.defalt,
+    borderColor: '#FFFFFF',
+    backgroundColor: '#E2E8F0',
   },
   cameraIcon: {
     position: 'absolute',
-    bottom: 10,
-    backgroundColor: color.drkGry,
-    borderRadius: 50,
-    padding: 8,
+    bottom: 2,
+    right: 2,
+    backgroundColor: color.defalt,
+    borderRadius: 18,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  fieldGroup: {
+    marginBottom: 12,
+    width: '100%',
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 6,
   },
   relativeBox: {
     position: 'relative',
   },
   addressLoader: {
     position: 'absolute',
-    right: 15,
-    top: 22,
+    right: 14,
+    top: 14,
   },
   mapBtn: {
-    backgroundColor: 'orange',
-    marginVertical: 15,
-    borderWidth: 0,
-    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingVertical: 12,
+    marginVertical: 8,
   },
-  BtnStyle: {
-    width: '100%',
-    elevation: 1,
-    marginTop: 20,
+  mapBtnText: {
+    color: color.defalt,
+    fontSize: 14,
+    fontWeight: '700',
   },
   certContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    marginBottom: 8,
   },
-  iconCont: {
-    alignSelf: 'center',
+  docUploadCard: {
+    width: '31%',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+  },
+  docIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   certiStyle: {
     fontWeight: '600',
-    color: 'black',
+    color: '#334155',
     textAlign: 'center',
     fontSize: 11,
-    marginTop: 5,
-    width: 85,
+    lineHeight: 14,
   },
-  skillsSection: {
-    paddingHorizontal: 20,
-    marginVertical: 10,
+  BtnStyle: {
+    width: '100%',
+    backgroundColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginTop: 12,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   skillsHeading: {
+    fontSize: 15,
     fontWeight: '700',
-    color: '#000',
+    color: '#0F172A',
     marginBottom: 10,
   },
   skillsRow: {
@@ -526,23 +689,31 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   skillPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: color.defalt,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingVertical: 7,
+    borderRadius: 12,
     marginRight: 8,
     marginBottom: 8,
   },
   skillPillText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 13,
   },
-  addSkill: {
+  addSkillBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginVertical: 20,
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginBottom: 10,
   },
   plusCont: {
     marginRight: 8,
@@ -550,44 +721,57 @@ const styles = StyleSheet.create({
   addMore: {
     fontWeight: '700',
     color: color.defalt,
-    fontSize: 15,
+    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   modalContent: {
-    width: '85%',
-    backgroundColor: '#fff',
-    borderRadius: 15,
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     padding: 20,
+    elevation: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   skillTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: color.defalt,
-    marginBottom: 10,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   skillExp: {
-    marginBottom: 10,
-    color: '#000',
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: 12,
   },
   certImg: {
     width: '100%',
     height: 180,
-    borderRadius: 10,
-    marginBottom: 15,
+    borderRadius: 14,
+    marginBottom: 14,
   },
   modalCloseBtn: {
     backgroundColor: color.defalt,
-    padding: 10,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
   },
   modalCloseText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

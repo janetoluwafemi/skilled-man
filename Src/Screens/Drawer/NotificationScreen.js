@@ -9,16 +9,18 @@ import {
   FlatList,
   Platform,
   SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import NotiCard from '../../Components/NotificationCard';
-import CstmHeader from '../../Components/CustomHeader';
+import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
 
-const NotifiScreen = props => {
+const NotificationScreen = props => {
   const insets = useSafeAreaInsets();
   const [notifications, setNotifications] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -84,10 +86,18 @@ const NotifiScreen = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <CstmHeader
-        title="Notifications"
-        onPressBack={() => props.navigation.goBack()}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => props.navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Notifications</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
       <FlatList
         data={notifications}
@@ -102,12 +112,15 @@ const NotifiScreen = props => {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons
-              name="notifications-off-outline"
+            <Icons.Feather
+              name="bell-off"
               size={48}
-              color={color.gry}
+              color="#CBD5E1"
             />
-            <Text style={styles.emptyText}>No Notifications Found</Text>
+            <Text style={styles.emptyTitle}>No Notifications</Text>
+            <Text style={styles.emptySubtitle}>
+              You do not have any new updates or alerts right now.
+            </Text>
           </View>
         }
       />
@@ -154,15 +167,43 @@ const NotifiScreen = props => {
   );
 };
 
-export default NotifiScreen;
+export default NotificationScreen;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8FAFC',
+  },
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+  },
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   listContent: {
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingTop: 14,
     flexGrow: 1,
   },
   emptyContainer: {
@@ -171,15 +212,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 80,
   },
-  emptyText: {
-    marginTop: 12,
-    color: color.gry,
-    fontSize: 15,
-    fontWeight: '500',
+  emptyTitle: {
+    marginTop: 14,
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  emptySubtitle: {
+    marginTop: 4,
+    color: '#64748B',
+    fontSize: 13,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -187,44 +235,57 @@ const styles = StyleSheet.create({
   modalBox: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 22,
     alignItems: 'center',
-    elevation: 6,
+    elevation: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
   },
   modalAvatar: {
-    width: 75,
-    height: 75,
-    borderRadius: 37.5,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#F1F5F9',
   },
   modalName: {
     fontSize: 17,
-    fontWeight: '700',
-    color: color.blak,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   modalMessage: {
     fontSize: 14,
-    color: color.gry,
-    marginTop: 10,
+    color: '#475569',
+    marginTop: 8,
     textAlign: 'center',
     lineHeight: 20,
   },
   modalTime: {
     fontSize: 12,
-    marginTop: 12,
-    color: color.gry,
+    marginTop: 10,
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   closeBtn: {
-    marginTop: 18,
+    marginTop: 20,
     backgroundColor: color.defalt,
-    paddingVertical: 10,
-    paddingHorizontal: 35,
-    borderRadius: 8,
+    paddingVertical: 12,
+    width: '100%',
+    alignItems: 'center',
+    borderRadius: 14,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   closeBtnText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: 14,
   },
 });

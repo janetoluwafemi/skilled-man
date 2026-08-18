@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -9,16 +9,16 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { showToast } from '../../utilis/showToast';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {showToast} from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
 import CstmHeader from '../../Components/CustomHeader';
 import FltLstCrd from '../../Components/FlatListCard';
-import { BASIC_URL } from '../Signin/Signin';
+import {BASIC_URL} from '../Signin/Signin';
 
-const { height } = Dimensions.get('window');
+const {height} = Dimensions.get('window');
 
 const HistryScren = props => {
   const navigation = useNavigation();
@@ -27,7 +27,9 @@ const HistryScren = props => {
   const [data, setData] = useState([]);
 
   const bottomPadding =
-    height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
+    height * 0.085 +
+    Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
+    20;
 
   const getData = useCallback(async () => {
     try {
@@ -47,7 +49,10 @@ const HistryScren = props => {
         showToast(result.error);
       }
     } catch (error) {
-      Alert.alert('Error', error?.message || String(error) || 'An error occurred');
+      Alert.alert(
+        'Error',
+        error?.message || String(error) || 'An error occurred',
+      );
     }
   }, []);
 
@@ -59,20 +64,19 @@ const HistryScren = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <CstmHeader
-        title="History"
-        onPressBack={() => navigation.goBack()}
-      />
+      <CstmHeader title="History" onPressBack={() => navigation.goBack()} />
 
       <FlatList
         data={data}
-        keyExtractor={(item, index) => item.booking_id?.toString() || index.toString()}
+        keyExtractor={(item, index) =>
+          item.booking_id?.toString() || index.toString()
+        }
         contentContainerStyle={[
           styles.cardContainer,
-          { paddingBottom: bottomPadding },
+          {paddingBottom: bottomPadding},
         ]}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
+        renderItem={({item}) => (
           <FltLstCrd
             cardTitle={item.name}
             bookingId={`Booking ID - ${item.booking_id}`}

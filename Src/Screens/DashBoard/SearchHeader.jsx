@@ -9,14 +9,14 @@ const SearchHeader = ({ onSearch, searchQuery, onSearchIconPress }) => {
       <Text style={styles.userStyle}>Earned Balance</Text>
       <View style={styles.searchStyle}>
         <View style={styles.searchContainer}>
-          <TouchableOpacity onPress={onSearchIconPress} activeOpacity={0.8}>
-            <Icons.FontAwesome5 name="search" size={18} color={color.defalt} />
+          <TouchableOpacity onPress={onSearchIconPress} activeOpacity={0.8} style={styles.searchIconBtn}>
+            <Icons.Feather name="search" size={18} color="#64748B" />
           </TouchableOpacity>
           <TextInput
             style={styles.inputStyle}
             value={searchQuery}
-            placeholder="Search for services"
-            placeholderTextColor={color.defalt}
+            placeholder="Search transactions..."
+            placeholderTextColor="#94A3B8"
             onChangeText={onSearch}
           />
         </View>
@@ -29,18 +29,17 @@ export default SearchHeader;
 
 const styles = StyleSheet.create({
   containerStyle: {
-    backgroundColor: color.defalt,
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    borderBottomRightRadius: 10,
-    borderBottomLeftRadius: 10,
-    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   userStyle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '800',
-    color: color.wite,
-    marginBottom: 10,
+    color: '#0F172A',
+    marginBottom: 12,
+    letterSpacing: -0.3,
   },
   searchStyle: {
     width: '100%',
@@ -50,15 +49,25 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 48,
     alignItems: 'center',
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    backgroundColor: color.wite,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+  },
+  searchIconBtn: {
+    paddingRight: 8,
   },
   inputStyle: {
     flex: 1,
-    paddingLeft: 10,
-    color: color.defalt,
-    backgroundColor: 'transparent',
+    color: '#0F172A',
+    fontSize: 14,
     height: '100%',
+    fontWeight: '500',
   },
 });

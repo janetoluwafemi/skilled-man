@@ -10,11 +10,13 @@ import {
   Modal,
   Alert,
   SafeAreaView,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
 
-import CstmHeader from '../../Components/CustomHeader';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 import InputSarchFiltr from '../../Components/InputSearchFilter';
@@ -23,7 +25,7 @@ import { BASIC_URL } from '../Signin/Signin';
 
 const { height, width } = Dimensions.get('window');
 
-const FndExprt = props => {
+const FindExpert = props => {
   const navigation = useNavigation();
   const route = useRoute();
   const initialData = route.params?.data || [];
@@ -160,27 +162,46 @@ const FndExprt = props => {
   };
 
   const renderLocationItem = ({ item }) => (
-    <View style={styles.listCont}>
+    <View style={styles.filterChipCol}>
       <TouchableOpacity
-        style={styles.itemStyle}
+        style={[
+          styles.filterSelectChip,
+          selectedLocation === item.address && styles.filterSelectChipActive,
+        ]}
         onPress={() => {
           handleLocation(item.address);
           toggleBack();
         }}>
-        <Text style={styles.itemName}>{item.address}</Text>
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.filterSelectChipText,
+            selectedLocation === item.address && styles.filterSelectChipTextActive,
+          ]}>
+          {item.address}
+        </Text>
       </TouchableOpacity>
     </View>
   );
 
   const renderAccountItem = ({ item }) => (
-    <View style={styles.listCont}>
+    <View style={styles.filterChipCol}>
       <TouchableOpacity
-        style={styles.itemStyle}
+        style={[
+          styles.filterSelectChip,
+          selectedAccount === item.name && styles.filterSelectChipActive,
+        ]}
         onPress={() => {
           handleAccount(item.name);
           toggleBack();
         }}>
-        <Text style={styles.itemName}>{item.name}</Text>
+        <Text
+          style={[
+            styles.filterSelectChipText,
+            selectedAccount === item.name && styles.filterSelectChipTextActive,
+          ]}>
+          {item.name}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -191,11 +212,11 @@ const FndExprt = props => {
 
     return (
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.85}
         onPress={() => navigation.navigate('ExpertDetail', { item })}
-        style={styles.textContainer}>
+        style={styles.expertCard}>
         <Image
-          style={styles.logoImg}
+          style={styles.providerImg}
           resizeMode="cover"
           source={
             item.image
@@ -204,47 +225,44 @@ const FndExprt = props => {
           }
         />
 
-        <View style={styles.profileCont}>
-          <View style={[styles.openingStyle, styles.titleCont]}>
-            <View style={styles.nameCont}>
-              <Text style={styles.TextStyle}>{item.name}</Text>
-              {item.verified === 'Verified' ? (
-                <Icons.FontAwesome5
-                  name="user-check"
-                  color={color.blu}
-                  size={14}
+        <View style={styles.providerCardInfo}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.nameVerifiedRow}>
+              <Text style={styles.providerCardName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              {item.verified === 'Verified' && (
+                <Icons.MaterialIcons
+                  name="verified"
+                  color={color.defalt}
+                  size={15}
+                  style={{ marginLeft: 4 }}
                 />
-              ) : null}
+              )}
             </View>
 
-            <TouchableOpacity onPress={() => addToFavourite(item)}>
-              <Icons.FontAwesome
-                name="bookmark-o"
-                color={color.defalt}
-                size={22}
-              />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => addToFavourite(item)}
+              style={styles.favBadge}>
+              <Icons.Feather name="bookmark" color={color.defalt} size={17} />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.openingStyle}>
-            <View style={styles.statCol}>
-              <Text style={styles.msgTitle}>Rating</Text>
-              <View style={styles.starCont}>
-                <Icons.FontAwesome name="star" color={color.ylow} size={14} />
-                <Text style={[styles.msgTitle, styles.ratingText]}>
-                  {avgRating}
-                </Text>
-              </View>
+          <View style={styles.metaBadgeRow}>
+            <View style={styles.statBadge}>
+              <Icons.FontAwesome name="star" color="#F59E0B" size={12} />
+              <Text style={styles.statBadgeText}>{avgRating}</Text>
             </View>
 
-            <View style={styles.statCol}>
-              <Text style={styles.msgTitle}>Total jobs</Text>
-              <Text style={styles.statVal}>{item.totaljob}</Text>
+            <View style={styles.statBadge}>
+              <Icons.Feather name="check-circle" color="#64748B" size={12} />
+              <Text style={styles.statBadgeText}>{item.totaljob} Jobs</Text>
             </View>
 
-            <View style={styles.statCol}>
-              <Text style={styles.msgTitle}>Experience</Text>
-              <Text style={styles.statVal}>{item.experience} Yrs</Text>
+            <View style={styles.statBadge}>
+              <Icons.Feather name="briefcase" color="#64748B" size={12} />
+              <Text style={styles.statBadgeText}>{item.experience} Yrs</Text>
             </View>
           </View>
         </View>
@@ -256,12 +274,22 @@ const FndExprt = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <CstmHeader
-        title={`Find Expert ${serviceTitle}`}
-        onPressBack={() => navigation.goBack()}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <View style={styles.searchStyle}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={22} color="#0F172A" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {serviceTitle ? `Experts: ${serviceTitle}` : 'Find Experts'}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <View style={styles.searchSection}>
         <InputSarchFiltr
           toggleModal={toggleModal}
           onChangeText={val => setSearchTerm(val)}
@@ -277,7 +305,11 @@ const FndExprt = props => {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No experts found</Text>
+            <Icons.Feather name="users" size={42} color="#CBD5E1" />
+            <Text style={styles.emptyTitle}>No Experts Found</Text>
+            <Text style={styles.emptySubtitle}>
+              Try adjusting your search criteria or filter options.
+            </Text>
           </View>
         }
       />
@@ -288,93 +320,74 @@ const FndExprt = props => {
         visible={modalVisible}
         onRequestClose={toggleModal}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
+          <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
               {showLocation || showAccount ? (
-                <>
-                  <TouchableOpacity
-                    style={[styles.cancelCont, styles.leftCancel]}
-                    onPress={toggleBack}>
-                    <Icons.FontAwesome5
-                      name="angle-left"
-                      color={color.wite}
-                      size={22}
-                    />
-                  </TouchableOpacity>
-                  <Text style={styles.modalTitle}>{modalTitle}</Text>
-                </>
-              ) : (
-                <Text style={styles.modalTitle}>Filter</Text>
-              )}
+                <TouchableOpacity
+                  style={styles.modalNavBtn}
+                  onPress={toggleBack}>
+                  <Icons.Feather name="arrow-left" color="#0F172A" size={20} />
+                </TouchableOpacity>
+              ) : null}
 
-              <TouchableOpacity style={styles.cancelCont} onPress={toggleModal}>
-                <Icons.FontAwesome5
-                  name="times"
-                  color={color.wite}
-                  size={20}
-                />
+              <Text style={styles.modalTitleText}>
+                {showLocation || showAccount ? modalTitle : 'Filter Providers'}
+              </Text>
+
+              <TouchableOpacity style={styles.modalCloseIcon} onPress={toggleModal}>
+                <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.modalBody}>
+            <View style={styles.modalBodyContent}>
               {!showLocation && !showAccount ? (
-                <View style={styles.jobsCont}>
-                  <Text style={styles.jobTitle}>Location</Text>
+                <>
                   <TouchableOpacity
-                    style={styles.cancelCont}
+                    activeOpacity={0.7}
+                    style={styles.filterTile}
                     onPress={toggleLocation}>
-                    <Text style={styles.filterText} numberOfLines={1}>
-                      {selectedLocation || 'View All'}
-                    </Text>
-                    <Icons.FontAwesome
-                      name="angle-right"
-                      color={color.blak}
-                      size={22}
-                      style={styles.angleRight}
-                    />
+                    <View>
+                      <Text style={styles.filterTileLabel}>Location</Text>
+                      <Text style={styles.filterTileValue}>
+                        {selectedLocation || 'All Locations'}
+                      </Text>
+                    </View>
+                    <Icons.Feather name="chevron-right" size={18} color="#94A3B8" />
                   </TouchableOpacity>
-                </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={styles.filterTile}
+                    onPress={toggleAccount}>
+                    <View>
+                      <Text style={styles.filterTileLabel}>Account Status</Text>
+                      <Text style={styles.filterTileValue}>
+                        {selectedAccount || 'All Accounts'}
+                      </Text>
+                    </View>
+                    <Icons.Feather name="chevron-right" size={18} color="#94A3B8" />
+                  </TouchableOpacity>
+                </>
               ) : null}
 
               {showLocation && (
-                <View style={styles.flatCont}>
-                  <FlatList
-                    data={locations}
-                    renderItem={renderLocationItem}
-                    keyExtractor={(item, index) => `location_${index}`}
-                    numColumns={2}
-                  />
-                </View>
+                <FlatList
+                  data={locations}
+                  renderItem={renderLocationItem}
+                  keyExtractor={(item, index) => `location_${index}`}
+                  numColumns={2}
+                  contentContainerStyle={{ paddingVertical: 6 }}
+                />
               )}
 
-              {!showLocation && !showAccount ? (
-                <View style={styles.jobsCont}>
-                  <Text style={styles.jobTitle}>Account</Text>
-                  <TouchableOpacity
-                    style={styles.cancelCont}
-                    onPress={toggleAccount}>
-                    <Text style={styles.filterText} numberOfLines={1}>
-                      {selectedAccount || 'View All'}
-                    </Text>
-                    <Icons.FontAwesome
-                      name="angle-right"
-                      color={color.blak}
-                      size={22}
-                      style={styles.angleRight}
-                    />
-                  </TouchableOpacity>
-                </View>
-              ) : null}
-
               {showAccount && (
-                <View style={styles.flatCont}>
-                  <FlatList
-                    data={accounts}
-                    renderItem={renderAccountItem}
-                    keyExtractor={(item, index) => `account_${index}`}
-                    numColumns={2}
-                  />
-                </View>
+                <FlatList
+                  data={accounts}
+                  renderItem={renderAccountItem}
+                  keyExtractor={(item, index) => `account_${index}`}
+                  numColumns={2}
+                  contentContainerStyle={{ paddingVertical: 6 }}
+                />
               )}
             </View>
 
@@ -383,8 +396,8 @@ const FndExprt = props => {
                 applyFilter();
                 toggleModal();
               }}
-              BtnStyle={styles.BtnStyle}
-              btnText="Apply"
+              BtnStyle={styles.applyFilterBtn}
+              btnText="Apply Filter"
             />
           </View>
         </View>
@@ -393,186 +406,226 @@ const FndExprt = props => {
   );
 };
 
-export default FndExprt;
+export default FindExpert;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
   },
-  searchStyle: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingBottom: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+  },
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    flex: 1,
+    textAlign: 'center',
+  },
+  searchSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
   },
   listContainer: {
-    paddingHorizontal: 15,
-    paddingBottom: 20,
-    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 30,
+  },
+  expertCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  providerImg: {
+    width: 68,
+    height: 68,
+    borderRadius: 14,
+    marginRight: 12,
+  },
+  providerCardInfo: {
+    flex: 1,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  nameVerifiedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  providerCardName: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  favBadge: {
+    padding: 4,
+  },
+  metaBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 6,
+  },
+  statBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#334155',
+    marginLeft: 4,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 50,
+    paddingVertical: 60,
   },
-  emptyText: {
-    fontSize: 15,
-    color: color.gry,
-  },
-  profileCont: {
-    flex: 1,
-  },
-  textContainer: {
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    backgroundColor: color.wite,
-    borderRadius: 10,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    width: '100%',
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  TextStyle: {
+  emptyTitle: {
     fontSize: 16,
-    color: color.blak,
     fontWeight: '700',
-    marginRight: 6,
+    color: '#0F172A',
+    marginTop: 12,
   },
-  msgTitle: {
-    fontSize: 12,
-    color: color.gry,
-    textAlign: 'center',
-  },
-  statVal: {
+  emptySubtitle: {
     fontSize: 13,
-    color: color.blak,
-    fontWeight: '600',
+    color: '#64748B',
+    marginTop: 4,
     textAlign: 'center',
-    marginTop: 2,
-  },
-  ratingText: {
-    marginLeft: 4,
-    fontWeight: '600',
-    color: color.blak,
-  },
-  statCol: {
-    alignItems: 'center',
-  },
-  openingStyle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-  },
-  logoImg: {
-    width: 65,
-    height: 65,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  titleCont: {
-    paddingBottom: 10,
-  },
-  nameCont: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  starCont: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    justifyContent: 'flex-end',
   },
-  modalView: {
-    borderRadius: 12,
-    width: '85%',
-    backgroundColor: color.wite,
-    overflow: 'hidden',
-    elevation: 5,
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 30,
+    maxHeight: '80%',
   },
   modalHeader: {
-    backgroundColor: color.defalt,
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 15,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-  cancelCont: {
+  modalNavBtn: {
     position: 'absolute',
-    right: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+    left: 0,
+    padding: 4,
   },
-  leftCancel: {
-    left: 12,
-    right: undefined,
+  modalTitleText: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  modalTitle: {
-    fontSize: 18,
-    color: color.wite,
-    fontWeight: '600',
+  modalCloseIcon: {
+    position: 'absolute',
+    right: 0,
+    padding: 4,
   },
-  modalBody: {
-    paddingVertical: 15,
-    paddingHorizontal: 15,
+  modalBodyContent: {
+    paddingVertical: 14,
   },
-  jobsCont: {
+  filterTile: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
-    borderBottomWidth: 0.5,
-    borderBottomColor: color.gry,
-    paddingBottom: 8,
-    marginVertical: 10,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 10,
   },
-  jobTitle: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: color.defalt,
+  filterTileLabel: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '600',
   },
-  filterText: {
-    color: color.blak,
-    fontSize: 13,
+  filterTileValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 2,
   },
-  angleRight: {
-    marginLeft: 6,
-  },
-  flatCont: {
-    flexDirection: 'row',
-    width: '100%',
-    paddingVertical: 10,
-  },
-  BtnStyle: {
-    marginVertical: 15,
-    width: '90%',
-    alignSelf: 'center',
-  },
-  listCont: {
+  filterChipCol: {
     flex: 0.5,
     padding: 4,
   },
-  itemStyle: {
-    backgroundColor: color.litOrng,
-    paddingHorizontal: 10,
+  filterSelectChip: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
     paddingVertical: 10,
-    borderRadius: 6,
+    paddingHorizontal: 8,
     alignItems: 'center',
   },
-  itemName: {
-    color: color.wite,
-    textAlign: 'center',
+  filterSelectChipActive: {
+    backgroundColor: '#EFF6FF',
+    borderColor: color.defalt,
+  },
+  filterSelectChipText: {
     fontSize: 12,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  filterSelectChipTextActive: {
+    color: color.defalt,
+    fontWeight: '700',
+  },
+  applyFilterBtn: {
+    width: '100%',
+    backgroundColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginTop: 10,
   },
 });

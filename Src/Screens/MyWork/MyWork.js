@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
 import HomStakWSarch from '../../Components/HomeStackWithSearch';
 import MyWrkTab from './AllTabs';
 
-const MyWrk = () => {
+const MyWork = () => {
   const navigation = useNavigation();
   const [searchTerm, setSearchTerm] = useState('');
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <HomStakWSarch
         onPress={() => navigation.openDrawer()}
         onPressnotification={() => navigation.navigate('edit_profile')}
@@ -25,15 +26,15 @@ const MyWrk = () => {
   );
 };
 
-export default MyWrk;
+export default MyWork;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8FAFC',
   },
   tabWrapper: {
     flex: 1,
-    paddingTop: 10,
+    paddingTop: 6,
   },
 });

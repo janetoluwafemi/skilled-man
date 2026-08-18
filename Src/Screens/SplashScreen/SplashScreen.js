@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Image } from 'react-native';
+import { StyleSheet, View, Image, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 import { useAuth } from '../../context/AuthProvider';
 import { notifiListener, reqestUsrPermision, getToken } from '../../utilis/notification';
 
-function SplshScren({ navigation }) {
+function SplashScreen({ navigation }) {
   const { dispatch } = useAuth();
   const isFocused = useIsFocused();
 
@@ -60,23 +61,31 @@ function SplshScren({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../../Assets/Images/splash.png')}
-        style={styles.imgStyle}
-        resizeMode="stretch"
-      />
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" translucent />
+      <Animatable.View
+        animation="fadeIn"
+        duration={1000}
+        style={styles.imageWrapper}>
+        <Image
+          source={require('../../Assets/Images/splash.png')}
+          style={styles.imgStyle}
+          resizeMode="cover"
+        />
+      </Animatable.View>
     </View>
   );
 }
 
-export default SplshScren;
+export default SplashScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#0F172A',
+  },
+  imageWrapper: {
+    width: '100%',
+    height: '100%',
   },
   imgStyle: {
     width: '100%',

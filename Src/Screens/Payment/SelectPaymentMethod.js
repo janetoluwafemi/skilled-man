@@ -7,17 +7,16 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { RadioButton } from 'react-native-paper';
+import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
-import CstmHeader from '../../Components/CustomHeader';
 import BotonComp from '../../Components/BtnComp';
 import { Icons } from '../../Components/Icons';
 
-const SlctPaymentMethd = props => {
+const SelectPaymentMethod = props => {
   const navigation = useNavigation();
   const route = useRoute();
 
@@ -51,93 +50,142 @@ const SlctPaymentMethd = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <CstmHeader
-        title="Select Payment Method"
-        onPressBack={() => props.navigation.goBack()}
-      />
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => props.navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Select Payment Method</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        <View style={styles.container}>
-          <Text style={styles.paymentTitle}>Choose Payment Option</Text>
-          <Text style={styles.paymentSubtitle}>
+        <Animatable.View
+          animation="fadeInUp"
+          duration={600}
+          style={styles.container}>
+
+          <View style={styles.badgeRow}>
+            <View style={styles.badgeCircle}>
+              <Icons.Ionicons
+                name="wallet-outline"
+                size={34}
+                color={color.defalt}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.welcomeTitle}>Choose Payment Option</Text>
+          <Text style={styles.welcomeSubtitle}>
             Select how you would like to complete your booking payment
           </Text>
 
-          <RadioButton.Group
-            onValueChange={newValue => setValue(newValue)}
-            value={value}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[
-                styles.optionCard,
-                value === 'Pay Online' && styles.optionCardSelected,
-              ]}
-              onPress={() => setValue('Pay Online')}>
-              <RadioButton.Android
-                value="Pay Online"
-                color={color.defalt}
-                uncheckedColor="#94A3B8"
-              />
-              <View style={styles.iconWrapper}>
-                <Icons.FontAwesome5
-                  name="credit-card"
+          <View style={styles.cardWrapper}>
+            <RadioButton.Group
+              onValueChange={newValue => setValue(newValue)}
+              value={value}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={[
+                  styles.optionCard,
+                  value === 'Pay Online' && styles.optionCardSelected,
+                ]}
+                onPress={() => setValue('Pay Online')}>
+                <RadioButton.Android
+                  value="Pay Online"
                   color={color.defalt}
-                  size={20}
+                  uncheckedColor="#94A3B8"
                 />
-              </View>
-              <View style={styles.optionTextCol}>
-                <Text style={styles.methodName}>Pay Online</Text>
-                <Text style={styles.methodSub}>Debit / Credit Card or Paystack</Text>
-              </View>
-            </TouchableOpacity>
+                <View style={styles.iconWrapper}>
+                  <Icons.FontAwesome5
+                    name="credit-card"
+                    color={color.defalt}
+                    size={18}
+                  />
+                </View>
+                <View style={styles.optionTextCol}>
+                  <Text style={styles.methodName}>Pay Online</Text>
+                  <Text style={styles.methodSub}>Debit / Credit Card or Paystack</Text>
+                </View>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[
-                styles.optionCard,
-                value === 'Cash on Delivery' && styles.optionCardSelected,
-              ]}
-              onPress={() => setValue('Cash on Delivery')}>
-              <RadioButton.Android
-                value="Cash on Delivery"
-                color={color.defalt}
-                uncheckedColor="#94A3B8"
-              />
-              <View style={styles.iconWrapper}>
-                <Icons.FontAwesome5
-                  name="money-bill-alt"
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={[
+                  styles.optionCard,
+                  value === 'Cash on Delivery' && styles.optionCardSelected,
+                ]}
+                onPress={() => setValue('Cash on Delivery')}>
+                <RadioButton.Android
+                  value="Cash on Delivery"
                   color={color.defalt}
-                  size={20}
+                  uncheckedColor="#94A3B8"
                 />
-              </View>
-              <View style={styles.optionTextCol}>
-                <Text style={styles.methodName}>Pay Later / Cash</Text>
-                <Text style={styles.methodSub}>Pay provider after service completion</Text>
-              </View>
-            </TouchableOpacity>
-          </RadioButton.Group>
+                <View style={styles.iconWrapper}>
+                  <Icons.FontAwesome5
+                    name="money-bill-alt"
+                    color={color.defalt}
+                    size={18}
+                  />
+                </View>
+                <View style={styles.optionTextCol}>
+                  <Text style={styles.methodName}>Pay Later / Cash</Text>
+                  <Text style={styles.methodSub}>Pay provider after service completion</Text>
+                </View>
+              </TouchableOpacity>
+            </RadioButton.Group>
 
-          <BotonComp
-            onPressFunc={handleNext}
-            BtnStyle={styles.submitBtn}
-            btnText="Next"
-          />
-        </View>
+            <BotonComp
+              onPressFunc={handleNext}
+              BtnStyle={styles.submitBtn}
+              btnText="Next"
+            />
+          </View>
+        </Animatable.View>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-export default SlctPaymentMethd;
+export default SelectPaymentMethod;
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+  },
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   scrollContent: {
     flexGrow: 1,
@@ -145,18 +193,51 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 4,
   },
-  paymentTitle: {
-    fontSize: 22,
+  badgeRow: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  badgeCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  welcomeTitle: {
+    fontSize: 26,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 4,
+    textAlign: 'center',
+    letterSpacing: -0.3,
   },
-  paymentSubtitle: {
+  welcomeSubtitle: {
     fontSize: 14,
     color: '#64748B',
-    marginBottom: 24,
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: 4,
+    lineHeight: 20,
+    paddingHorizontal: 12,
+  },
+  cardWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    marginBottom: 20,
   },
   optionCard: {
     flexDirection: 'row',
@@ -170,7 +251,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   optionCardSelected: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#EFF6FF',
     borderColor: color.defalt,
   },
   iconWrapper: {
@@ -183,7 +264,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     marginRight: 12,
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -203,9 +284,14 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     width: '100%',
-    marginTop: 20,
+    marginTop: 10,
     backgroundColor: color.defalt,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 14,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
 });
