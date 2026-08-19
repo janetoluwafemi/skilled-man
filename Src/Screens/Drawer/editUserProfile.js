@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import * as Animatable from 'react-native-animatable';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
@@ -27,7 +27,6 @@ const EditUserProfile = () => {
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
 
-  const [profileData, setProfileData] = useState(null);
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
@@ -35,6 +34,7 @@ const EditUserProfile = () => {
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [image, setImage] = useState(null);
+  const [profileImgUrl, setProfileImgUrl] = useState(null);
   const [load, setLoad] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
 
@@ -56,86 +56,83 @@ const EditUserProfile = () => {
     }
   }, []);
 
-  const getProfilData = useCallback(async () => {
+  const getProfileData = useCallback(async () => {
     try {
-      const formdata = new FormData();
-      formdata.append('id', global.id);
-      const response = await fetch(`${BASIC_URL}user/get_profile.php`, {
-        method: 'POST',
-        body: formdata,
+      const storedUser = await AsyncStorage.getItem('user');
+      const userObj = storedUser ? JSON.parse(storedUser) : null;
+      const userId = global.id || userObj?.id || '255';
+
+      // GET endpoint matching Postman documentation
+      const response = await fetch(`${BASIC_URL}user/get_profile.php?id=${userId}`, {
+        method: 'GET',
       });
       const result = await response.json();
-      if (result) setProfileData(result);
+
+      if (result) {
+        setName(result.name || '');
+        setEmail(result.email || '');
+        setPhone(result.phone_number || '');
+        setAddress(result.address || '');
+        if (result.profile) setProfileImgUrl(result.profile);
+
+        if (!global.lat && result.latitude) {
+          setLatitude(String(result.latitude));
+          setLongitude(String(result.longitude || ''));
+        }
+      }
     } catch (error) {
-      console.log('Fetch error:', error);
+      console.log('Fetch error in EditUserProfile:', error);
     }
   }, []);
 
   useEffect(() => {
     if (focus) {
-      getProfilData();
+      getProfileData();
     }
-  }, [focus, getProfilData]);
+  }, [focus, getProfileData]);
 
   useEffect(() => {
-    if (profileData) {
-      setPhone(profileData.phone_number || '');
-      setAddress(profileData.address || '');
-      setEmail(profileData.email || '');
-      setName(profileData.name || '');
-      if (profileData.latitude) {
-        setLatitude(parseFloat(profileData.latitude).toFixed(6).toString());
-      }
-      if (profileData.longitude) {
-        setLongitude(parseFloat(profileData.longitude).toFixed(6).toString());
-      }
-    }
-  }, [profileData]);
+    if (focus && global.lat && global.long) {
+      const latStr = parseFloat(global.lat).toFixed(6).toString();
+      const longStr = parseFloat(global.long).toFixed(6).toString();
 
-  useEffect(() => {
-    if (focus) {
-      if (global.lat && global.long) {
-        const latStr = parseFloat(global.lat).toFixed(6).toString();
-        const longStr = parseFloat(global.long).toFixed(6).toString();
-
-        setLatitude(latStr);
-        setLongitude(longStr);
-        getAddressFromCoords(latStr, longStr);
-      }
+      setLatitude(latStr);
+      setLongitude(longStr);
+      getAddressFromCoords(latStr, longStr);
     }
   }, [focus, getAddressFromCoords]);
 
   const onGalry = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Gallery permission is needed to select photos.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-    if (!result.canceled && result.assets && result.assets[0]) {
-      setImage(result.assets[0]);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setImage(result.assets[0]);
+      }
+    } catch (e) {
+      console.log('Image picker error:', e);
     }
   };
 
   const handleUpdate = async () => {
-    if (!latitude || !longitude) {
-      Alert.alert('Error', 'Latitude and Longitude are required.');
-      return;
-    }
     setLoad(true);
     try {
+      const storedUser = await AsyncStorage.getItem('user');
+      const userObj = storedUser ? JSON.parse(storedUser) : null;
+      const userId = global.id || userObj?.id || '255';
+
       const profileFormData = new FormData();
-      profileFormData.append('id', global.id);
+      profileFormData.append('id', String(userId));
       profileFormData.append('name', name);
       profileFormData.append('email', email);
       profileFormData.append('phone_number', phone);
       profileFormData.append('address', address);
-      profileFormData.append('latitude', latitude);
-      profileFormData.append('longitude', longitude);
-      if (image) {
+      profileFormData.append('latitude', latitude || '0');
+      profileFormData.append('longitude', longitude || '0');
+
+      if (image && image.uri) {
         profileFormData.append('profile', {
           uri: image.uri,
           name: image.fileName || 'profile.jpg',
@@ -143,32 +140,24 @@ const EditUserProfile = () => {
         });
       }
 
-      await fetch(`${BASIC_URL}user/profile.php`, {
+      const response = await fetch(`${BASIC_URL}user/profile.php`, {
         method: 'POST',
         body: profileFormData,
       });
 
-      const otpFormData = new FormData();
-      otpFormData.append('name', name);
-      otpFormData.append('phone_number', phone);
-      otpFormData.append('address', address);
-      otpFormData.append('email', email);
-      otpFormData.append('latitude', latitude);
-      otpFormData.append('longitude', longitude);
-      otpFormData.append('role', global.role || '0');
-      otpFormData.append('account', 'Verified');
+      const result = await response.json();
 
-      await fetch(`${BASIC_URL}otp_register.php`, {
-        method: 'POST',
-        body: otpFormData,
-      });
-
-      setLoad(false);
-      showToast('Profile Updated Successfully');
-      navigation.navigate('DashBoard');
+      if (result && (result.success || !result.error)) {
+        showToast('Profile Updated Successfully');
+        navigation.goBack();
+      } else {
+        showToast(result?.error || 'Update failed');
+      }
     } catch (error) {
+      console.log('Update Error:', error);
+      showToast('Update failed. Check network connection.');
+    } finally {
       setLoad(false);
-      showToast('Update failed');
     }
   };
 
@@ -195,15 +184,15 @@ const EditUserProfile = () => {
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={600} style={styles.container}>
+        <View style={styles.container}>
           <View style={styles.cardWrapper}>
             <View style={styles.imageContainer}>
               <Image
                 source={
-                  image
+                  image?.uri
                     ? { uri: image.uri }
-                    : profileData?.profile
-                      ? { uri: `${BASIC_URL}uploads/${profileData.profile}` }
+                    : profileImgUrl
+                      ? { uri: `${BASIC_URL}uploads/${profileImgUrl}` }
                       : require('../../Assets/Images/user.jpg')
                 }
                 style={styles.profileImage}
@@ -284,7 +273,7 @@ const EditUserProfile = () => {
               }
             />
           </View>
-        </Animatable.View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

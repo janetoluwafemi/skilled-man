@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Formik } from 'formik';
@@ -25,17 +26,17 @@ import { BASIC_URL } from '../Signin/Signin';
 
 const validationSchema = yup.object().shape({
   password: yup
-    .string()
-    .required('Password is required')
-    .min(10, 'Password must be at least 10 characters')
-    .matches(
-      /^(?=.*[A-Z])(?=.*[a-z]).*$/,
-      'Password must contain at least one uppercase letter and one lowercase letter'
-    ),
+      .string()
+      .required('Password is required')
+      .min(10, 'Password must be at least 10 characters')
+      .matches(
+          /^(?=.*[A-Z])(?=.*[a-z]).*$/,
+          'Password must contain at least one uppercase letter and one lowercase letter'
+      ),
   confirmPassword: yup
-    .string()
-    .required('Confirm Password is required')
-    .oneOf([yup.ref('password'), null], 'Passwords must match'),
+      .string()
+      .required('Confirm Password is required')
+      .oneOf([yup.ref('password'), null], 'Passwords must match'),
 });
 
 const SettingForgotPassword = props => {
@@ -45,148 +46,148 @@ const SettingForgotPassword = props => {
   const [load, setLoad] = useState(false);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <View style={styles.headerBar}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => props.navigation.goBack()}
-          style={styles.backArrowBtn}>
-          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Reset Password</Text>
-        <View style={{ width: 40 }} />
-      </View>
+        <View style={styles.headerBar}>
+          <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.goBack()}
+              style={styles.backArrowBtn}>
+            <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+          </TouchableOpacity>
+        </View>
 
-      <Formik
-        initialValues={{
-          password: '',
-          confirmPassword: '',
-        }}
-        validationSchema={validationSchema}
-        onSubmit={async values => {
-          try {
-            setLoad(true);
-            const myHeaders = new Headers();
-            myHeaders.append('Content-Type', 'multipart/form-data');
+        <Formik
+            initialValues={{
+              password: '',
+              confirmPassword: '',
+            }}
+            validationSchema={validationSchema}
+            onSubmit={async values => {
+              try {
+                setLoad(true);
+                const formdata = new FormData();
+                formdata.append('email', global.forgetemail);
+                formdata.append('password', values.password);
+                formdata.append('confirm_password', values.confirmPassword);
 
-            const formdata = new FormData();
-            formdata.append('email', global.forgetemail);
-            formdata.append('password', values.password);
-            formdata.append('confirm_password', values.confirmPassword);
+                const apiUrl = `${BASIC_URL}user/resetpassword.php`;
 
-            const apiUrl = `${BASIC_URL}user/resetpassword.php`;
+                const response = await fetch(apiUrl, {
+                  method: 'POST',
+                  body: formdata,
+                });
+                const result = await response.json();
 
-            const requestOptions = {
-              method: 'POST',
-              headers: myHeaders,
-              body: formdata,
-              redirect: 'follow',
-            };
+                setLoad(false);
 
-            const response = await fetch(apiUrl, requestOptions);
-            const result = await response.json();
+                if (result.success) {
+                  showToast(result.success);
+                  navigation.navigate('Signin');
+                } else if (result.error) {
+                  Alert.alert('Error', result.error);
+                } else {
+                  Alert.alert('Error', 'Unable to reset password. Please try again.');
+                }
+              } catch (error) {
+                setLoad(false);
+                Alert.alert('Error', error?.message || String(error) || 'An error occurred');
+              }
+            }}>
+          {({
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              values,
+              errors,
+              touched,
+            }) => (
+              <ScrollView
+                  contentContainerStyle={styles.scrollContent}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled">
+                <Animatable.View
+                    animation="fadeInUp"
+                    duration={600}
+                    style={styles.formContainer}>
 
-            setLoad(false);
+                  <View style={styles.logoRow}>
+                    <View style={styles.logoCircle}>
+                      <Image
+                          source={require('../../Assets/Images/logo.png')}
+                          style={styles.logoImage}
+                          resizeMode="contain"
+                      />
+                    </View>
+                  </View>
 
-            if (result.success) {
-              showToast(result.success);
-              navigation.navigate('Signin');
-            } else if (result.error) {
-              Alert.alert('Error', result.error);
-            } else {
-              Alert.alert('Error', 'Unable to reset password. Please try again.');
-            }
-          } catch (error) {
-            setLoad(false);
-            Alert.alert('Error', error?.message || String(error) || 'An error occurred');
-          }
-        }}>
-        {({
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            values,
-            errors,
-            touched,
-          }) => (
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled">
-            <Animatable.View
-              animation="fadeInUp"
-              duration={600}
-              style={styles.formContainer}>
+                  <Text style={styles.welcomeTitle}>Set New Password</Text>
+                  <Text style={styles.welcomeSubtitle}>
+                    Create a strong password with at least 10 characters, including uppercase and lowercase letters
+                  </Text>
 
-              <View style={styles.badgeRow}>
-                <View style={styles.badgeCircle}>
-                  <Icons.Feather
-                    name="lock"
-                    size={34}
-                    color={color.defalt}
-                  />
-                </View>
-              </View>
+                  <View style={styles.cardWrapper}>
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>New Password</Text>
+                      <C_InputScurEntry
+                          styles={styles.inputTextBlack}
+                          placeholder="Enter new password"
+                          placeholderTextColor="#94A3B8"
+                          secureTextEntry={hide}
+                          icon="eye-off"
+                          onChangeText={handleChange('password')}
+                          onBlur={handleBlur('password')}
+                          value={values.password}
+                          onPress={() => setHide(!hide)}
+                      />
+                      {touched.password && errors.password && (
+                          <Text style={styles.errorText}>{errors.password}</Text>
+                      )}
+                    </View>
 
-              <Text style={styles.welcomeTitle}>Set New Password</Text>
-              <Text style={styles.welcomeSubtitle}>
-                Create a strong password with at least 10 characters, including uppercase and lowercase letters.
-              </Text>
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>Confirm New Password</Text>
+                      <C_InputScurEntry
+                          styles={styles.inputTextBlack}
+                          placeholder="Confirm new password"
+                          placeholderTextColor="#94A3B8"
+                          onChangeText={handleChange('confirmPassword')}
+                          onBlur={handleBlur('confirmPassword')}
+                          value={values.confirmPassword}
+                          icon="eye-off"
+                          secureTextEntry={confirmHide}
+                          onPress={() => setConfirmHide(!confirmHide)}
+                      />
+                      {touched.confirmPassword && errors.confirmPassword && (
+                          <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+                      )}
+                    </View>
 
-              <View style={styles.cardWrapper}>
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>New Password</Text>
-                  <C_InputScurEntry
-                    placeholder="Enter new password"
-                    placeholderTextColor={color.litGry}
-                    secureTextEntry={hide}
-                    icon="eye-off"
-                    onChangeText={handleChange('password')}
-                    onBlur={handleBlur('password')}
-                    value={values.password}
-                    onPress={() => setHide(!hide)}
-                  />
-                  {touched.password && errors.password && (
-                    <Text style={styles.errorText}>{errors.password}</Text>
-                  )}
-                </View>
+                    <BotonComp
+                        BtnStyle={styles.submitBtn}
+                        btnText={
+                          load ? (
+                              <ActivityIndicator color="#FFFFFF" size="small" />
+                          ) : (
+                              'Reset Password'
+                          )
+                        }
+                        onPressFunc={handleSubmit}
+                    />
+                  </View>
 
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Confirm New Password</Text>
-                  <C_InputScurEntry
-                    placeholder="Confirm new password"
-                    placeholderTextColor={color.litGry}
-                    onChangeText={handleChange('confirmPassword')}
-                    onBlur={handleBlur('confirmPassword')}
-                    value={values.confirmPassword}
-                    icon="eye-off"
-                    secureTextEntry={confirmHide}
-                    onPress={() => setConfirmHide(!confirmHide)}
-                  />
-                  {touched.confirmPassword && errors.confirmPassword && (
-                    <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-                  )}
-                </View>
-
-                <BotonComp
-                  BtnStyle={styles.submitBtn}
-                  btnText={
-                    load ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                      'Reset Password'
-                    )
-                  }
-                  onPressFunc={handleSubmit}
-                />
-              </View>
-            </Animatable.View>
-          </ScrollView>
-        )}
-      </Formik>
-    </SafeAreaView>
+                  <View style={styles.footerRow}>
+                    <Text style={styles.footerText}>Remembered your password? </Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Signin')}>
+                      <Text style={styles.footerLink}>Sign In</Text>
+                    </TouchableOpacity>
+                  </View>
+                </Animatable.View>
+              </ScrollView>
+          )}
+        </Formik>
+      </SafeAreaView>
   );
 };
 
@@ -199,11 +200,10 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: '#F8FAFC',
   },
   backArrowBtn: {
@@ -219,11 +219,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 40,
@@ -232,14 +227,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 4,
   },
-  badgeRow: {
+  logoRow: {
     alignItems: 'center',
     marginBottom: 12,
   },
-  badgeCircle: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -248,6 +243,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
+  },
+  logoImage: {
+    width: 52,
+    height: 52,
   },
   welcomeTitle: {
     fontSize: 26,
@@ -262,8 +261,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
     marginTop: 4,
-    lineHeight: 20,
     paddingHorizontal: 12,
+    lineHeight: 20,
   },
   cardWrapper: {
     backgroundColor: '#FFFFFF',
@@ -286,6 +285,9 @@ const styles = StyleSheet.create({
     color: '#334155',
     marginBottom: 6,
   },
+  inputTextBlack: {
+    color: '#000000',
+  },
   submitBtn: {
     width: '100%',
     backgroundColor: color.defalt,
@@ -303,5 +305,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 2,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  footerText: {
+    color: '#64748B',
+    fontSize: 14,
+  },
+  footerLink: {
+    color: color.defalt,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

@@ -9,9 +9,10 @@ import {
   Alert,
   Modal,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
@@ -24,7 +25,6 @@ import { BASIC_URL } from '../Signin/Signin';
 const { height } = Dimensions.get('window');
 
 const UserDashboard = () => {
-  const isFocused = useIsFocused();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { state } = useAuth();
@@ -32,12 +32,13 @@ const UserDashboard = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [skill, setSkill] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchSpecificData = async value => {
     try {
       const formdata = new FormData();
       formdata.append('job', value);
-      formdata.append('user_id', global.id);
+      formdata.append('user_id', global.id || '255');
 
       const response = await fetch(`${BASIC_URL}user/providers_job.php`, {
         method: 'POST',
@@ -62,23 +63,24 @@ const UserDashboard = () => {
 
   const getOverallServices = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch(`${BASIC_URL}get_services.php`, {
         method: 'POST',
       });
       const result = await response.json();
 
-      if (result && result.add_skills) {
+      if (result && Array.isArray(result.add_skills)) {
         setSkill(result.add_skills);
-      } else if (result?.error) {
-        Alert.alert(
-          'Error',
-          typeof result.error === 'string'
-            ? result.error
-            : String(result.error)
-        );
+      } else if (result && Array.isArray(result)) {
+        setSkill(result);
+      } else {
+        setSkill([]);
       }
     } catch (error) {
       console.log('Error fetching services:', error);
+      setSkill([]);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -89,9 +91,11 @@ const UserDashboard = () => {
     getOverallServices();
   }, [state?.isAuth, getOverallServices]);
 
-  const filteredData = skill.filter(item =>
-    item?.select_bussiness?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredData = Array.isArray(skill)
+    ? skill.filter(item =>
+      item?.select_bussiness?.toLowerCase().includes((searchTerm || '').toLowerCase())
+    )
+    : [];
 
   const bottomPadding =
     height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
@@ -111,28 +115,39 @@ const UserDashboard = () => {
         screen="user"
       />
 
-      <ScrollView
-        style={styles.scrollStyle}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: bottomPadding },
-        ]}
-        showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={600}>
-          <View style={styles.gridContainer}>
-            {filteredData.map((itemdata, ind) => (
-              <SrvicCrd
-                key={ind}
-                showProfile={() => fetchSpecificData(itemdata.select_bussiness)}
-                serviceTitle={itemdata.select_bussiness}
-                iconUrl={`${BASIC_URL}uploads/${itemdata.image}`}
-              />
-            ))}
-          </View>
-        </Animatable.View>
-      </ScrollView>
+      {loading ? (
+        <View style={styles.centerLoading}>
+          <ActivityIndicator size="large" color={color.defalt} />
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.scrollStyle}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: bottomPadding },
+          ]}
+          showsVerticalScrollIndicator={false}>
+          <Animatable.View animation="fadeInUp" duration={600}>
+            <View style={styles.gridContainer}>
+              {filteredData.length > 0 ? (
+                filteredData.map((itemdata, ind) => (
+                  <SrvicCrd
+                    key={itemdata?.id?.toString() || ind.toString()}
+                    showProfile={() => fetchSpecificData(itemdata?.select_bussiness)}
+                    serviceTitle={itemdata?.select_bussiness || 'Service'}
+                    iconUrl={`${BASIC_URL}uploads/${itemdata?.image || ''}`}
+                  />
+                ))
+              ) : (
+                <View style={styles.noDataContainer}>
+                  <Text style={styles.noDataText}>No services found</Text>
+                </View>
+              )}
+            </View>
+          </Animatable.View>
+        </ScrollView>
+      )}
 
-      {/* Disclaimer Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -204,6 +219,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+  centerLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   scrollStyle: {
     paddingHorizontal: 20,
     paddingTop: 12,
@@ -216,6 +236,16 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
+  },
+  noDataContainer: {
+    width: '100%',
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  noDataText: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
   },
   modalContainer: {
     flex: 1,

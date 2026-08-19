@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: 'transparent',
     borderRadius: 6,
-    color: color.defalt,
+    color: '#000000',
   },
   focusedBorder: {
     borderColor: color.defalt,

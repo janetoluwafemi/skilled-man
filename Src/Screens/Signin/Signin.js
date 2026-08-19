@@ -46,7 +46,6 @@ const Signin = props => {
   const [load, setLoad] = useState(false);
   const [googleRole, setGoogleRole] = useState(0);
 
-  // useIdTokenAuthRequest ensures Google returns an id_token for Firebase Auth
   const [googleRequest, googleResponse, promptGoogle] =
       Google.useIdTokenAuthRequest({
         clientId: GOOGLE_WEB_CLIENT_ID,
@@ -123,23 +122,23 @@ const Signin = props => {
     try {
       setLoad(true);
       const formdata = new FormData();
-      formdata.append('identifier', userName.trim());
+      formdata.append('email', userName.trim());
       formdata.append('password', password);
       formdata.append('token', token || '');
 
-      const response = await fetch(`${BASIC_URL}google_login.php`, {
+      const response = await fetch(`${BASIC_URL}login.php`, {
         method: 'POST',
         body: formdata,
       });
       const result = await response.json();
 
-      if (result && !result.error) {
+      if (result && !result.error && (result.id || result.success)) {
         await AsyncStorage.setItem('user', JSON.stringify(result));
         await AsyncStorage.setItem('role', (result.role ?? 0).toString());
         dispatch({ type: 'LOGIN', payload: { user: result, role: result.role ?? 0 } });
         navigation.navigate('Parent');
       } else {
-        showToast('Invalid credentials, please try again');
+        showToast(result.error || result.status || 'Invalid credentials, please try again');
       }
     } catch (error) {
       showToast('Something went wrong. Check connection.');
@@ -237,7 +236,6 @@ const Signin = props => {
               <Text style={styles.dividerText}>or continue with</Text>
               <View style={styles.dividerLine} />
             </View>
-
             <Text style={styles.googleRoleLabel}>Account Type for Google Sign-In</Text>
             <View style={styles.segmentContainer}>
               <TouchableOpacity
@@ -275,8 +273,9 @@ const Signin = props => {
                 activeOpacity={0.85}
                 onPress={handleGoogleSignInFlow}
                 style={styles.googleBtn}>
-              <Icons.FontAwesome name="google" size={18} color="#DB4437" />
-              <Text style={styles.googleBtnText}>
+                <Image source={require('../../Assets/Images/download (7).jpeg')} style={styles.googleImage}></Image>
+
+                <Text style={styles.googleBtnText}>
                 Continue with Google ({googleRole === 0 ? 'User' : 'Provider'})
               </Text>
             </TouchableOpacity>
@@ -299,6 +298,11 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+  googleImage: {
+      width: 20,
+      height: 20,
+      resizeMode: 'contain',
   },
   headerBar: {
     paddingHorizontal: 20,

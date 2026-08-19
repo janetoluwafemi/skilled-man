@@ -11,11 +11,10 @@ import { Icons } from './Icons';
 const C_InputScurEntry = forwardRef(
   (
     {
-      mode = 'outlined',
       styles: customInputStyle,
       containerStyle,
       placeholder,
-      placeholderTextColor,
+      placeholderTextColor = '#94A3B8',
       textAlign,
       keyboardType,
       multiline,
@@ -46,55 +45,50 @@ const C_InputScurEntry = forwardRef(
 
     const handleInputChange = (text) => {
       let formattedText = text;
-
       if (isNumericOnly) {
         formattedText = formattedText.replace(/[^0-9]/g, '');
       }
-
       if (maxLength) {
         formattedText = formattedText.slice(0, maxLength);
       }
-
       if (onChangeText) {
         onChangeText(formattedText);
       }
     };
 
     return (
-      <View style={[styles.inputView, containerStyle]}>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            {...rest}
-            ref={ref}
-            placeholder={placeholder}
-            mode={mode}
-            placeholderTextColor={placeholderTextColor}
-            textAlign={textAlign}
-            keyboardType={keyboardType}
-            scrollEnabled={false}
-            multiline={multiline}
-            numberOfLines={numberOfLines}
-            secureTextEntry={secureTextEntry}
-            maxLength={maxLength}
-            style={[
-              styles.inputstyle,
-              isFocused && styles.focusedBorder,
-              customInputStyle,
-            ]}
-            onChangeText={handleInputChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-          />
-        </View>
+      <View
+        style={[
+          styles.inputContainer,
+          isFocused && styles.inputContainerFocused,
+          containerStyle,
+        ]}>
+        <TextInput
+          {...rest}
+          ref={ref}
+          placeholder={placeholder}
+          placeholderTextColor={placeholderTextColor}
+          textAlign={textAlign}
+          keyboardType={keyboardType}
+          scrollEnabled={false}
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+          secureTextEntry={secureTextEntry}
+          maxLength={maxLength}
+          style={[styles.textInputField, customInputStyle]}
+          onChangeText={handleInputChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
 
         <TouchableOpacity
           activeOpacity={0.7}
-          style={styles.iconStyle}
+          style={styles.iconButton}
           onPress={onPress}>
           <Icons.Feather
-            name={secureTextEntry ? icon : 'eye'}
-            size={22}
-            color={color.defalt}
+            name={secureTextEntry ? 'eye-off' : 'eye'}
+            size={18}
+            color="#64748B"
           />
         </TouchableOpacity>
       </View>
@@ -107,36 +101,34 @@ C_InputScurEntry.displayName = 'C_InputScurEntry';
 export default C_InputScurEntry;
 
 const styles = StyleSheet.create({
-  inputView: {
-    backgroundColor: 'transparent',
-    borderRadius: 6,
-    width: '100%',
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 5,
-  },
-  inputWrapper: {
     width: '100%',
-  },
-  inputstyle: {
-    width: '100%',
-    paddingVertical: 10,
-    fontSize: 15,
-    paddingLeft: 20,
-    paddingRight: 45,
-    borderColor: color.defalt,
+    height: 48,
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    backgroundColor: 'transparent',
-    borderRadius: 6,
-    color: color.defalt,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    marginVertical: 4,
   },
-  focusedBorder: {
+  inputContainerFocused: {
     borderColor: color.defalt,
-    borderWidth: 1.5,
+    backgroundColor: '#FFFFFF',
   },
-  iconStyle: {
-    position: 'absolute',
-    right: 12,
-    padding: 4,
+  textInputField: {
+    flex: 1,
+    fontSize: 14,
+    color: '#0F172A',
+    fontWeight: '500',
+    paddingVertical: 0,
+    height: '100%',
+    outlineStyle: 'none',
+  },
+  iconButton: {
+    padding: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

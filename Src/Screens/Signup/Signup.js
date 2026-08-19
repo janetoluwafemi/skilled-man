@@ -13,6 +13,7 @@ import {
     FlatList,
     TextInput,
     Image,
+    Alert,
 } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { Formik } from 'formik';
@@ -61,7 +62,7 @@ const Signup = props => {
     const navigation = useNavigation();
     const focus = useIsFocused();
 
-    const [role, setRole] = useState(0);
+    const [role, setRole] = useState(0); // 0 = User, 1 = Provider
     const [load, setLoad] = useState(false);
     const [countries, setCountries] = useState([]);
     const [states, setStates] = useState([]);
@@ -94,7 +95,7 @@ const Signup = props => {
         if (googleResponse?.type === 'success') {
             const { id_token } = googleResponse.params;
             if (id_token) {
-                handleGoogleSignInSuccess(id_token).then(r => {});
+                handleGoogleSignInSuccess(id_token).then(() => {});
             }
         } else if (googleResponse?.type === 'error') {
             showToast('Google authentication failed');
@@ -196,55 +197,46 @@ const Signup = props => {
                 onSubmit={async value => {
                     try {
                         setLoad(true);
-                        const myHeaders = new Headers();
-                        myHeaders.append('Content-Type', 'multipart/form-data');
 
                         const formdata = new FormData();
                         formdata.append('name', value.name);
                         const fullPhoneNumber = `+${selectedDialCode.phonecode}${value.phone_number}`;
                         formdata.append('phone_number', fullPhoneNumber);
-                        formdata.append('address', value.address);
-                        formdata.append('state', selectedState ? selectedState.isoCode : '');
-                        formdata.append('role', role);
                         formdata.append('email', value.email);
-                        formdata.append('account', 'Verified');
-                        formdata.append('country', selectedCountry ? selectedCountry.isoCode : 'NG');
-                        formdata.append('association', value.association);
-                        formdata.append('latitude', global.lat || '');
-                        formdata.append('longitude', global.long || '');
+                        formdata.append('address', value.address);
+                        formdata.append('state', selectedState ? selectedState.name : '');
+                        formdata.append('country', selectedCountry ? selectedCountry.name : 'Nigeria');
+                        formdata.append('account', 'VERIFIED');
+                        formdata.append('role', String(role));
+                        formdata.append('association', value.association || (role === 1 ? 'Artisan' : 'User'));
+                        formdata.append('latitude', global.lat ? String(global.lat) : '33.5595769');
+                        formdata.append('longitude', global.long ? String(global.long) : '73.1249139');
+                        const apiUrl = `${BASIC_URL}otp_register.php?role=${role}`;
 
-                        const apiUrl = `${BASIC_URL}otp_register.php`;
-
-                        const requestOptions = {
+                        const response = await fetch(apiUrl, {
                             method: 'POST',
-                            headers: myHeaders,
                             body: formdata,
-                            redirect: 'follow',
-                        };
+                        });
 
-                        const response = await fetch(apiUrl, requestOptions);
                         const result = await response.json();
+                        setLoad(false);
 
-                        if (result) {
-                            setLoad(false);
+                        if (result && (result.success || !result.error)) {
                             global.id = result.id;
-                            global.name = result.name;
-                            global.role = result.role;
-                            global.email = result.email;
-                            global.address = result.address;
-                            global.phone_number = result.phone_number;
+                            global.name = result.name || value.name;
+                            global.role = result.role || String(role);
+                            global.email = result.email || value.email;
+                            global.address = result.address || value.address;
+                            global.phone_number = result.phone_number || fullPhoneNumber;
 
-                            if (!result.error) {
-                                navigation.navigate('OtpScreen', { result });
-                            } else {
-                                showToast(result.error);
-                            }
+                            showToast(result.status || 'OTP sent to your email');
+                            navigation.navigate('OtpScreen', { result });
                         } else {
-                            setLoad(false);
+                            Alert.alert('Registration Failed', result?.error || result?.Twilio_error || 'Something went wrong. Please try again.');
                         }
                     } catch (error) {
                         setLoad(false);
-                        console.error('API error:', error);
+                        Alert.alert('Network Error', error?.message || 'Unable to connect to server');
                     }
                 }}>
                 {({
@@ -494,7 +486,7 @@ const Signup = props => {
                                 activeOpacity={0.85}
                                 onPress={handleGoogleSignInFlow}
                                 style={styles.googleBtn}>
-                                <Icons.FontAwesome name="google" size={18} color="#DB4437" />
+                                <Image source={require('../../Assets/Images/download (7).jpeg')} style={styles.googleImage} />
                                 <Text style={styles.googleBtnText}>
                                     Continue with Google ({role === 0 ? 'User' : 'Provider'})
                                 </Text>
@@ -666,6 +658,11 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: '#F8FAFC',
+    },
+    googleImage: {
+        width: 20,
+        height: 20,
+        resizeMode: 'contain',
     },
     headerBar: {
         paddingHorizontal: 20,
@@ -844,7 +841,6 @@ const styles = StyleSheet.create({
         padding: 0,
         height: 24,
     },
-
     selectTile: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -924,7 +920,6 @@ const styles = StyleSheet.create({
         marginTop: 4,
         marginLeft: 2,
     },
-
     dividerRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -941,7 +936,6 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         paddingHorizontal: 12,
     },
-
     googleBtn: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -963,7 +957,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginLeft: 10,
     },
-
     footerRow: {
         flexDirection: 'row',
         justifyContent: 'center',
@@ -979,7 +972,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
     },
-
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(15, 23, 42, 0.4)',

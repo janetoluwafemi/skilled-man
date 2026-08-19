@@ -32,12 +32,57 @@ const ForgotPasswordOtpScreen = props => {
   const [fourthDigit, setFourthDigit] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const firstInput = useRef();
-  const secondInput = useRef();
-  const thirdInput = useRef();
-  const fourthInput = useRef();
+  const firstInput = useRef(null);
+  const secondInput = useRef(null);
+  const thirdInput = useRef(null);
+  const fourthInput = useRef(null);
 
   const finalOtp = firstDigit + secondDigit + thirdDigit + fourthDigit;
+
+  const handleOtpChange = (text, index) => {
+    const cleaned = text.replace(/[^0-9]/g, '');
+
+    if (cleaned.length > 1) {
+      const digits = cleaned.slice(0, 4).split('');
+      setFirstDigit(digits[0] || '');
+      setSecondDigit(digits[1] || '');
+      setThirdDigit(digits[2] || '');
+      setFourthDigit(digits[3] || '');
+
+      if (digits.length === 4) {
+        fourthInput.current?.focus();
+      } else if (digits.length === 3) {
+        fourthInput.current?.focus();
+      } else if (digits.length === 2) {
+        thirdInput.current?.focus();
+      }
+      return;
+    }
+    if (index === 0) {
+      setFirstDigit(cleaned);
+      if (cleaned) secondInput.current?.focus();
+    } else if (index === 1) {
+      setSecondDigit(cleaned);
+      if (cleaned) thirdInput.current?.focus();
+    } else if (index === 2) {
+      setThirdDigit(cleaned);
+      if (cleaned) fourthInput.current?.focus();
+    } else if (index === 3) {
+      setFourthDigit(cleaned);
+    }
+  };
+
+  const handleKeyPress = (e, index) => {
+    if (e.nativeEvent.key === 'Backspace') {
+      if (index === 3 && !fourthDigit) {
+        thirdInput.current?.focus();
+      } else if (index === 2 && !thirdDigit) {
+        secondInput.current?.focus();
+      } else if (index === 1 && !secondDigit) {
+        firstInput.current?.focus();
+      }
+    }
+  };
 
   const handleSubmit = () => {
     if (finalOtp.length < 4) {
@@ -132,53 +177,45 @@ const ForgotPasswordOtpScreen = props => {
                 ref={firstInput}
                 style={[styles.otpBox, firstDigit ? styles.otpBoxActive : null]}
                 keyboardType="number-pad"
-                maxLength={1}
+                textContentType="oneTimeCode"
+                autoComplete="sms-otp"
+                maxLength={4}
                 value={firstDigit}
-                onChangeText={text => {
-                  setFirstDigit(text);
-                  if (text) secondInput.current?.focus();
-                }}
+                onChangeText={text => handleOtpChange(text, 0)}
+                onKeyPress={e => handleKeyPress(e, 0)}
               />
               <TextInput
                 ref={secondInput}
                 style={[styles.otpBox, secondDigit ? styles.otpBoxActive : null]}
                 keyboardType="number-pad"
-                maxLength={1}
+                textContentType="oneTimeCode"
+                autoComplete="sms-otp"
+                maxLength={4}
                 value={secondDigit}
-                onChangeText={text => {
-                  setSecondDigit(text);
-                  if (text) {
-                    thirdInput.current?.focus();
-                  } else {
-                    firstInput.current?.focus();
-                  }
-                }}
+                onChangeText={text => handleOtpChange(text, 1)}
+                onKeyPress={e => handleKeyPress(e, 1)}
               />
               <TextInput
                 ref={thirdInput}
                 style={[styles.otpBox, thirdDigit ? styles.otpBoxActive : null]}
                 keyboardType="number-pad"
-                maxLength={1}
+                textContentType="oneTimeCode"
+                autoComplete="sms-otp"
+                maxLength={4}
                 value={thirdDigit}
-                onChangeText={text => {
-                  setThirdDigit(text);
-                  if (text) {
-                    fourthInput.current?.focus();
-                  } else {
-                    secondInput.current?.focus();
-                  }
-                }}
+                onChangeText={text => handleOtpChange(text, 2)}
+                onKeyPress={e => handleKeyPress(e, 2)}
               />
               <TextInput
                 ref={fourthInput}
                 style={[styles.otpBox, fourthDigit ? styles.otpBoxActive : null]}
                 keyboardType="number-pad"
-                maxLength={1}
+                textContentType="oneTimeCode"
+                autoComplete="sms-otp"
+                maxLength={4}
                 value={fourthDigit}
-                onChangeText={text => {
-                  setFourthDigit(text);
-                  if (!text) thirdInput.current?.focus();
-                }}
+                onChangeText={text => handleOtpChange(text, 3)}
+                onKeyPress={e => handleKeyPress(e, 3)}
               />
             </View>
 
