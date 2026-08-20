@@ -10,7 +10,7 @@ import colors from '../Assets/colors/colors';
 import { Icons } from './Icons';
 import { BASIC_URL } from '../Screens/Signin/Signin';
 
-const FltLstCrd = ({
+const FlatListCard = ({
                      cardTitle,
                      cardStyle,
                      onPressShowProfile,
@@ -31,8 +31,18 @@ const FltLstCrd = ({
     });
   };
 
+  const combinedCardStyle = StyleSheet.flatten([
+    styles.textContainer,
+    cardStyle,
+  ]);
+
+  const combinedPaidStyle = StyleSheet.flatten([
+    styles.paidStyle,
+    dateCont,
+  ]);
+
   return (
-    <View style={[styles.textContainer, cardStyle]}>
+    <View style={combinedCardStyle}>
       <View style={styles.openingStyle}>
         <Text style={styles.TextStyle}>{cardTitle}</Text>
         <View style={styles.rightCont}>
@@ -45,7 +55,7 @@ const FltLstCrd = ({
               />
             </TouchableOpacity>
           ) : null}
-          <Text style={[styles.paidStyle, dateCont]}>{paidTitle}</Text>
+          <Text style={combinedPaidStyle}>{paidTitle}</Text>
         </View>
       </View>
 
@@ -72,7 +82,7 @@ const FltLstCrd = ({
   );
 };
 
-export default FltLstCrd;
+export default FlatListCard;
 
 const styles = StyleSheet.create({
   textContainer: {

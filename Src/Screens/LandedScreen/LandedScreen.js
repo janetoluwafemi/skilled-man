@@ -5,9 +5,9 @@ import {
   View,
   SafeAreaView,
   StatusBar,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import BotonComp from '../../Components/BtnComp';
@@ -19,20 +19,18 @@ const LndedScren = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <View style={styles.content}>
-        <Animatable.View animation="fadeInDown" duration={1000} style={styles.header}>
+        <View style={styles.header}>
           <Text style={styles.title}>Skilledman</Text>
           <Text style={styles.subtitle}>Professional Services at Your Fingertips</Text>
-        </Animatable.View>
+        </View>
 
-        <Animatable.Image
-          animation="zoomIn"
-          duration={1200}
+        <Image
           source={require('../../Assets/Images/landed.png')}
           style={styles.image}
           resizeMode="contain"
         />
 
-        <Animatable.View animation="fadeInUp" duration={1000} style={styles.cardWrapper}>
+        <View style={styles.cardWrapper}>
           <Text style={styles.description}>
             Connecting skilled professionals with service seekers through innovative technology.
           </Text>
@@ -51,7 +49,7 @@ const LndedScren = () => {
               onPressFunc={() => navigation.navigate('Signin')}
             />
           </View>
-        </Animatable.View>
+        </View>
       </View>
     </SafeAreaView>
   );

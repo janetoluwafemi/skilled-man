@@ -27,7 +27,7 @@ const getResponsiveSpacing = (small, medium, large) => {
   return large;
 };
 
-const DrarUsr = () => {
+const DrawerUser = () => {
   const navigation = useNavigation();
   const focus = useIsFocused();
   const [profileData, setProfileData] = useState(null);
@@ -87,7 +87,7 @@ const DrarUsr = () => {
   );
 };
 
-export default DrarUsr;
+export default DrawerUser;
 
 const styles = StyleSheet.create({
   mainContainer: {

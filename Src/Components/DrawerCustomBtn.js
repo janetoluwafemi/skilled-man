@@ -35,29 +35,33 @@ const DrarCstmBtn = ({
                        activeOpacity = 0.7,
                        ...rest
                      }) => {
+  const containerStyle = StyleSheet.flatten([styles.loginBtn, style]);
+
+  const combinedIconStyle = StyleSheet.flatten([
+    styles.iconStyle,
+    { fontSize: getResponsiveSize(24, 26, 27) },
+    iconStyle,
+  ]);
+
+  const combinedTextStyle = StyleSheet.flatten([
+    styles.btnText,
+    { fontSize: getResponsiveSize(16, 17, 18) },
+    textStyle,
+  ]);
+
   return (
     <TouchableOpacity
-      style={[styles.loginBtn, style]}
+      style={containerStyle}
       onPress={DrawerBtnPress}
       activeOpacity={activeOpacity}
       {...rest}>
       {drawerIcon ? (
         <IconComponent
           name={drawerIcon}
-          style={[
-            styles.iconStyle,
-            { fontSize: getResponsiveSize(24, 26, 27) },
-            iconStyle,
-          ]}
+          style={combinedIconStyle}
         />
       ) : null}
-      <Text
-        style={[
-          styles.btnText,
-          { fontSize: getResponsiveSize(16, 17, 18) },
-          textStyle,
-        ]}
-        numberOfLines={1}>
+      <Text style={combinedTextStyle} numberOfLines={1}>
         {title}
       </Text>
     </TouchableOpacity>

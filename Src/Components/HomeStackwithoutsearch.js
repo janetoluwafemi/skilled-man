@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Image } from 'native-base';
+import { Image } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 
 import color from '../Assets/colors/colors';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -7,11 +7,12 @@ import {
   Platform,
   StatusBar,
   Dimensions,
+  Image, // Standard React Native Image
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Image } from 'native-base';
 import { useIsFocused } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import color from '../Assets/colors/colors';
 import InputSarchFiltr from './InputSearchFilter';
@@ -49,20 +50,14 @@ const HeaderWSarchFiltr = ({
   const insets = useSafeAreaInsets();
   const [profileData, setProfileData] = useState(null);
 
-  useEffect(() => {
-    if (focus) {
-      getProfileData();
-    }
-  }, [focus]);
-
-  const getProfileData = async () => {
+  const getProfileData = useCallback(async () => {
     try {
-      const formdata = new FormData();
-      formdata.append('id', global.id);
+      const storedUser = await AsyncStorage.getItem('user');
+      const userObj = storedUser ? JSON.parse(storedUser) : null;
+      const userId = global.id || userObj?.id || '255';
 
-      const response = await fetch(`${BASIC_URL}user/get_profile.php`, {
-        method: 'POST',
-        body: formdata,
+      const response = await fetch(`${BASIC_URL}user/get_profile.php?id=${userId}`, {
+        method: 'GET',
       });
 
       const result = await response.json();
@@ -72,7 +67,13 @@ const HeaderWSarchFiltr = ({
     } catch (error) {
       console.log('Error fetching profile data:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (focus) {
+      getProfileData();
+    }
+  }, [focus, getProfileData]);
 
   const imageUri = profileData?.profile
     ? `${BASIC_URL}uploads/${profileData.profile}`
@@ -80,24 +81,32 @@ const HeaderWSarchFiltr = ({
 
   const avatarSize = getResponsiveSize(45, 48, 50);
 
+  const containerStyleCombined = StyleSheet.flatten([
+    styles.containerStyle,
+    {
+      paddingTop: Math.max(
+        insets.top,
+        Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0
+      ),
+    },
+  ]);
+
+  const imageStyleCombined = StyleSheet.flatten([
+    styles.imgStyle,
+    {
+      width: avatarSize,
+      height: avatarSize,
+    },
+  ]);
+
   return (
-    <View
-      style={[
-        styles.containerStyle,
-        {
-          paddingTop: Math.max(
-            insets.top,
-            Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0
-          ),
-        },
-      ]}>
+    <View style={containerStyleCombined}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={color.defalt}
         translucent={false}
       />
 
-      {/* Top Header Row */}
       <View style={styles.topCont}>
         <TouchableOpacity
           onPress={onPress}
@@ -133,20 +142,12 @@ const HeaderWSarchFiltr = ({
                   : require('../Assets/Images/user.jpg')
               }
               resizeMode="cover"
-              style={[
-                styles.imgStyle,
-                {
-                  width: avatarSize,
-                  height: avatarSize,
-                },
-              ]}
-              alt="User Profile"
+              style={imageStyleCombined}
             />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Title Header */}
       {titleText ? (
         <Text
           style={[
@@ -158,7 +159,6 @@ const HeaderWSarchFiltr = ({
         </Text>
       ) : null}
 
-      {/* Overlapping Search Input Bar */}
       <View style={styles.searchStyle}>
         <InputSarchFiltr
           onChangeText={onChangeText}

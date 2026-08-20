@@ -6,7 +6,6 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
-import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
@@ -17,11 +16,7 @@ const WishlistScreen = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.container}>
-        <Animatable.View
-          animation="fadeInUp"
-          duration={600}
-          style={styles.contentContainer}>
-
+        <View style={styles.contentContainer}>
           <View style={styles.badgeRow}>
             <View style={styles.badgeCircle}>
               <Icons.Ionicons
@@ -41,12 +36,12 @@ const WishlistScreen = () => {
             <View style={styles.emptyIconCircle}>
               <Icons.Feather name="bookmark" size={28} color="#94A3B8" />
             </View>
-            <Text style={styles.emptyTitle}>Welcome, John!</Text>
+            <Text style={styles.emptyTitle}>Welcome!</Text>
             <Text style={styles.emptySubtitle}>
               You haven't added any favorite services to your wishlist yet.
             </Text>
           </View>
-        </Animatable.View>
+        </View>
       </View>
     </SafeAreaView>
   );

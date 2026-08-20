@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -7,11 +7,12 @@ import {
   Platform,
   StatusBar,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Image } from 'native-base';
 import { useIsFocused } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import color from '../Assets/colors/colors';
 import SarchInpt from './SearchInput';
@@ -43,20 +44,14 @@ const HomStakWSarch = ({
   const insets = useSafeAreaInsets();
   const [profileData, setProfileData] = useState(null);
 
-  useEffect(() => {
-    if (focus) {
-      getProfileData();
-    }
-  }, [focus]);
-
-  const getProfileData = async () => {
+  const getProfileData = useCallback(async () => {
     try {
-      const formdata = new FormData();
-      formdata.append('id', global.id);
+      const storedUser = await AsyncStorage.getItem('user');
+      const userObj = storedUser ? JSON.parse(storedUser) : null;
+      const userId = global.id || userObj?.id || '255';
 
-      const response = await fetch(`${BASIC_URL}user/get_profile.php`, {
-        method: 'POST',
-        body: formdata,
+      const response = await fetch(`${BASIC_URL}user/get_profile.php?id=${userId}`, {
+        method: 'GET',
       });
 
       const result = await response.json();
@@ -66,7 +61,13 @@ const HomStakWSarch = ({
     } catch (error) {
       console.log('Error fetching search header profile data:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (focus) {
+      getProfileData();
+    }
+  }, [focus, getProfileData]);
 
   const imageUri = profileData?.profile
     ? `${BASIC_URL}uploads/${profileData.profile}`
@@ -74,17 +75,31 @@ const HomStakWSarch = ({
 
   const avatarSize = getResponsiveSize(45, 48, 50);
 
+  const containerStyle = StyleSheet.flatten([
+    styles.containerStyle,
+    {
+      paddingTop: Math.max(
+        insets.top,
+        Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0
+      ),
+    },
+  ]);
+
+  const avatarStyle = StyleSheet.flatten([
+    styles.imgStyle,
+    {
+      width: avatarSize,
+      height: avatarSize,
+    },
+  ]);
+
+  const userTextStyle = StyleSheet.flatten([
+    styles.userStyle,
+    { fontSize: getResponsiveSize(14, 15, 16) },
+  ]);
+
   return (
-    <View
-      style={[
-        styles.containerStyle,
-        {
-          paddingTop: Math.max(
-            insets.top,
-            Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0
-          ),
-        },
-      ]}>
+    <View style={containerStyle}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={color.defalt}
@@ -111,25 +126,13 @@ const HomStakWSarch = ({
                   : require('../Assets/Images/user.jpg')
               }
               resizeMode="cover"
-              style={[
-                styles.imgStyle,
-                {
-                  width: avatarSize,
-                  height: avatarSize,
-                },
-              ]}
-              alt="User Avatar"
+              style={avatarStyle}
             />
           </TouchableOpacity>
         </View>
       </View>
 
-      <Text
-        style={[
-          styles.userStyle,
-          { fontSize: getResponsiveSize(14, 15, 16) },
-        ]}
-        numberOfLines={1}>
+      <Text style={userTextStyle} numberOfLines={1}>
         Hi, {profileData?.name || 'User'}
       </Text>
 

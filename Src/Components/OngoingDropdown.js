@@ -4,7 +4,6 @@ import color from '../Assets/colors/colors';
 import {Picker} from '@react-native-picker/picker';
 
 const OngoingDrpdwn = props => {
-  //const [selectedBusiness, setselectedBusiness] = useState(props.selectedValue);
   const pickerRef = useRef();
 
   const businessOptions = [

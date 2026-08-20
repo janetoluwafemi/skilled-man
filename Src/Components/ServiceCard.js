@@ -2,12 +2,17 @@ import React from 'react';
 import { Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import colors from '../Assets/colors/colors';
 
-const SrvicCrd = props => {
+const ServiceCard = props => {
+  const combinedCardStyle = StyleSheet.flatten([
+    styles.textContainer,
+    props.cardStyle,
+  ]);
+
   return (
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={props.showProfile}
-      style={[styles.textContainer, props.cardStyle]}>
+      style={combinedCardStyle}>
       <Image
         style={styles.logoImg}
         resizeMode="contain"
@@ -22,7 +27,7 @@ const SrvicCrd = props => {
   );
 };
 
-export default SrvicCrd;
+export default ServiceCard;
 
 const styles = StyleSheet.create({
   textContainer: {

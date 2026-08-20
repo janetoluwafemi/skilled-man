@@ -28,7 +28,7 @@ const getResponsiveSpacing = (small, medium, large) => {
   return large;
 };
 
-const CstmDrar = () => {
+const CustomDrawer = () => {
   const { dispatch } = useAuth();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -55,13 +55,20 @@ const CstmDrar = () => {
 
   const isArtisanRole = global.role === 0 || global.role === '0';
 
+  const containerStyle = StyleSheet.flatten([
+    styles.linearGradientStyle,
+    { paddingTop: Math.max(insets.top, Platform.OS === 'android' ? 0 : 0) },
+  ]);
+
+  const logoutStyle = StyleSheet.flatten([
+    styles.logoutStyle,
+    { paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) },
+  ]);
+
   return (
     <LinearGradient
       colors={['#c07a50', '#bc7950', '#f3a260']}
-      style={[
-        styles.linearGradientStyle,
-        { paddingTop: Math.max(insets.top, Platform.OS === 'android' ? 0 : 0) },
-      ]}>
+      style={containerStyle}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -105,11 +112,7 @@ const CstmDrar = () => {
         </View>
       </ScrollView>
 
-      <View
-        style={[
-          styles.logoutStyle,
-          { paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) },
-        ]}>
+      <View style={logoutStyle}>
         <DrarCstmBtn
           title="Logout"
           drawerIcon="sign-out"
@@ -120,7 +123,7 @@ const CstmDrar = () => {
   );
 };
 
-export default CstmDrar;
+export default CustomDrawer;
 
 const styles = StyleSheet.create({
   linearGradientStyle: {

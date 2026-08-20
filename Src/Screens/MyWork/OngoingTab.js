@@ -36,7 +36,7 @@ const OngoingTabs = ({ route }) => {
       setLoading(true);
       const storedUser = await AsyncStorage.getItem('user');
       const userObj = storedUser ? JSON.parse(storedUser) : null;
-      const providerId = global.id || userObj?.id || '255'; // Safe fallback
+      const providerId = global.id || userObj?.id || '255';
 
       const formdata = new FormData();
       formdata.append('provider_id', String(providerId));
