@@ -213,7 +213,7 @@ const Dashboard = () => {
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor={color.btnClr} />
+      <StatusBar barStyle="light-content" backgroundColor={color.defalt} />
 
       <HomStakwithoutsarch
         onPress={() => navigation.openDrawer()}
@@ -232,9 +232,9 @@ const Dashboard = () => {
               activeOpacity={0.8}
               style={styles.actionPill}
               onPress={() => navigation.navigate('PublicRoutes', { screen: 'AddBankGoogle' })}>
-              <View style={[styles.actionIconCircle, { backgroundColor: '#EEF2FF' }]}>
+              <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="credit-card" size={18} color={color.btnClr} />
+                  <Icons.Feather name="credit-card" size={18} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.actionText}>Add Bank</Text>
@@ -244,9 +244,9 @@ const Dashboard = () => {
               activeOpacity={0.8}
               style={styles.actionPill}
               onPress={() => navigation.navigate('Cash')}>
-              <View style={[styles.actionIconCircle, { backgroundColor: '#ECFDF5' }]}>
+              <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="dollar-sign" size={18} color={color.Gren} />
+                  <Icons.Feather name="dollar-sign" size={18} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.actionText}>Cash In</Text>
@@ -256,9 +256,9 @@ const Dashboard = () => {
               activeOpacity={0.8}
               style={styles.actionPill}
               onPress={() => navigation.navigate('Balance')}>
-              <View style={[styles.actionIconCircle, { backgroundColor: '#FFFBEB' }]}>
+              <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="clock" size={18} color={color.ylow} />
+                  <Icons.Feather name="clock" size={18} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.actionText}>History</Text>
@@ -268,9 +268,9 @@ const Dashboard = () => {
               activeOpacity={0.8}
               style={styles.actionPill}
               onPress={() => setsigninmodal(true)}>
-              <View style={[styles.actionIconCircle, { backgroundColor: '#F5F3FF' }]}>
+              <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="edit-3" size={18} color={color.prpl} />
+                  <Icons.Feather name="edit-3" size={18} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.actionText}>Profile</Text>
@@ -322,10 +322,10 @@ const Dashboard = () => {
                 verticalLabelRotation: 0,
                 backgroundGradientToOpacity: 0,
                 showBarTops: false,
-                fillShadowGradient: color.btnClr,
+                fillShadowGradient: color.defalt,
                 fillShadowGradientOpacity: 1,
                 strokeWidth: 2,
-                color: () => color.btnClr,
+                color: () => color.defalt,
                 labelColor: () => '#94A3B8',
                 propsForLabels: {
                   fontSize: 11,
@@ -343,7 +343,7 @@ const Dashboard = () => {
           <View style={styles.statusNoticeBanner}>
             <View style={styles.noticeIconWrap}>
               {Icons?.Feather && (
-                <Icons.Feather name="shield" size={20} color={color.ylow} />
+                <Icons.Feather name="shield" size={20} color={color.defalt} />
               )}
             </View>
             <View style={styles.noticeTextCol}>
@@ -364,7 +364,7 @@ const Dashboard = () => {
             <View style={styles.modalHeader}>
               <View style={styles.modalIconWrapper}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="shield" size={22} color={color.btnClr} />
+                  <Icons.Feather name="shield" size={22} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.modalTitle}>Disclaimer Notice</Text>
@@ -394,6 +394,7 @@ const Dashboard = () => {
               <View style={styles.modalBtnContainer}>
                 <BotonComp
                   BtnStyle={styles.primaryModalBtn}
+                  btnTextStyle={styles.primaryModalBtnText}
                   btnText="I Understand & Agree"
                   onPressFunc={() => setModalVisible(false)}
                 />
@@ -413,7 +414,7 @@ const Dashboard = () => {
             <View style={styles.modalHeader}>
               <View style={styles.modalIconWrapper}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="user-check" size={22} color={color.btnClr} />
+                  <Icons.Feather name="user-check" size={22} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.modalTitle}>Complete Provider Profile</Text>
@@ -534,6 +535,7 @@ const Dashboard = () => {
               <View style={styles.actionButtonGroup}>
                 <BotonComp
                   BtnStyle={styles.saveSubmitBtn}
+                  btnTextStyle={styles.primaryModalBtnText}
                   btnText={
                     load ? <ActivityIndicator size="small" color="#FFFFFF" /> : 'Save Profile'
                   }
@@ -673,7 +675,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   periodTabTextActive: {
-    color: color.btnClr,
+    color: color.defalt,
     fontWeight: '700',
   },
   chartStyle: {
@@ -691,7 +693,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EEF2F6',
     borderLeftWidth: 4,
-    borderLeftColor: color.ylow,
+    borderLeftColor: color.defalt,
     ...(Platform.OS === 'web'
       ? { boxShadow: '0 4px 14px rgba(15, 23, 42, 0.03)' }
       : {
@@ -706,7 +708,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#FFFBEB',
+    backgroundColor: '#F7ECE4',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -784,7 +786,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#F7ECE4',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
@@ -826,18 +828,23 @@ const styles = StyleSheet.create({
   },
   primaryModalBtn: {
     width: '100%',
-    backgroundColor: color.btnClr,
+    backgroundColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 14,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 4px 12px rgba(32, 30, 82, 0.2)' }
+      ? { boxShadow: '0 4px 14px rgba(192, 122, 80, 0.25)' }
       : {
         elevation: 3,
-        shadowColor: color.btnClr,
+        shadowColor: color.defalt,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.25,
         shadowRadius: 8,
       }),
+  },
+  primaryModalBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   fieldGroup: {
     marginBottom: 15,
@@ -867,7 +874,7 @@ const styles = StyleSheet.create({
   },
   saveSubmitBtn: {
     flex: 1,
-    backgroundColor: color.btnClr,
+    backgroundColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 14,
   },
@@ -875,14 +882,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: color.btnClr,
+    borderColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   outlineAddBankText: {
-    color: color.btnClr,
+    color: color.defalt,
     fontSize: 14,
     fontWeight: '700',
   },

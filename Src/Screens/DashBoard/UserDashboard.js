@@ -168,7 +168,6 @@ const UserDashboard = () => {
         </ScrollView>
       )}
 
-      {/* Disclaimer Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -179,12 +178,12 @@ const UserDashboard = () => {
             <View style={styles.modalHeader}>
               <View style={styles.modalIconWrapper}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="shield" size={20} color={color.defalt} />
+                  <Icons.Feather name="shield" size={22} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.modalTitle}>Disclaimer Notice</Text>
               <Text style={styles.modalSubheading}>
-                Please review terms before connecting with artisans
+                Please review terms before continuing
               </Text>
             </View>
 
@@ -351,10 +350,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F8FAFC',
   },
   modalIconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: '#EEF2F6',
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#F7ECE4',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
@@ -400,12 +399,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)' }
+      ? { boxShadow: '0 4px 14px rgba(192, 122, 80, 0.25)' }
       : {
         elevation: 3,
         shadowColor: color.defalt,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.25,
         shadowRadius: 8,
       }),
   },
