@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
   Platform,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -53,43 +53,46 @@ const Signin = props => {
         scopes: ['profile', 'email'],
       });
 
-  const completeFirebaseGoogleLogin = useCallback(async (idToken, role) => {
-    try {
-      setLoad(true);
-      const credential = GoogleAuthProvider.credential(idToken);
-      const { user } = await signInWithCredential(auth, credential);
-      const token = await getToken();
+  const completeFirebaseGoogleLogin = useCallback(
+      async (idToken, role) => {
+        try {
+          setLoad(true);
+          const credential = GoogleAuthProvider.credential(idToken);
+          const { user } = await signInWithCredential(auth, credential);
+          const token = await getToken();
 
-      const formdata = new FormData();
-      formdata.append('identifier', user.email || '');
-      formdata.append('google_id', user.uid);
-      formdata.append('google_token', idToken);
-      formdata.append('name', user.displayName || '');
-      formdata.append('photo', user.photoURL || '');
-      formdata.append('role', role);
-      formdata.append('password', 'googleuser');
-      formdata.append('token', token || '');
+          const formdata = new FormData();
+          formdata.append('identifier', user.email || '');
+          formdata.append('google_id', user.uid);
+          formdata.append('google_token', idToken);
+          formdata.append('name', user.displayName || '');
+          formdata.append('photo', user.photoURL || '');
+          formdata.append('role', role);
+          formdata.append('password', 'googleuser');
+          formdata.append('token', token || '');
 
-      const response = await fetch(`${BASIC_URL}google_login.php`, {
-        method: 'POST',
-        body: formdata,
-      });
-      const result = await response.json();
+          const response = await fetch(`${BASIC_URL}google_login.php`, {
+            method: 'POST',
+            body: formdata,
+          });
+          const result = await response.json();
 
-      if (result.success || !result.error) {
-        await AsyncStorage.setItem('user', JSON.stringify(result));
-        await AsyncStorage.setItem('role', role.toString());
-        dispatch({ type: 'LOGIN', payload: { user: result, role } });
-        navigation.navigate('Parent');
-      } else {
-        showToast(result.error || 'Google Login Failed');
-      }
-    } catch (error) {
-      showToast('Google Sign-In Error');
-    } finally {
-      setLoad(false);
-    }
-  }, [dispatch, navigation]);
+          if (result.success || !result.error) {
+            await AsyncStorage.setItem('user', JSON.stringify(result));
+            await AsyncStorage.setItem('role', role.toString());
+            dispatch({ type: 'LOGIN', payload: { user: result, role } });
+            navigation.navigate('Parent');
+          } else {
+            showToast(result.error || 'Google Login Failed');
+          }
+        } catch (error) {
+          showToast('Google Sign-In Error');
+        } finally {
+          setLoad(false);
+        }
+      },
+      [dispatch, navigation]
+  );
 
   useEffect(() => {
     if (googleResponse?.type === 'success') {
@@ -135,10 +138,15 @@ const Signin = props => {
       if (result && !result.error && (result.id || result.success)) {
         await AsyncStorage.setItem('user', JSON.stringify(result));
         await AsyncStorage.setItem('role', (result.role ?? 0).toString());
-        dispatch({ type: 'LOGIN', payload: { user: result, role: result.role ?? 0 } });
+        dispatch({
+          type: 'LOGIN',
+          payload: { user: result, role: result.role ?? 0 },
+        });
         navigation.navigate('Parent');
       } else {
-        showToast(result.error || result.status || 'Invalid credentials, please try again');
+        showToast(
+            result.error || result.status || 'Invalid credentials, please try again'
+        );
       }
     } catch (error) {
       showToast('Something went wrong. Check connection.');
@@ -164,8 +172,10 @@ const Signin = props => {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled">
-          <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
-
+          <Animatable.View
+              animation="fadeInUp"
+              duration={600}
+              style={styles.formContainer}>
             <View style={styles.logoRow}>
               <View style={styles.logoCircle}>
                 <Image
@@ -205,8 +215,14 @@ const Signin = props => {
                     activeOpacity={0.8}
                     style={styles.checkboxWrapper}
                     onPress={() => setChecked(!checked)}>
-                  <View style={StyleSheet.flatten([styles.customCheckbox, checked && styles.customCheckboxActive])}>
-                    {checked && <Icons.Feather name="check" size={12} color="#FFFFFF" />}
+                  <View
+                      style={StyleSheet.flatten([
+                        styles.customCheckbox,
+                        checked && styles.customCheckboxActive,
+                      ])}>
+                    {checked && (
+                        <Icons.Feather name="check" size={12} color="#FFFFFF" />
+                    )}
                   </View>
                   <Text style={styles.checkboxText}>Remember me</Text>
                 </TouchableOpacity>
@@ -236,19 +252,28 @@ const Signin = props => {
               <Text style={styles.dividerText}>or continue with</Text>
               <View style={styles.dividerLine} />
             </View>
-            <Text style={styles.googleRoleLabel}>Account Type for Google Sign-In</Text>
+            <Text style={styles.googleRoleLabel}>
+              Account Type for Google Sign-In
+            </Text>
             <View style={styles.segmentContainer}>
               <TouchableOpacity
                   activeOpacity={0.9}
                   onPress={() => setGoogleRole(0)}
-                  style={StyleSheet.flatten([styles.segmentBtn, googleRole === 0 && styles.segmentActive])}>
+                  style={StyleSheet.flatten([
+                    styles.segmentBtn,
+                    googleRole === 0 && styles.segmentActive,
+                  ])}>
                 <Icons.FontAwesome5
                     name="user"
                     size={13}
                     color={googleRole === 0 ? color.defalt : '#64748B'}
                     style={styles.segmentIcon}
                 />
-                <Text style={StyleSheet.flatten([styles.segmentText, googleRole === 0 && styles.segmentTextActive])}>
+                <Text
+                    style={StyleSheet.flatten([
+                      styles.segmentText,
+                      googleRole === 0 && styles.segmentTextActive,
+                    ])}>
                   User
                 </Text>
               </TouchableOpacity>
@@ -256,14 +281,21 @@ const Signin = props => {
               <TouchableOpacity
                   activeOpacity={0.9}
                   onPress={() => setGoogleRole(1)}
-                  style={StyleSheet.flatten([styles.segmentBtn, googleRole === 1 && styles.segmentActive])}>
+                  style={StyleSheet.flatten([
+                    styles.segmentBtn,
+                    googleRole === 1 && styles.segmentActive,
+                  ])}>
                 <Icons.FontAwesome5
                     name="briefcase"
                     size={13}
                     color={googleRole === 1 ? color.defalt : '#64748B'}
                     style={styles.segmentIcon}
                 />
-                <Text style={StyleSheet.flatten([styles.segmentText, googleRole === 1 && styles.segmentTextActive])}>
+                <Text
+                    style={StyleSheet.flatten([
+                      styles.segmentText,
+                      googleRole === 1 && styles.segmentTextActive,
+                    ])}>
                   Provider
                 </Text>
               </TouchableOpacity>
@@ -273,9 +305,11 @@ const Signin = props => {
                 activeOpacity={0.85}
                 onPress={handleGoogleSignInFlow}
                 style={styles.googleBtn}>
-                <Image source={require('../../Assets/Images/download (7).jpeg')} style={styles.googleImage}></Image>
-
-                <Text style={styles.googleBtnText}>
+              <Image
+                  source={require('../../Assets/Images/download (7).jpeg')}
+                  style={styles.googleImage}
+              />
+              <Text style={styles.googleBtnText}>
                 Continue with Google ({googleRole === 0 ? 'User' : 'Provider'})
               </Text>
             </TouchableOpacity>
@@ -300,9 +334,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   googleImage: {
-      width: 20,
-      height: 20,
-      resizeMode: 'contain',
+    width: 20,
+    height: 20,
+    resizeMode: 'contain',
   },
   headerBar: {
     paddingHorizontal: 20,
@@ -368,7 +402,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 4,
   },
-
   cardWrapper: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
@@ -436,7 +469,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 6,
   },
-
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -453,7 +485,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     paddingHorizontal: 12,
   },
-
   googleRoleLabel: {
     fontSize: 12,
     fontWeight: '600',
@@ -496,7 +527,6 @@ const styles = StyleSheet.create({
     color: color.defalt,
     fontWeight: '700',
   },
-
   googleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -518,7 +548,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 10,
   },
-
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',

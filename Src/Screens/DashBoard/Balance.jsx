@@ -8,13 +8,19 @@ import {
   ActivityIndicator,
   StatusBar,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 import SearchHeader from './SearchHeader';
 import { BASIC_URL } from '../Signin/Signin';
 
 const Balance = () => {
+  const navigation = useNavigation();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -80,13 +86,13 @@ const Balance = () => {
         </View>
         <View style={styles.infoCol}>
           <Text style={styles.nameText} numberOfLines={1}>
-            {item.user_name}
+            {item.user_name || 'Customer'}
           </Text>
           <View style={styles.metaRow}>
             {Icons?.Feather && (
               <Icons.Feather name="calendar" size={12} color="#94A3B8" style={styles.metaIcon} />
             )}
-            <Text style={styles.dateText}>{item.date}</Text>
+            <Text style={styles.dateText}>{item.date || 'Recent'}</Text>
           </View>
         </View>
       </View>
@@ -99,13 +105,32 @@ const Balance = () => {
   );
 
   return (
-    <View style={styles.flexFill}>
+    <SafeAreaView style={styles.flexFill} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+      <View style={styles.topHeaderRow}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+          style={styles.backArrowBtn}>
+          {Icons?.Feather ? (
+            <Icons.Feather name="arrow-left" size={22} color="#0F172A" />
+          ) : (
+            <Text style={styles.fallbackBackText}>←</Text>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.titleWrapper}>
+          <Text style={styles.centerHeaderText}>Earned Balance</Text>
+        </View>
+      </View>
+
       <SearchHeader
         onSearch={handleSearch}
         searchQuery={searchQuery}
         onSearchIconPress={handleSearchIconPress}
       />
+
       <View style={styles.listWrapper}>
         {loading ? (
           <View style={styles.loaderCenter}>
@@ -136,7 +161,7 @@ const Balance = () => {
           />
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -147,12 +172,61 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+  topHeaderRow: {
+    position: 'relative',
+    height: 52,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    backgroundColor: '#F8FAFC',
+    marginTop: Platform.OS === 'android' ? 6 : 2,
+  },
+  backArrowBtn: {
+    position: 'absolute',
+    left: 16,
+    top: 0,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    zIndex: 10,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)' }
+      : {
+        elevation: 2,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+      }),
+  },
+  fallbackBackText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  titleWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  centerHeaderText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+    textAlign: 'center',
+  },
   listWrapper: {
     flex: 1,
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 10,
     paddingBottom: 32,
     flexGrow: 1,
   },

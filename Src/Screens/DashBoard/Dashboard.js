@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,13 +10,15 @@ import {
   ActivityIndicator,
   Modal,
   StatusBar,
+  TextInput,
+  Image,
+  FlatList,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { BarChart } from 'react-native-chart-kit';
 import * as DocumentPicker from 'expo-document-picker';
-import { Picker } from '@react-native-picker/picker';
 import { Country, State } from 'country-state-city';
 import { showToast } from '../../utilis/showToast';
 
@@ -53,15 +55,17 @@ const Dashboard = () => {
   const [load, setLoad] = useState(false);
   const [items, setItems] = useState([]);
   const [countries, setCountries] = useState([]);
-  const [states, setStates] = useState([]);
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [selectedState, setSelectedState] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState({
+    isoCode: 'NG',
+    name: 'Nigeria',
+    phonecode: '234',
+  });
+  const [countryModalVisible, setCountryModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [number, setNumber] = useState('');
   const [address, setAddress] = useState('');
   const [association, setAssociation] = useState('');
-
-  const pickerRef = useRef();
 
   const experienceOptions = [
     { id: 1, select_bussiness: 'Year of experience' },
@@ -121,12 +125,17 @@ const Dashboard = () => {
     fetchUserDataAndCheckModal();
   }, [state?.isAuth]);
 
-  const onCountryChange = countryCode => {
-    setSelectedCountry(countryCode);
-    setSelectedState('');
-    const countryStates = State.getStatesOfCountry(countryCode);
-    setStates(countryStates);
+  const onCountrySelect = country => {
+    setSelectedCountry(country);
+    setCountryModalVisible(false);
+    setSearchQuery('');
   };
+
+  const filteredCountries = countries.filter(
+    c =>
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.phonecode?.includes(searchQuery)
+  );
 
   const handlFilPik = async value => {
     try {
@@ -163,7 +172,7 @@ const Dashboard = () => {
       const formdata = new FormData();
       formdata.append('provider_id', global.id);
       formdata.append('phone_number', number);
-      formdata.append('country', selectedCountry);
+      formdata.append('country', selectedCountry ? selectedCountry.name : 'Nigeria');
       formdata.append('address', address);
       formdata.append('association', association);
       formdata.append('select_bussiness', selectedBusiness);
@@ -234,7 +243,7 @@ const Dashboard = () => {
               onPress={() => navigation.navigate('PublicRoutes', { screen: 'AddBankGoogle' })}>
               <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="credit-card" size={18} color={color.defalt} />
+                  <Icons.Feather name="credit-card" size={20} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.actionText}>Add Bank</Text>
@@ -246,7 +255,7 @@ const Dashboard = () => {
               onPress={() => navigation.navigate('Cash')}>
               <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="dollar-sign" size={18} color={color.defalt} />
+                  <Icons.Feather name="dollar-sign" size={20} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.actionText}>Cash In</Text>
@@ -258,7 +267,7 @@ const Dashboard = () => {
               onPress={() => navigation.navigate('Balance')}>
               <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="clock" size={18} color={color.defalt} />
+                  <Icons.Feather name="clock" size={20} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.actionText}>History</Text>
@@ -270,7 +279,7 @@ const Dashboard = () => {
               onPress={() => setsigninmodal(true)}>
               <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="edit-3" size={18} color={color.defalt} />
+                  <Icons.Feather name="edit-3" size={20} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.actionText}>Profile</Text>
@@ -328,7 +337,7 @@ const Dashboard = () => {
                 color: () => color.defalt,
                 labelColor: () => '#94A3B8',
                 propsForLabels: {
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: '600',
                 },
                 propsForBackgroundLines: {
@@ -343,7 +352,7 @@ const Dashboard = () => {
           <View style={styles.statusNoticeBanner}>
             <View style={styles.noticeIconWrap}>
               {Icons?.Feather && (
-                <Icons.Feather name="shield" size={20} color={color.defalt} />
+                <Icons.Feather name="shield" size={22} color={color.defalt} />
               )}
             </View>
             <View style={styles.noticeTextCol}>
@@ -360,19 +369,22 @@ const Dashboard = () => {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={styles.disclaimerModalCard}>
             <View style={styles.modalHeader}>
               <View style={styles.modalIconWrapper}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="shield" size={22} color={color.defalt} />
+                  <Icons.Feather name="shield" size={26} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.modalTitle}>Disclaimer Notice</Text>
               <Text style={styles.modalSubheading}>Please review before continuing</Text>
             </View>
 
-            <View style={styles.modalBody}>
-              <ScrollView showsVerticalScrollIndicator={false} style={styles.disclaimerScroll}>
+            <View style={styles.disclaimerBody}>
+              <ScrollView
+                style={styles.disclaimerScroll}
+                contentContainerStyle={styles.disclaimerScrollContent}
+                showsVerticalScrollIndicator={true}>
                 <Text style={styles.disclaimerText}>
                   The following disclaimer outlines the terms of use for the
                   Skilledman App, a platform designed to connect artisans and
@@ -383,7 +395,8 @@ const Dashboard = () => {
                   transactions between artisans and users. We do not take
                   responsibility for the quality, guarantee, pricing, delivery,
                   or any other aspect of the products or services offered by
-                  artisans.{'\n\n'}
+                  artisans.
+                  {'\n\n'}
                   Users are responsible for conducting their own due diligence
                   before engaging in any business transactions. By using the
                   Skilledman App, you acknowledge that you have read and
@@ -414,15 +427,22 @@ const Dashboard = () => {
             <View style={styles.modalHeader}>
               <View style={styles.modalIconWrapper}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="user-check" size={22} color={color.defalt} />
+                  <Icons.Feather name="user-check" size={26} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.modalTitle}>Complete Provider Profile</Text>
-              <Text style={styles.modalSubheading}>Set up your service details to receive client bookings</Text>
+              <Text style={styles.modalSubheading}>
+                Set up your service details to receive client bookings
+              </Text>
             </View>
 
-            <View style={styles.modalBody}>
-              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <View style={styles.formModalBody}>
+              <ScrollView
+                style={styles.formScroll}
+                contentContainerStyle={styles.formScrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled">
+
                 <View style={styles.fieldGroup}>
                   <Text style={styles.fieldLabel}>Trade Service</Text>
                   <C_Dropdwn
@@ -497,28 +517,25 @@ const Dashboard = () => {
 
                 <View style={styles.fieldGroup}>
                   <Text style={styles.fieldLabel}>Country</Text>
-                  <View style={styles.pickerWrapper}>
-                    <Picker
-                      ref={pickerRef}
-                      selectedValue={selectedCountry}
-                      onValueChange={itemValue => onCountryChange(itemValue)}
-                      mode="dialog"
-                      dropdownIconColor="#64748B">
-                      <Picker.Item
-                        label="Select Country"
-                        value=""
-                        color="#94A3B8"
-                      />
-                      {countries.map(country => (
-                        <Picker.Item
-                          key={country.isoCode}
-                          label={country.name}
-                          value={country.isoCode}
-                          color="#0F172A"
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={styles.selectTile}
+                    onPress={() => setCountryModalVisible(true)}>
+                    {selectedCountry ? (
+                      <View style={styles.tileSelectedRow}>
+                        <Image
+                          source={{
+                            uri: `https://flagcdn.com/w40/${selectedCountry.isoCode.toLowerCase()}.png`,
+                          }}
+                          style={styles.flagImageSmall}
                         />
-                      ))}
-                    </Picker>
-                  </View>
+                        <Text style={styles.selectTileText}>{selectedCountry.name}</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.selectTilePlaceholder}>Select Country</Text>
+                    )}
+                    <Icons.Feather name="chevron-down" size={18} color="#64748B" />
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.fieldGroup}>
@@ -554,6 +571,58 @@ const Dashboard = () => {
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={countryModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setCountryModalVisible(false)}>
+        <View style={styles.bottomSheetOverlay}>
+          <View style={styles.sheetContainer}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Select Country</Text>
+              <TouchableOpacity onPress={() => setCountryModalVisible(false)}>
+                <Icons.Ionicons name="close-circle" size={24} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.searchBar}>
+              <Icons.Feather name="search" size={18} color="#94A3B8" />
+              <TextInput
+                placeholder="Search country..."
+                placeholderTextColor="#94A3B8"
+                style={styles.searchInput}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+
+            <FlatList
+              data={filteredCountries}
+              keyExtractor={item => item.isoCode}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.optionRow}
+                  onPress={() => onCountrySelect(item)}>
+                  <View style={styles.dialOptionLeft}>
+                    <Image
+                      source={{
+                        uri: `https://flagcdn.com/w40/${item.isoCode.toLowerCase()}.png`,
+                      }}
+                      style={styles.flagImageOption}
+                    />
+                    <Text style={styles.optionText}>{item.name}</Text>
+                  </View>
+                  {selectedCountry?.isoCode === item.isoCode && (
+                    <Icons.Feather name="check" size={18} color={color.defalt} />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
           </View>
         </View>
       </Modal>
@@ -604,15 +673,15 @@ const styles = StyleSheet.create({
       }),
   },
   actionIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
   },
   actionText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -644,13 +713,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chartTitle: {
-    fontSize: 16,
+    fontSize: 17,
     color: '#0F172A',
     fontWeight: '800',
     letterSpacing: -0.3,
   },
   chartSubtitle: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#94A3B8',
     marginTop: 2,
     fontWeight: '500',
@@ -662,15 +731,15 @@ const styles = StyleSheet.create({
     padding: 3,
   },
   periodTab: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
   },
   periodTabActive: {
     backgroundColor: '#FFFFFF',
   },
   periodTabText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     color: '#64748B',
   },
@@ -705,9 +774,9 @@ const styles = StyleSheet.create({
       }),
   },
   noticeIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: '#F7ECE4',
     justifyContent: 'center',
     alignItems: 'center',
@@ -717,59 +786,59 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   noticeTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.2,
   },
   noticeSub: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#64748B',
     marginTop: 2,
-    lineHeight: 17,
+    lineHeight: 18,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
   },
-  modalCard: {
+  disclaimerModalCard: {
     borderRadius: 24,
     width: '100%',
-    maxWidth: 480,
-    maxHeight: '75%',
+    maxWidth: 420,
+    height: Math.min(height * 0.72, 540),
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#EEF2F6',
     ...(Platform.OS === 'web'
       ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
       : {
-        elevation: 6,
+        elevation: 8,
         shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.18,
         shadowRadius: 20,
       }),
   },
   formModalCard: {
     borderRadius: 24,
     width: '100%',
-    maxWidth: 480,
-    maxHeight: '86%',
+    maxWidth: 440,
+    height: Math.min(height * 0.84, 680),
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#EEF2F6',
     ...(Platform.OS === 'web'
       ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
       : {
-        elevation: 6,
+        elevation: 8,
         shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.18,
         shadowRadius: 20,
       }),
   },
@@ -777,60 +846,81 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     paddingTop: 22,
-    paddingBottom: 14,
+    paddingBottom: 10,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
   },
   modalIconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 54,
+    height: 54,
+    borderRadius: 18,
     backgroundColor: '#F7ECE4',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 21,
     color: '#0F172A',
     fontWeight: '800',
     letterSpacing: -0.3,
+    textAlign: 'center',
   },
   modalSubheading: {
-    fontSize: 12,
+    fontSize: 13.5,
     color: '#64748B',
     marginTop: 4,
     fontWeight: '500',
     textAlign: 'center',
+    lineHeight: 18,
   },
-  modalBody: {
-    padding: 20,
+  disclaimerBody: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 4,
     flex: 1,
+    justifyContent: 'space-between',
   },
   disclaimerScroll: {
-    maxHeight: height * 0.38,
+    flex: 1,
     backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#EEF2F6',
+    marginVertical: 12,
+  },
+  disclaimerScrollContent: {
+    padding: 14,
   },
   disclaimerText: {
     color: '#475569',
     textAlign: 'left',
     lineHeight: 21,
-    fontSize: 13,
+    fontSize: 13.5,
+  },
+  formModalBody: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 6,
+    justifyContent: 'space-between',
+  },
+  formScroll: {
+    flex: 1,
+    marginVertical: 6,
+  },
+  formScrollContent: {
+    paddingBottom: 10,
   },
   modalBtnContainer: {
-    marginTop: 18,
     width: '100%',
+    paddingTop: 4,
   },
   primaryModalBtn: {
     width: '100%',
     backgroundColor: color.defalt,
     borderRadius: 14,
-    paddingVertical: 14,
+    paddingVertical: 15,
+    borderWidth: 0,
     ...(Platform.OS === 'web'
       ? { boxShadow: '0 4px 14px rgba(192, 122, 80, 0.25)' }
       : {
@@ -842,55 +932,163 @@ const styles = StyleSheet.create({
       }),
   },
   primaryModalBtnText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
   fieldGroup: {
-    marginBottom: 15,
+    marginBottom: 14,
     width: '100%',
   },
   fieldLabel: {
-    fontSize: 13,
+    fontSize: 14.5,
     fontWeight: '600',
     color: '#334155',
-    marginBottom: 7,
+    marginBottom: 6,
     letterSpacing: -0.2,
   },
-  pickerWrapper: {
+  selectTile: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderRadius: 14,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 14,
-    justifyContent: 'center',
-    overflow: 'hidden',
+    height: 52,
+    paddingHorizontal: 16,
+  },
+  tileSelectedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectTileText: {
+    fontSize: 14.5,
+    color: '#0F172A',
+    fontWeight: '500',
+  },
+  selectTilePlaceholder: {
+    fontSize: 14.5,
+    color: '#94A3B8',
+  },
+  flagImageSmall: {
+    width: 24,
+    height: 16,
+    borderRadius: 3,
+    marginRight: 10,
   },
   actionButtonGroup: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginTop: 18,
+    paddingTop: 10,
     gap: 12,
   },
   saveSubmitBtn: {
     flex: 1,
     backgroundColor: color.defalt,
     borderRadius: 14,
-    paddingVertical: 14,
+    paddingVertical: 15,
+    borderWidth: 0,
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   outlineAddBankBtn: {
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: color.defalt,
+    borderColor: '#E2E8F0',
     borderRadius: 14,
-    paddingVertical: 14,
+    paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
   outlineAddBankText: {
     color: color.defalt,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
+  },
+  bottomSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    justifyContent: 'flex-end',
+  },
+  sheetContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 16,
+    paddingHorizontal: 18,
+    maxHeight: '75%',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.15)' }
+      : {
+        elevation: 10,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+      }),
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 44,
+    marginBottom: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14.5,
+    color: '#0F172A',
+    marginLeft: 8,
+    padding: 0,
+    ...(Platform.OS === 'web' && {
+      outline: 'none',
+      border: 'none',
+    }),
+  },
+  optionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  dialOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  flagImageOption: {
+    width: 24,
+    height: 16,
+    borderRadius: 3,
+    marginRight: 12,
+  },
+  optionText: {
+    fontSize: 15,
+    color: '#334155',
+    fontWeight: '500',
   },
 });

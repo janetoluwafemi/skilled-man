@@ -178,7 +178,7 @@ const UserDashboard = () => {
             <View style={styles.modalHeader}>
               <View style={styles.modalIconWrapper}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="shield" size={22} color={color.defalt} />
+                  <Icons.Feather name="shield" size={24} color={color.defalt} />
                 )}
               </View>
               <Text style={styles.modalTitle}>Disclaimer Notice</Text>
@@ -188,7 +188,10 @@ const UserDashboard = () => {
             </View>
 
             <View style={styles.modalBody}>
-              <ScrollView showsVerticalScrollIndicator={false} style={styles.disclaimerScroll}>
+              <ScrollView
+                showsVerticalScrollIndicator={true}
+                style={styles.disclaimerScroll}
+                contentContainerStyle={styles.disclaimerScrollContent}>
                 <Text style={styles.disclaimerText}>
                   The following disclaimer outlines the terms of use for the
                   Skilledman App, a platform designed to connect artisans and
@@ -316,16 +319,16 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
   },
   modalView: {
     borderRadius: 24,
     width: '100%',
-    maxWidth: 480,
-    maxHeight: '76%',
+    maxWidth: 420,
+    height: Math.min(height * 0.72, 540),
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
     borderWidth: 1,
@@ -333,71 +336,75 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web'
       ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
       : {
-        elevation: 6,
+        elevation: 8,
         shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.18,
         shadowRadius: 20,
       }),
   },
   modalHeader: {
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    paddingTop: 22,
-    paddingBottom: 14,
+    paddingTop: 24,
+    paddingBottom: 12,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
   },
   modalIconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 18,
     backgroundColor: '#F7ECE4',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     color: '#0F172A',
     fontWeight: '800',
     letterSpacing: -0.3,
   },
   modalSubheading: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#64748B',
     marginTop: 4,
     fontWeight: '500',
     textAlign: 'center',
   },
   modalBody: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 4,
     flex: 1,
+    justifyContent: 'space-between',
   },
   disclaimerScroll: {
-    maxHeight: height * 0.38,
+    flex: 1,
     backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#EEF2F6',
+    marginVertical: 12,
+  },
+  disclaimerScrollContent: {
+    padding: 14,
   },
   disclaimerText: {
     color: '#475569',
     textAlign: 'left',
-    lineHeight: 21,
+    lineHeight: 20,
     fontSize: 13,
   },
   btnContainer: {
     width: '100%',
-    marginTop: 18,
+    paddingTop: 4,
   },
   acceptStyle: {
     width: '100%',
     backgroundColor: color.defalt,
     borderRadius: 14,
-    paddingVertical: 14,
+    paddingVertical: 15,
     ...(Platform.OS === 'web'
       ? { boxShadow: '0 4px 14px rgba(192, 122, 80, 0.25)' }
       : {
@@ -409,8 +416,9 @@ const styles = StyleSheet.create({
       }),
   },
   btnTextStyle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
 });

@@ -6,11 +6,11 @@ import { Icons } from '../../Components/Icons';
 const SearchHeader = ({ onSearch, searchQuery, onSearchIconPress }) => {
   return (
     <View style={styles.containerStyle}>
-      <Text style={styles.userStyle}>Earned Balance</Text>
+      {/*<Text style={styles.userStyle}>Earned Balance</Text>*/}
       <View style={styles.searchStyle}>
         <View style={styles.searchContainer}>
           <TouchableOpacity onPress={onSearchIconPress} activeOpacity={0.8} style={styles.searchIconBtn}>
-            <Icons.Feather name="search" size={18} color="#64748B" />
+            <Icons.Feather name="search" size={20} color="#64748B" />
           </TouchableOpacity>
           <TextInput
             style={styles.inputStyle}
@@ -30,8 +30,9 @@ export default SearchHeader;
 const styles = StyleSheet.create({
   containerStyle: {
     backgroundColor: '#F8FAFC',
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    width: '100%',
+    paddingHorizontal: 16,
+    paddingTop: 10,
     paddingBottom: 8,
   },
   userStyle: {
@@ -47,26 +48,27 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     width: '100%',
-    height: 48,
+    height: 52,
     alignItems: 'center',
-    paddingHorizontal: 14,
-    borderRadius: 14,
+    paddingHorizontal: 16,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    elevation: 1,
+    elevation: 2,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
-    shadowRadius: 4,
+    shadowRadius: 6,
   },
   searchIconBtn: {
-    paddingRight: 8,
+    paddingRight: 10,
   },
   inputStyle: {
     flex: 1,
+    width: '100%',
     color: '#0F172A',
-    fontSize: 14,
+    fontSize: 15,
     height: '100%',
     fontWeight: '500',
   },

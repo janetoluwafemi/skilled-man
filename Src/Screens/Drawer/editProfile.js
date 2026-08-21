@@ -470,7 +470,6 @@ const EditProfileScreen = props => {
         </Animatable.View>
       </ScrollView>
 
-      {/* Skill Modal */}
       <Modal
         visible={modalVisible}
         transparent
