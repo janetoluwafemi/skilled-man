@@ -13,12 +13,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import HeaderWSarchFiltr from '../../Components/HeaderWithSearchFilter';
 import SrvicCrd from '../../Components/ServiceCard';
 import BotonComp from '../../Components/BtnComp';
+import { Icons } from '../../Components/Icons';
 import { useAuth } from '../../context/AuthProvider';
 import { BASIC_URL } from '../Signin/Signin';
 
@@ -98,7 +98,12 @@ const UserDashboard = () => {
     : [];
 
   const bottomPadding =
-    height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
+    height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 24;
+
+  const scrollContentFlattened = StyleSheet.flatten([
+    styles.scrollContent,
+    { paddingBottom: bottomPadding },
+  ]);
 
   return (
     <SafeAreaView style={styles.flexContainer} edges={['top']}>
@@ -122,41 +127,65 @@ const UserDashboard = () => {
       ) : (
         <ScrollView
           style={styles.scrollStyle}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: bottomPadding },
-          ]}
+          contentContainerStyle={scrollContentFlattened}
           showsVerticalScrollIndicator={false}>
-          <Animatable.View animation="fadeInUp" duration={600}>
+          <View style={styles.innerSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Available Services</Text>
+              <Text style={styles.sectionSubtitle}>
+                Choose a category to find certified artisans
+              </Text>
+            </View>
+
             <View style={styles.gridContainer}>
               {filteredData.length > 0 ? (
                 filteredData.map((itemdata, ind) => (
-                  <SrvicCrd
+                  <View
                     key={itemdata?.id?.toString() || ind.toString()}
-                    showProfile={() => fetchSpecificData(itemdata?.select_bussiness)}
-                    serviceTitle={itemdata?.select_bussiness || 'Service'}
-                    iconUrl={`${BASIC_URL}uploads/${itemdata?.image || ''}`}
-                  />
+                    style={styles.gridItemWrapper}>
+                    <SrvicCrd
+                      showProfile={() => fetchSpecificData(itemdata?.select_bussiness)}
+                      serviceTitle={itemdata?.select_bussiness || 'Service'}
+                      iconUrl={`${BASIC_URL}uploads/${itemdata?.image || ''}`}
+                    />
+                  </View>
                 ))
               ) : (
                 <View style={styles.noDataContainer}>
+                  <View style={styles.emptyIconCircle}>
+                    {Icons?.Feather && (
+                      <Icons.Feather name="search" size={28} color="#94A3B8" />
+                    )}
+                  </View>
                   <Text style={styles.noDataText}>No services found</Text>
+                  <Text style={styles.noDataSubtext}>
+                    Try searching with another keyword
+                  </Text>
                 </View>
               )}
             </View>
-          </Animatable.View>
+          </View>
         </ScrollView>
       )}
 
+      {/* Disclaimer Modal */}
       <Modal
         animationType="fade"
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalContainer}>
-          <Animatable.View animation="zoomIn" duration={300} style={styles.modalView}>
+          <View style={styles.modalView}>
             <View style={styles.modalHeader}>
+              <View style={styles.modalIconWrapper}>
+                {Icons?.Feather && (
+                  <Icons.Feather name="shield" size={20} color={color.defalt} />
+                )}
+              </View>
               <Text style={styles.modalTitle}>Disclaimer Notice</Text>
+              <Text style={styles.modalSubheading}>
+                Please review terms before connecting with artisans
+              </Text>
             </View>
 
             <View style={styles.modalBody}>
@@ -205,7 +234,7 @@ const UserDashboard = () => {
                 />
               </View>
             </View>
-          </Animatable.View>
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -225,11 +254,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollStyle: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
+    paddingTop: 10,
+  },
+  innerSection: {
+    paddingHorizontal: 16,
+  },
+  sectionHeader: {
+    marginTop: 8,
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 2,
+    fontWeight: '500',
   },
   gridContainer: {
     flexDirection: 'row',
@@ -237,78 +285,133 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flexWrap: 'wrap',
   },
+  gridItemWrapper: {
+    width: '48.5%',
+    marginBottom: 12,
+  },
   noDataContainer: {
     width: '100%',
-    paddingVertical: 40,
+    paddingVertical: 60,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: '#EEF2F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   noDataText: {
-    fontSize: 14,
+    fontSize: 15,
+    color: '#0F172A',
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  noDataSubtext: {
+    fontSize: 12,
     color: '#64748B',
-    fontWeight: '500',
+    marginTop: 4,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
   },
   modalView: {
-    borderRadius: 20,
+    borderRadius: 24,
     width: '100%',
-    maxHeight: '75%',
+    maxWidth: 480,
+    maxHeight: '76%',
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
+      : {
+        elevation: 6,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+      }),
   },
   modalHeader: {
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingTop: 22,
+    paddingBottom: 14,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: '#F8FAFC',
+  },
+  modalIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#EEF2F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   modalTitle: {
     fontSize: 18,
     color: '#0F172A',
     fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  modalSubheading: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 4,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   modalBody: {
-    padding: 18,
+    padding: 20,
     flex: 1,
   },
   disclaimerScroll: {
-    maxHeight: height * 0.4,
+    maxHeight: height * 0.38,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
   },
   disclaimerText: {
     color: '#475569',
     textAlign: 'left',
-    lineHeight: 22,
+    lineHeight: 21,
     fontSize: 13,
   },
   btnContainer: {
     width: '100%',
-    marginTop: 16,
+    marginTop: 18,
   },
   acceptStyle: {
     width: '100%',
     backgroundColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 14,
-    elevation: 3,
-    shadowColor: color.defalt,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)' }
+      : {
+        elevation: 3,
+        shadowColor: color.defalt,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      }),
   },
   btnTextStyle: {
     fontSize: 14,
     fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

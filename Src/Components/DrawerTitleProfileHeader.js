@@ -7,13 +7,13 @@ import {
   Platform,
   StatusBar,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Image } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 
 import color from '../Assets/colors/colors';
+import { Icons } from './Icons';
 import { BASIC_URL } from '../Screens/Signin/Signin';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -66,20 +66,20 @@ const DrarTitlProfilHeader = ({ screenTitle, onPress, userProfile }) => {
     ? `${BASIC_URL}uploads/${profileData?.profile}`
     : null;
 
+  const dynamicPaddingTop = Math.max(
+    insets.top,
+    Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0
+  ) + (Platform.OS === 'ios' ? 8 : 12);
+
   return (
     <View
-      style={[
+      style={StyleSheet.flatten([
         styles.containerStyle,
-        {
-          paddingTop: Math.max(
-            insets.top,
-            Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0
-          ),
-        },
-      ]}>
+        { paddingTop: dynamicPaddingTop },
+      ])}>
       <StatusBar
         barStyle="light-content"
-        backgroundColor={color.defalt}
+        backgroundColor={color.btnClr}
         translucent={false}
       />
       <View style={styles.topCont}>
@@ -87,18 +87,22 @@ const DrarTitlProfilHeader = ({ screenTitle, onPress, userProfile }) => {
           onPress={onPress}
           style={styles.menuStyle}
           activeOpacity={0.7}>
-          <Icon
-            name="menu"
-            size={getResponsiveSize(30, 33, 35)}
-            color={color.wite}
-          />
+          {Icons?.Feather ? (
+            <Icons.Feather
+              name="menu"
+              size={getResponsiveSize(20, 22, 24)}
+              color={color.wite}
+            />
+          ) : (
+            <Text style={styles.fallbackIconText}>☰</Text>
+          )}
         </TouchableOpacity>
 
         <Text
-          style={[
+          style={StyleSheet.flatten([
             styles.userStyle,
-            { fontSize: getResponsiveSize(14, 15, 16) },
-          ]}
+            { fontSize: getResponsiveSize(15, 16, 17) },
+          ])}
           numberOfLines={1}>
           {screenTitle}
         </Text>
@@ -112,13 +116,13 @@ const DrarTitlProfilHeader = ({ screenTitle, onPress, userProfile }) => {
             }
             resizeMode="cover"
             alt="User Avatar"
-            style={[
+            style={StyleSheet.flatten([
               styles.imgStyle,
               {
-                width: getResponsiveSize(45, 48, 50),
-                height: getResponsiveSize(45, 48, 50),
+                width: getResponsiveSize(40, 44, 46),
+                height: getResponsiveSize(40, 44, 46),
               },
-            ]}
+            ])}
           />
         </TouchableOpacity>
       </View>
@@ -130,31 +134,52 @@ export default DrarTitlProfilHeader;
 
 const styles = StyleSheet.create({
   containerStyle: {
-    backgroundColor: color.defalt,
-    paddingHorizontal: getResponsiveSpacing(12, 15, 18),
-    paddingVertical: getResponsiveSpacing(10, 12, 15),
-    borderBottomRightRadius: 10,
-    borderBottomLeftRadius: 10,
+    backgroundColor: color.btnClr,
+    paddingHorizontal: getResponsiveSpacing(14, 18, 20),
+    paddingBottom: getResponsiveSpacing(14, 16, 18),
+    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 20,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 6px 20px rgba(32, 30, 82, 0.12)' }
+      : {
+        elevation: 5,
+        shadowColor: color.btnClr,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      }),
   },
   topCont: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Platform.OS === 'android' ? 8 : 4,
+    paddingVertical: Platform.OS === 'android' ? 6 : 4,
+  },
+  menuStyle: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   userStyle: {
     fontWeight: '800',
     color: color.wite,
     flex: 1,
     textAlign: 'center',
-    marginHorizontal: getResponsiveSpacing(10, 15, 20),
+    letterSpacing: -0.3,
+    marginHorizontal: getResponsiveSpacing(10, 14, 18),
   },
   imgStyle: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: color.wite,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: color.ylow,
+    backgroundColor: '#FFFFFF',
   },
-  menuStyle: {
-    padding: 4,
+  fallbackIconText: {
+    color: color.wite,
+    fontSize: 18,
+    fontWeight: '700',
   },
 });

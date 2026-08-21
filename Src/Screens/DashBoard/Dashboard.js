@@ -33,7 +33,7 @@ import { BASIC_URL } from '../Signin/Signin';
 
 const { height, width } = Dimensions.get('window');
 
-const Dshbord = () => {
+const Dashboard = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
@@ -41,6 +41,7 @@ const Dshbord = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [signinmodal, setsigninmodal] = useState(false);
+  const [chartPeriod, setChartPeriod] = useState('Monthly');
 
   const [certficate, setCertficate] = useState(null);
   const [guarantor, setGuarantor] = useState(null);
@@ -203,7 +204,7 @@ const Dshbord = () => {
   };
 
   const bottomPadding =
-    height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
+    height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 36;
 
   const scrollContentFlattened = StyleSheet.flatten([
     styles.scrollContent,
@@ -212,7 +213,7 @@ const Dshbord = () => {
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <StatusBar barStyle="light-content" backgroundColor={color.btnClr} />
 
       <HomStakwithoutsarch
         onPress={() => navigation.openDrawer()}
@@ -223,52 +224,136 @@ const Dshbord = () => {
         style={styles.scrollStyle}
         contentContainerStyle={scrollContentFlattened}
         showsVerticalScrollIndicator={false}>
-        <View>
+        <View style={styles.contentWrapper}>
           <Two_Crd />
 
-          <View style={styles.chartCard}>
-            <View style={styles.filterCont}>
-              <View>
-                <Text style={styles.chartTitle}>Income Overview</Text>
-                <Text style={styles.chartSubtitle}>Monthly Earnings Projection</Text>
-              </View>
-              <TouchableOpacity activeOpacity={0.7} style={styles.filterBtn}>
+          <View style={styles.quickActionsContainer}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.actionPill}
+              onPress={() => navigation.navigate('PublicRoutes', { screen: 'AddBankGoogle' })}>
+              <View style={[styles.actionIconCircle, { backgroundColor: '#EEF2FF' }]}>
                 {Icons?.Feather && (
-                  <Icons.Feather name="filter" size={16} color={color.defalt} />
+                  <Icons.Feather name="credit-card" size={18} color={color.btnClr} />
                 )}
-              </TouchableOpacity>
+              </View>
+              <Text style={styles.actionText}>Add Bank</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.actionPill}
+              onPress={() => navigation.navigate('Cash')}>
+              <View style={[styles.actionIconCircle, { backgroundColor: '#ECFDF5' }]}>
+                {Icons?.Feather && (
+                  <Icons.Feather name="dollar-sign" size={18} color={color.Gren} />
+                )}
+              </View>
+              <Text style={styles.actionText}>Cash In</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.actionPill}
+              onPress={() => navigation.navigate('Balance')}>
+              <View style={[styles.actionIconCircle, { backgroundColor: '#FFFBEB' }]}>
+                {Icons?.Feather && (
+                  <Icons.Feather name="clock" size={18} color={color.ylow} />
+                )}
+              </View>
+              <Text style={styles.actionText}>History</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.actionPill}
+              onPress={() => setsigninmodal(true)}>
+              <View style={[styles.actionIconCircle, { backgroundColor: '#F5F3FF' }]}>
+                {Icons?.Feather && (
+                  <Icons.Feather name="edit-3" size={18} color={color.prpl} />
+                )}
+              </View>
+              <Text style={styles.actionText}>Profile</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.chartCard}>
+            <View style={styles.cardHeader}>
+              <View style={styles.headerTextGroup}>
+                <Text style={styles.chartTitle}>Income Analytics</Text>
+                <Text style={styles.chartSubtitle}>Earnings overview over time</Text>
+              </View>
+
+              <View style={styles.periodSwitch}>
+                {['Weekly', 'Monthly'].map(p => (
+                  <TouchableOpacity
+                    key={p}
+                    activeOpacity={0.7}
+                    onPress={() => setChartPeriod(p)}
+                    style={[
+                      styles.periodTab,
+                      chartPeriod === p && styles.periodTabActive,
+                    ]}>
+                    <Text
+                      style={[
+                        styles.periodTabText,
+                        chartPeriod === p && styles.periodTabTextActive,
+                      ]}>
+                      {p}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
             <BarChart
               data={{
                 labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                datasets: [{ data: [0, 16, 33, 50, 66, 83, 100] }],
+                datasets: [{ data: [20, 45, 28, 80, 99, 43, 110] }],
               }}
-              width={Math.min(width - 40, 600)}
-              height={260}
+              width={Math.min(width - 56, 540)}
+              height={220}
               chartConfig={{
+                backgroundColor: '#FFFFFF',
                 backgroundGradientFrom: '#FFFFFF',
                 backgroundGradientTo: '#FFFFFF',
                 decimalPlaces: 0,
-                barPercentage: 0.5,
+                barPercentage: 0.52,
                 verticalLabelRotation: 0,
                 backgroundGradientToOpacity: 0,
                 showBarTops: false,
+                fillShadowGradient: color.btnClr,
+                fillShadowGradientOpacity: 1,
                 strokeWidth: 2,
-                color: () => color.defalt,
-                labelColor: () => '#64748B',
+                color: () => color.btnClr,
+                labelColor: () => '#94A3B8',
                 propsForLabels: {
                   fontSize: 11,
                   fontWeight: '600',
+                },
+                propsForBackgroundLines: {
+                  strokeDasharray: '4',
+                  stroke: '#F1F5F9',
                 },
               }}
               style={StyleSheet.flatten(styles.chartStyle)}
             />
           </View>
+
+          <View style={styles.statusNoticeBanner}>
+            <View style={styles.noticeIconWrap}>
+              {Icons?.Feather && (
+                <Icons.Feather name="shield" size={20} color={color.ylow} />
+              )}
+            </View>
+            <View style={styles.noticeTextCol}>
+              <Text style={styles.noticeTitle}>Account Verified</Text>
+              <Text style={styles.noticeSub}>Your provider profile is active and eligible for bookings.</Text>
+            </View>
+          </View>
         </View>
       </ScrollView>
 
-      {/* Disclaimer Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -277,7 +362,13 @@ const Dshbord = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
+              <View style={styles.modalIconWrapper}>
+                {Icons?.Feather && (
+                  <Icons.Feather name="shield" size={22} color={color.btnClr} />
+                )}
+              </View>
               <Text style={styles.modalTitle}>Disclaimer Notice</Text>
+              <Text style={styles.modalSubheading}>Please review before continuing</Text>
             </View>
 
             <View style={styles.modalBody}>
@@ -300,9 +391,9 @@ const Dshbord = () => {
                 </Text>
               </ScrollView>
 
-              <View style={styles.btnWrapper}>
+              <View style={styles.modalBtnContainer}>
                 <BotonComp
-                  BtnStyle={styles.fullWidthBtn}
+                  BtnStyle={styles.primaryModalBtn}
                   btnText="I Understand & Agree"
                   onPressFunc={() => setModalVisible(false)}
                 />
@@ -312,7 +403,6 @@ const Dshbord = () => {
         </View>
       </Modal>
 
-      {/* Provider Details Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -321,7 +411,13 @@ const Dshbord = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.formModalCard}>
             <View style={styles.modalHeader}>
+              <View style={styles.modalIconWrapper}>
+                {Icons?.Feather && (
+                  <Icons.Feather name="user-check" size={22} color={color.btnClr} />
+                )}
+              </View>
               <Text style={styles.modalTitle}>Complete Provider Profile</Text>
+              <Text style={styles.modalSubheading}>Set up your service details to receive client bookings</Text>
             </View>
 
             <View style={styles.modalBody}>
@@ -349,7 +445,7 @@ const Dshbord = () => {
                   <TouchableOpacity activeOpacity={0.8} onPress={() => handlFilPik('Certificates')}>
                     <UploadfilwIcon
                       placeholder="Upload Certificates"
-                      icon="upload"
+                      icon="upload-cloud"
                       title={certficate ? certficate.name : ''}
                     />
                   </TouchableOpacity>
@@ -360,7 +456,7 @@ const Dshbord = () => {
                   <TouchableOpacity activeOpacity={0.8} onPress={() => handlFilPik('Job References')}>
                     <UploadfilwIcon
                       placeholder="Upload Job References"
-                      icon="upload"
+                      icon="file-text"
                       title={jobReferences ? jobReferences.name : ''}
                     />
                   </TouchableOpacity>
@@ -371,7 +467,7 @@ const Dshbord = () => {
                   <TouchableOpacity activeOpacity={0.8} onPress={() => handlFilPik('Guarantor')}>
                     <UploadfilwIcon
                       placeholder="Upload Guarantor Document"
-                      icon="upload"
+                      icon="file"
                       title={guarantor ? guarantor.name : ''}
                     />
                   </TouchableOpacity>
@@ -389,9 +485,9 @@ const Dshbord = () => {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Address</Text>
+                  <Text style={styles.fieldLabel}>Business Address</Text>
                   <C_TxtInput
-                    placeholder="Enter full address"
+                    placeholder="Enter full physical address"
                     placeholderTextColor="#94A3B8"
                     onChangeText={setAddress}
                     value={address}
@@ -435,24 +531,24 @@ const Dshbord = () => {
                 </View>
               </ScrollView>
 
-              <View style={styles.doubleBtnRow}>
+              <View style={styles.actionButtonGroup}>
                 <BotonComp
-                  BtnStyle={styles.halfBtn}
+                  BtnStyle={styles.saveSubmitBtn}
                   btnText={
-                    load ? <ActivityIndicator size="small" color="#FFFFFF" /> : 'Save Details'
+                    load ? <ActivityIndicator size="small" color="#FFFFFF" /> : 'Save Profile'
                   }
                   onPressFunc={handlADdetail}
                 />
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  style={styles.addBankBtn}
+                  style={styles.outlineAddBankBtn}
                   onPress={() => {
                     setsigninmodal(false);
                     navigation.navigate('PublicRoutes', {
                       screen: 'AddBankGoogle',
                     });
                   }}>
-                  <Text style={styles.addBankBtnText}>Add Bank</Text>
+                  <Text style={styles.outlineAddBankText}>Add Bank</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -463,7 +559,7 @@ const Dshbord = () => {
   );
 };
 
-export default Dshbord;
+export default Dashboard;
 
 const styles = StyleSheet.create({
   safeContainer: {
@@ -471,186 +567,322 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   scrollStyle: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
+    paddingTop: 8,
   },
-  chartCard: {
+  contentWrapper: {
+    paddingHorizontal: 16,
+  },
+  quickActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 18,
+    gap: 10,
+  },
+  actionPill: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
-    marginTop: 16,
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 18,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#EEF2F6',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0px 4px 10px rgba(15, 23, 42, 0.04)' }
+      ? { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)' }
       : {
         elevation: 2,
         shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
-        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.03,
+        shadowRadius: 6,
       }),
   },
-  filterCont: {
+  actionIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  actionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  chartCard: {
+    backgroundColor: '#FFFFFF',
+    marginTop: 18,
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 8px 24px rgba(15, 23, 42, 0.04)' }
+      : {
+        elevation: 2,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.04,
+        shadowRadius: 12,
+      }),
+  },
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  headerTextGroup: {
+    flex: 1,
   },
   chartTitle: {
-    fontSize: 17,
+    fontSize: 16,
     color: '#0F172A',
     fontWeight: '800',
+    letterSpacing: -0.3,
   },
   chartSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: '#94A3B8',
     marginTop: 2,
+    fontWeight: '500',
   },
-  filterBtn: {
-    width: 36,
-    height: 36,
+  periodSwitch: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
     borderRadius: 10,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 3,
+  },
+  periodTab: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  periodTabActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  periodTabText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  periodTabTextActive: {
+    color: color.btnClr,
+    fontWeight: '700',
   },
   chartStyle: {
     marginVertical: 4,
-    borderRadius: 14,
+    borderRadius: 16,
     alignSelf: 'center',
+  },
+  statusNoticeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    marginTop: 18,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    borderLeftWidth: 4,
+    borderLeftColor: color.ylow,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 4px 14px rgba(15, 23, 42, 0.03)' }
+      : {
+        elevation: 2,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.03,
+        shadowRadius: 6,
+      }),
+  },
+  noticeIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#FFFBEB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  noticeTextCol: {
+    flex: 1,
+  },
+  noticeTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  noticeSub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+    lineHeight: 17,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
   },
   modalCard: {
-    borderRadius: 20,
+    borderRadius: 24,
     width: '100%',
+    maxWidth: 480,
     maxHeight: '75%',
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0px 6px 12px rgba(15, 23, 42, 0.1)' }
+      ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
       : {
-        elevation: 4,
+        elevation: 6,
         shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
       }),
   },
   formModalCard: {
-    borderRadius: 20,
+    borderRadius: 24,
     width: '100%',
-    maxHeight: '85%',
+    maxWidth: 480,
+    maxHeight: '86%',
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0px 6px 12px rgba(15, 23, 42, 0.1)' }
+      ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
       : {
-        elevation: 4,
+        elevation: 6,
         shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
       }),
   },
   modalHeader: {
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingTop: 22,
+    paddingBottom: 14,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: '#F8FAFC',
+  },
+  modalIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#EEF2FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   modalTitle: {
     fontSize: 18,
     color: '#0F172A',
     fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  modalSubheading: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 4,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   modalBody: {
-    padding: 18,
+    padding: 20,
     flex: 1,
   },
   disclaimerScroll: {
-    maxHeight: height * 0.4,
+    maxHeight: height * 0.38,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
   },
   disclaimerText: {
     color: '#475569',
     textAlign: 'left',
-    lineHeight: 22,
+    lineHeight: 21,
     fontSize: 13,
   },
-  btnWrapper: {
-    marginTop: 16,
+  modalBtnContainer: {
+    marginTop: 18,
     width: '100%',
   },
-  fullWidthBtn: {
+  primaryModalBtn: {
     width: '100%',
-    backgroundColor: color.defalt,
+    backgroundColor: color.btnClr,
     borderRadius: 14,
     paddingVertical: 14,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.25)' }
+      ? { boxShadow: '0 4px 12px rgba(32, 30, 82, 0.2)' }
       : {
         elevation: 3,
-        shadowColor: color.defalt,
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
+        shadowColor: color.btnClr,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
       }),
   },
   fieldGroup: {
-    marginBottom: 14,
+    marginBottom: 15,
     width: '100%',
   },
   fieldLabel: {
     fontSize: 13,
     fontWeight: '600',
     color: '#334155',
-    marginBottom: 6,
+    marginBottom: 7,
+    letterSpacing: -0.2,
   },
   pickerWrapper: {
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderRadius: 14,
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  doubleBtnRow: {
+  actionButtonGroup: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginTop: 16,
+    marginTop: 18,
+    gap: 12,
   },
-  halfBtn: {
-    width: '48%',
-    backgroundColor: color.defalt,
+  saveSubmitBtn: {
+    flex: 1,
+    backgroundColor: color.btnClr,
     borderRadius: 14,
     paddingVertical: 14,
   },
-  addBankBtn: {
-    width: '48%',
+  outlineAddBankBtn: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: color.defalt,
+    borderColor: color.btnClr,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addBankBtnText: {
-    color: color.defalt,
+  outlineAddBankText: {
+    color: color.btnClr,
     fontSize: 14,
     fontWeight: '700',
   },

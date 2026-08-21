@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, Image, StyleSheet, Text, View, StatusBar } from 'react-native';
+import { FlatList, Image, StyleSheet, Text, View, StatusBar, Platform } from 'react-native';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 import SearchHeader from './SearchHeader';
@@ -39,20 +39,28 @@ const Cash = () => {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.container}>
+    <View style={styles.cardContainer}>
       <View style={styles.leftRow}>
-        <Image
-          source={require('../../Assets/Images/logo.png')}
-          style={styles.avatar}
-        />
+        <View style={styles.avatarWrapper}>
+          <Image
+            source={require('../../Assets/Images/logo.png')}
+            style={styles.avatar}
+            resizeMode="cover"
+          />
+        </View>
         <View style={styles.infoCol}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.dateText}>{item.date}</Text>
+          <Text style={styles.nameText} numberOfLines={1}>{item.name}</Text>
+          <View style={styles.metaRow}>
+            {Icons?.Feather && (
+              <Icons.Feather name="calendar" size={12} color="#94A3B8" style={styles.metaIcon} />
+            )}
+            <Text style={styles.dateText}>{item.date}</Text>
+          </View>
         </View>
       </View>
       <View style={styles.rightCol}>
         <Text style={styles.balanceLabel}>Balance</Text>
-        <Text style={styles.balance}>₦ {item.balance}</Text>
+        <Text style={styles.balanceValue}>₦{item.balance}</Text>
       </View>
     </View>
   );
@@ -74,7 +82,11 @@ const Cash = () => {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyBox}>
-              <Icons.Feather name="dollar-sign" size={48} color="#CBD5E1" />
+              <View style={styles.emptyIconCircle}>
+                {Icons?.Feather && (
+                  <Icons.Feather name="dollar-sign" size={32} color="#94A3B8" />
+                )}
+              </View>
               <Text style={styles.emptyTitle}>No Cash Records Found</Text>
               <Text style={styles.emptySubtitle}>
                 No transactions matched your search query.
@@ -98,38 +110,49 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 30,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 32,
     flexGrow: 1,
   },
-  container: {
+  cardContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    elevation: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#EEF2F6',
     marginBottom: 12,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)' }
+      : {
+        elevation: 2,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+      }),
   },
   leftRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: 10,
+    marginRight: 12,
+  },
+  avatarWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: '#E2E8F0',
+    width: '100%',
+    height: '100%',
   },
   infoCol: {
     marginLeft: 12,
@@ -137,46 +160,68 @@ const styles = StyleSheet.create({
   },
   rightCol: {
     alignItems: 'flex-end',
+    justifyContent: 'center',
   },
-  name: {
+  nameText: {
     fontSize: 15,
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 2,
+    letterSpacing: -0.2,
+    marginBottom: 4,
   },
-  balanceLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-    marginBottom: 2,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  balance: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: color.defalt,
+  metaIcon: {
+    marginRight: 4,
   },
   dateText: {
     color: '#64748B',
     fontSize: 12,
     fontWeight: '500',
   },
+  balanceLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 2,
+  },
+  balanceValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: color.defalt,
+    letterSpacing: -0.3,
+  },
   emptyBox: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 80,
+    paddingVertical: 90,
+  },
+  emptyIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: '#EEF2F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: '#0F172A',
-    marginTop: 14,
+    letterSpacing: -0.2,
   },
   emptySubtitle: {
     fontSize: 13,
     color: '#64748B',
-    marginTop: 4,
+    marginTop: 6,
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 32,
+    lineHeight: 19,
   },
 });
