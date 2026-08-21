@@ -63,7 +63,7 @@ const DrarTitlProfilHeader = ({ screenTitle, onPress, userProfile }) => {
   };
 
   const imageUri = profileData?.profile
-    ? `${BASIC_URL}uploads/${profileData.profile}`
+    ? `${BASIC_URL}uploads/${profileData?.profile}`
     : null;
 
   return (

@@ -58,8 +58,13 @@ const DrawerUser = () => {
   };
 
   const imageUri = profileData?.profile
-    ? `${BASIC_URL}uploads/${profileData.profile}`
+    ? `${BASIC_URL}uploads/${profileData?.profile}`
     : null;
+
+  const combinedTextStyle = StyleSheet.flatten([
+    styles.userName,
+    { fontSize: getResponsiveSize(18, 19, 20) },
+  ]);
 
   return (
     <TouchableOpacity
@@ -75,12 +80,7 @@ const DrawerUser = () => {
         resizeMode="cover"
         style={styles.imgStyle}
       />
-      <Text
-        style={[
-          styles.userName,
-          { fontSize: getResponsiveSize(18, 19, 20) },
-        ]}
-        numberOfLines={1}>
+      <Text style={combinedTextStyle} numberOfLines={1}>
         {profileData?.name || 'User'}
       </Text>
     </TouchableOpacity>

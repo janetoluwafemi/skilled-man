@@ -216,10 +216,10 @@ const AddExpense = props => {
                             activeOpacity={0.7}
                             style={styles.optionRow}
                             onPress={() => toggleSelection(item.value)}>
-                          <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>
+                          <Text style={StyleSheet.flatten([styles.optionText, isSelected && styles.optionTextActive])}>
                             {item.value}
                           </Text>
-                          <View style={[styles.checkbox, isSelected && styles.checkboxActive]}>
+                          <View style={StyleSheet.flatten([styles.checkbox, isSelected && styles.checkboxActive])}>
                             {isSelected && <Icons.Feather name="check" size={14} color="#FFFFFF" />}
                           </View>
                         </TouchableOpacity>

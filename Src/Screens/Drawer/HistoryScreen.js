@@ -71,10 +71,10 @@ const HistryScren = props => {
         keyExtractor={(item, index) =>
           item.booking_id?.toString() || index.toString()
         }
-        contentContainerStyle={[
+        contentContainerStyle={StyleSheet.flatten([
           styles.cardContainer,
           {paddingBottom: bottomPadding},
-        ]}
+        ])}
         showsVerticalScrollIndicator={false}
         renderItem={({item}) => (
           <FltLstCrd

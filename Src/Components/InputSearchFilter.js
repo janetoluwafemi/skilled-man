@@ -19,22 +19,26 @@ const InputSarchFiltr = props => {
   ];
 
   return (
-    <View style={styles.searchContainer}>
-      <Icons.FontAwesome5 name="search" size={18} color={color.defalt} />
+    <View style={StyleSheet.flatten([styles.searchContainer, props.containerStyle])}>
+      {Icons?.FontAwesome5 && (
+        <Icons.FontAwesome5 name="search" size={18} color={color.defalt} />
+      )}
       <TextInput
-        style={styles.textInput}
+        style={StyleSheet.flatten([styles.textInput, props.inputStyle])}
         value={props.value}
         placeholder="Search for services"
         placeholderTextColor={color.defalt}
         onChangeText={props.onChangeText}
       />
       {props.screen ? null : (
-        <TouchableOpacity onPress={toggleModal}>
+        <TouchableOpacity onPress={toggleModal} activeOpacity={0.7}>
           <LinearGradient
-            style={styles.sliderStyle}
+            style={StyleSheet.flatten([styles.sliderStyle])}
             colors={gradientColors}
           >
-            <Icons.FontAwesome name="sliders" size={18} color={color.wite} />
+            {Icons?.FontAwesome && (
+              <Icons.FontAwesome name="sliders" size={18} color={color.wite} />
+            )}
           </LinearGradient>
         </TouchableOpacity>
       )}

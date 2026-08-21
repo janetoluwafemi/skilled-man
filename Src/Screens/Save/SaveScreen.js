@@ -121,10 +121,10 @@ const SaveScreen = () => {
                     save={true}
                 />
             )}
-            contentContainerStyle={[
+            contentContainerStyle={StyleSheet.flatten([
               styles.cardContainer,
               { paddingBottom: bottomPadding },
-            ]}
+            ])}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>

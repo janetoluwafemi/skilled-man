@@ -28,21 +28,16 @@ const DrarCstmBtn = ({
                        title,
                        drawerIcon,
                        DrawerBtnPress,
-                       IconComponent = Icons.FontAwesome,
+                       IconComponent = Icons?.FontAwesome,
                        style,
                        textStyle,
                        iconStyle,
                        activeOpacity = 0.7,
                        ...rest
                      }) => {
+  const iconSize = getResponsiveSize(24, 26, 27);
   const containerStyle = StyleSheet.flatten([styles.loginBtn, style]);
-
-  const combinedIconStyle = StyleSheet.flatten([
-    styles.iconStyle,
-    { fontSize: getResponsiveSize(24, 26, 27) },
-    iconStyle,
-  ]);
-
+  const combinedIconStyle = StyleSheet.flatten([styles.iconStyle, iconStyle]);
   const combinedTextStyle = StyleSheet.flatten([
     styles.btnText,
     { fontSize: getResponsiveSize(16, 17, 18) },
@@ -55,9 +50,11 @@ const DrarCstmBtn = ({
       onPress={DrawerBtnPress}
       activeOpacity={activeOpacity}
       {...rest}>
-      {drawerIcon ? (
+      {drawerIcon && IconComponent ? (
         <IconComponent
           name={drawerIcon}
+          size={iconSize}
+          color={color.wite}
           style={combinedIconStyle}
         />
       ) : null}
@@ -88,7 +85,6 @@ const styles = StyleSheet.create({
     marginLeft: getResponsiveSpacing(10, 12, 15),
   },
   iconStyle: {
-    color: color.wite,
     width: getResponsiveSpacing(30, 35, 40),
     textAlign: 'center',
   },

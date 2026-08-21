@@ -205,7 +205,7 @@ const Signin = props => {
                     activeOpacity={0.8}
                     style={styles.checkboxWrapper}
                     onPress={() => setChecked(!checked)}>
-                  <View style={[styles.customCheckbox, checked && styles.customCheckboxActive]}>
+                  <View style={StyleSheet.flatten([styles.customCheckbox, checked && styles.customCheckboxActive])}>
                     {checked && <Icons.Feather name="check" size={12} color="#FFFFFF" />}
                   </View>
                   <Text style={styles.checkboxText}>Remember me</Text>
@@ -241,14 +241,14 @@ const Signin = props => {
               <TouchableOpacity
                   activeOpacity={0.9}
                   onPress={() => setGoogleRole(0)}
-                  style={[styles.segmentBtn, googleRole === 0 && styles.segmentActive]}>
+                  style={StyleSheet.flatten([styles.segmentBtn, googleRole === 0 && styles.segmentActive])}>
                 <Icons.FontAwesome5
                     name="user"
                     size={13}
                     color={googleRole === 0 ? color.defalt : '#64748B'}
                     style={styles.segmentIcon}
                 />
-                <Text style={[styles.segmentText, googleRole === 0 && styles.segmentTextActive]}>
+                <Text style={StyleSheet.flatten([styles.segmentText, googleRole === 0 && styles.segmentTextActive])}>
                   User
                 </Text>
               </TouchableOpacity>
@@ -256,14 +256,14 @@ const Signin = props => {
               <TouchableOpacity
                   activeOpacity={0.9}
                   onPress={() => setGoogleRole(1)}
-                  style={[styles.segmentBtn, googleRole === 1 && styles.segmentActive]}>
+                  style={StyleSheet.flatten([styles.segmentBtn, googleRole === 1 && styles.segmentActive])}>
                 <Icons.FontAwesome5
                     name="briefcase"
                     size={13}
                     color={googleRole === 1 ? color.defalt : '#64748B'}
                     style={styles.segmentIcon}
                 />
-                <Text style={[styles.segmentText, googleRole === 1 && styles.segmentTextActive]}>
+                <Text style={StyleSheet.flatten([styles.segmentText, googleRole === 1 && styles.segmentTextActive])}>
                   Provider
                 </Text>
               </TouchableOpacity>

@@ -18,7 +18,6 @@ import { BarChart } from 'react-native-chart-kit';
 import * as DocumentPicker from 'expo-document-picker';
 import { Picker } from '@react-native-picker/picker';
 import { Country, State } from 'country-state-city';
-import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
@@ -98,10 +97,10 @@ const Dshbord = () => {
   }, [isFocused]);
 
   useEffect(() => {
-    if (state.isAuth === true) {
+    if (state?.isAuth === true) {
       setModalVisible(true);
     }
-  }, [state.isAuth]);
+  }, [state?.isAuth]);
 
   useEffect(() => {
     const fetchUserDataAndCheckModal = async () => {
@@ -109,7 +108,7 @@ const Dshbord = () => {
         const storedUserData = await AsyncStorage.getItem('userData');
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
-          if (parsedUserData?.working_experience && state.isAuth === true) {
+          if (parsedUserData?.working_experience && state?.isAuth === true) {
             setsigninmodal(true);
           }
         }
@@ -119,7 +118,7 @@ const Dshbord = () => {
     };
 
     fetchUserDataAndCheckModal();
-  }, [state.isAuth]);
+  }, [state?.isAuth]);
 
   const onCountryChange = countryCode => {
     setSelectedCountry(countryCode);
@@ -170,21 +169,21 @@ const Dshbord = () => {
       formdata.append('working_experience', selectedExperience);
 
       formdata.append('certificates', {
-        uri: certficate.uri,
-        name: certficate.name || 'certificate',
-        type: certficate.mimeType || 'application/octet-stream',
+        uri: certficate?.uri,
+        name: certficate?.name || 'certificate',
+        type: certficate?.mimeType || 'application/octet-stream',
       });
 
       formdata.append('job_references', {
-        uri: jobReferences.uri,
-        name: jobReferences.name || 'reference',
-        type: jobReferences.mimeType || 'application/octet-stream',
+        uri: jobReferences?.uri,
+        name: jobReferences?.name || 'reference',
+        type: jobReferences?.mimeType || 'application/octet-stream',
       });
 
       formdata.append('gurantor', {
-        uri: guarantor.uri,
-        name: guarantor.name || 'guarantor',
-        type: guarantor.mimeType || 'application/octet-stream',
+        uri: guarantor?.uri,
+        name: guarantor?.name || 'guarantor',
+        type: guarantor?.mimeType || 'application/octet-stream',
       });
 
       formdata.append('type', global.role || '1');
@@ -206,6 +205,11 @@ const Dshbord = () => {
   const bottomPadding =
     height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
 
+  const scrollContentFlattened = StyleSheet.flatten([
+    styles.scrollContent,
+    { paddingBottom: bottomPadding },
+  ]);
+
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -217,12 +221,9 @@ const Dshbord = () => {
 
       <ScrollView
         style={styles.scrollStyle}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: bottomPadding },
-        ]}
+        contentContainerStyle={scrollContentFlattened}
         showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={600}>
+        <View>
           <Two_Crd />
 
           <View style={styles.chartCard}>
@@ -232,7 +233,9 @@ const Dshbord = () => {
                 <Text style={styles.chartSubtitle}>Monthly Earnings Projection</Text>
               </View>
               <TouchableOpacity activeOpacity={0.7} style={styles.filterBtn}>
-                <Icons.Feather name="filter" size={16} color={color.defalt} />
+                {Icons?.Feather && (
+                  <Icons.Feather name="filter" size={16} color={color.defalt} />
+                )}
               </TouchableOpacity>
             </View>
 
@@ -241,7 +244,7 @@ const Dshbord = () => {
                 labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
                 datasets: [{ data: [0, 16, 33, 50, 66, 83, 100] }],
               }}
-              width={width - 40}
+              width={Math.min(width - 40, 600)}
               height={260}
               chartConfig={{
                 backgroundGradientFrom: '#FFFFFF',
@@ -259,10 +262,10 @@ const Dshbord = () => {
                   fontWeight: '600',
                 },
               }}
-              style={styles.chartStyle}
+              style={StyleSheet.flatten(styles.chartStyle)}
             />
           </View>
-        </Animatable.View>
+        </View>
       </ScrollView>
 
       {/* Disclaimer Modal */}
@@ -272,7 +275,7 @@ const Dshbord = () => {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <Animatable.View animation="zoomIn" duration={300} style={styles.modalCard}>
+          <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Disclaimer Notice</Text>
             </View>
@@ -305,7 +308,7 @@ const Dshbord = () => {
                 />
               </View>
             </View>
-          </Animatable.View>
+          </View>
         </View>
       </Modal>
 
@@ -316,7 +319,7 @@ const Dshbord = () => {
         visible={signinmodal}
         onRequestClose={() => setsigninmodal(false)}>
         <View style={styles.modalOverlay}>
-          <Animatable.View animation="fadeInUp" duration={400} style={styles.formModalCard}>
+          <View style={styles.formModalCard}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Complete Provider Profile</Text>
             </View>
@@ -453,7 +456,7 @@ const Dshbord = () => {
                 </TouchableOpacity>
               </View>
             </View>
-          </Animatable.View>
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -478,14 +481,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     marginTop: 16,
     borderRadius: 20,
-    elevation: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
     padding: 16,
     borderWidth: 1,
     borderColor: '#F1F5F9',
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0px 4px 10px rgba(15, 23, 42, 0.04)' }
+      : {
+        elevation: 2,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+      }),
   },
   filterCont: {
     flexDirection: 'row',
@@ -531,11 +538,15 @@ const styles = StyleSheet.create({
     maxHeight: '75%',
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0px 6px 12px rgba(15, 23, 42, 0.1)' }
+      : {
+        elevation: 4,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      }),
   },
   formModalCard: {
     borderRadius: 20,
@@ -543,11 +554,15 @@ const styles = StyleSheet.create({
     maxHeight: '85%',
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0px 6px 12px rgba(15, 23, 42, 0.1)' }
+      : {
+        elevation: 4,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      }),
   },
   modalHeader: {
     backgroundColor: '#FFFFFF',
@@ -584,11 +599,15 @@ const styles = StyleSheet.create({
     backgroundColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 14,
-    elevation: 3,
-    shadowColor: color.defalt,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.25)' }
+      : {
+        elevation: 3,
+        shadowColor: color.defalt,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
+      }),
   },
   fieldGroup: {
     marginBottom: 14,

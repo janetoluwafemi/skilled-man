@@ -82,13 +82,13 @@ const EditProfileScreen = props => {
         setName(result.name || '');
         setAddress(result.address || '');
         setEmail(result.email || '');
-        setPhone(result.phone_number || '');
-        setExperience(result.working_experience || '');
-        setProfileImg(result.profile);
+        setPhone(result?.phone_number || '');
+        setExperience(result?.working_experience || '');
+        setProfileImg(result?.profile);
 
         if (!global.lat) {
-          setLatitude(result.latitude ? String(result.latitude) : '');
-          setLongitude(result.longitude ? String(result.longitude) : '');
+          setLatitude(result?.latitude ? String(result?.latitude) : '');
+          setLongitude(result?.longitude ? String(result?.longitude) : '');
         }
       }
     } catch (error) {
@@ -262,7 +262,7 @@ const EditProfileScreen = props => {
               <Image
                 source={
                   image
-                    ? { uri: image.uri }
+                    ? { uri: image?.uri }
                     : profileImg
                       ? { uri: `${BASIC_URL}uploads/${profileImg}` }
                       : require('../../Assets/Images/user.jpg')
@@ -490,13 +490,13 @@ const EditProfileScreen = props => {
                 </View>
 
                 <Text style={styles.skillExp}>
-                  Experience: {selectedSkill.working_experience} Years
+                  Experience: {selectedSkill?.working_experience} Years
                 </Text>
 
-                {selectedSkill.certificates ? (
+                {selectedSkill?.certificates ? (
                   <Image
                     source={{
-                      uri: `${BASIC_URL}uploads/${selectedSkill.certificates}`,
+                      uri: `${BASIC_URL}uploads/${selectedSkill?.certificates}`,
                     }}
                     style={styles.certImg}
                     resizeMode="cover"

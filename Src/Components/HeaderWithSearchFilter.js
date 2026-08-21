@@ -7,7 +7,7 @@ import {
   Platform,
   StatusBar,
   Dimensions,
-  Image, // Standard React Native Image
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -75,9 +75,10 @@ const HeaderWSarchFiltr = ({
     }
   }, [focus, getProfileData]);
 
-  const imageUri = profileData?.profile
-    ? `${BASIC_URL}uploads/${profileData.profile}`
-    : null;
+  const imageUri =
+    profileData?.profile && typeof profileData.profile === 'string' && profileData.profile.trim() !== ''
+      ? `${BASIC_URL}uploads/${profileData.profile}`
+      : null;
 
   const avatarSize = getResponsiveSize(45, 48, 50);
 
@@ -98,6 +99,13 @@ const HeaderWSarchFiltr = ({
       height: avatarSize,
     },
   ]);
+
+  const titleStyleCombined = StyleSheet.flatten([
+    styles.userStyle,
+    { fontSize: getResponsiveSize(15, 16, 17) },
+  ]);
+
+  const BellIconComponent = Icons?.MaterialCommunityIcons;
 
   return (
     <View style={containerStyleCombined}>
@@ -120,12 +128,12 @@ const HeaderWSarchFiltr = ({
         </TouchableOpacity>
 
         <View style={styles.rightCont}>
-          {bellIcon ? (
+          {bellIcon && BellIconComponent ? (
             <TouchableOpacity
               onPress={onPressNotifiction}
               style={styles.menuStyle}
               activeOpacity={0.7}>
-              <Icons.MaterialCommunityIcons
+              <BellIconComponent
                 name={bellIcon}
                 size={getResponsiveSize(26, 28, 30)}
                 color={color.wite}
@@ -149,12 +157,7 @@ const HeaderWSarchFiltr = ({
       </View>
 
       {titleText ? (
-        <Text
-          style={[
-            styles.userStyle,
-            { fontSize: getResponsiveSize(15, 16, 17) },
-          ]}
-          numberOfLines={1}>
+        <Text style={titleStyleCombined} numberOfLines={1}>
           {titleText}
         </Text>
       ) : null}
@@ -217,10 +220,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '95%',
     maxWidth: SCREEN_WIDTH - 30,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)' }
+      : {
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      }),
   },
 });

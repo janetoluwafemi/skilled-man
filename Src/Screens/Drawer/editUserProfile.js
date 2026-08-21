@@ -69,15 +69,15 @@ const EditUserProfile = () => {
       const result = await response.json();
 
       if (result) {
-        setName(result.name || '');
-        setEmail(result.email || '');
-        setPhone(result.phone_number || '');
-        setAddress(result.address || '');
-        if (result.profile) setProfileImgUrl(result.profile);
+        setName(result?.name || '');
+        setEmail(result?.email || '');
+        setPhone(result?.phone_number || '');
+        setAddress(result?.address || '');
+        if (result?.profile) setProfileImgUrl(result.profile);
 
-        if (!global.lat && result.latitude) {
-          setLatitude(String(result.latitude));
-          setLongitude(String(result.longitude || ''));
+        if (!global.lat && result?.latitude) {
+          setLatitude(String(result?.latitude));
+          setLongitude(String(result?.longitude || ''));
         }
       }
     } catch (error) {

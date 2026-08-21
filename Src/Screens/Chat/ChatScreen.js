@@ -130,10 +130,10 @@ const ChatScreen = props => {
             color={color.defalt}
           />
           <TextInput
-            style={[
+            style={StyleSheet.flatten([
               styles.searchInput,
               { fontSize: getResponsiveSize(14, 15, 16) },
-            ]}
+            ])}
             value={searchTerm}
             placeholder="Search conversations..."
             placeholderTextColor="#94A3B8"
@@ -145,10 +145,10 @@ const ChatScreen = props => {
       <FlatList
         data={sortedData}
         keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        contentContainerStyle={[
+        contentContainerStyle={StyleSheet.flatten([
           styles.listContainer,
           { paddingBottom: bottomPadding },
-        ]}
+        ])}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -192,11 +192,6 @@ const styles = StyleSheet.create({
     marginBottom: getResponsiveSpacing(8, 10, 12),
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    elevation: 1,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
   },
   searchInput: {
     flex: 1,

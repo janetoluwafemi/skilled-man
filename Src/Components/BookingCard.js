@@ -33,7 +33,7 @@ const BookingCrd = ({
   };
 
   return (
-    <View style={[styles.textContainer, cardStyle]}>
+    <View style={StyleSheet.flatten([styles.textContainer, cardStyle])}>
       <View style={styles.openingStyle}>
         <Text style={styles.TextStyle}>{cardTitle}</Text>
         <View style={styles.rightCont}>
@@ -46,7 +46,7 @@ const BookingCrd = ({
               />
             </TouchableOpacity>
           ) : null}
-          <Text style={[styles.paidStyle, dateCont, styles.paidMargin]}>
+          <Text style={StyleSheet.flatten([styles.paidStyle, dateCont, styles.paidMargin])}>
             {paidTitle}
           </Text>
           {status === 'complete' ? (

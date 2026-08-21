@@ -51,12 +51,12 @@ const HomStakwithoutsarch = ({
   };
 
   const imageUri = profileData?.profile
-    ? `${BASIC_URL}uploads/${profileData.profile}`
+    ? `${BASIC_URL}uploads/${profileData?.profile}`
     : null;
 
   return (
     <View
-      style={[
+      style={StyleSheet.flatten([
         styles.containerStyle,
         {
           paddingTop: Math.max(
@@ -64,7 +64,7 @@ const HomStakwithoutsarch = ({
             Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0
           ),
         },
-      ]}>
+      ])}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={color.defalt}
@@ -98,7 +98,7 @@ const HomStakwithoutsarch = ({
         Hi, {profileData?.name || 'User'}
       </Text>
 
-      <OpningCrd cardStyle={[styles.openingBalanceCard, cardStyle]} />
+      <OpningCrd cardStyle={StyleSheet.flatten([styles.openingBalanceCard, cardStyle])} />
     </View>
   );
 };

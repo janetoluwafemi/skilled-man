@@ -1,17 +1,20 @@
 import React from 'react';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import Feather from 'react-native-vector-icons/Feather';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Entypo from 'react-native-vector-icons/Entypo';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-import Octicons from 'react-native-vector-icons/Octicons';
-import Foundation from 'react-native-vector-icons/Foundation';
-import EvilIcons from 'react-native-vector-icons/EvilIcons';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import { StyleSheet } from 'react-native';
+import {
+  AntDesign,
+  FontAwesome,
+  FontAwesome5,
+  FontAwesome6,
+  Ionicons,
+  Feather,
+  MaterialCommunityIcons,
+  Entypo,
+  MaterialIcons,
+  SimpleLineIcons,
+  Octicons,
+  Foundation,
+  EvilIcons,
+} from '@expo/vector-icons';
 
 export const Icons = {
   MaterialCommunityIcons,
@@ -26,18 +29,20 @@ export const Icons = {
   Octicons,
   Foundation,
   EvilIcons,
-  FontAwesome6
+  FontAwesome6,
 };
 
-const Icon = ({type, name, color, size = 24, style}) => {
-  const fontSize = 24;
+const Icon = ({ type, name, color, size = 24, style }) => {
   const Tag = type;
+  if (!Tag || !name) return null;
+
   return (
-    <>
-      {type && name && (
-        <Tag name={name} size={size || fontSize} color={color} style={style} />
-      )}
-    </>
+    <Tag
+      name={name}
+      size={size}
+      color={color}
+      style={style ? StyleSheet.flatten(style) : undefined}
+    />
   );
 };
 
