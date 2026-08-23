@@ -30,7 +30,7 @@ const Balance = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `${BASIC_URL}provider-transactions/${global.id}`
+          `${BASIC_URL}provider-transactions/${global.id}`
       );
 
       if (!response.ok) {
@@ -58,7 +58,7 @@ const Balance = () => {
       setFilteredData(data);
     } else {
       const filtered = data.filter(item =>
-        item.user_name?.toLowerCase().includes(query.toLowerCase())
+          item.user_name?.toLowerCase().includes(query.toLowerCase())
       );
       setFilteredData(filtered);
     }
@@ -71,97 +71,99 @@ const Balance = () => {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.cardContainer}>
-      <View style={styles.leftRow}>
-        <View style={styles.avatarWrapper}>
-          <Image
-            source={
-              item.user_profile
-                ? { uri: `${BASIC_URL}uploads/${item.user_profile}` }
-                : require('../../Assets/Images/logo.png')
-            }
-            style={styles.avatar}
-            resizeMode="cover"
-          />
-        </View>
-        <View style={styles.infoCol}>
-          <Text style={styles.nameText} numberOfLines={1}>
-            {item.user_name || 'Customer'}
-          </Text>
-          <View style={styles.metaRow}>
-            {Icons?.Feather && (
-              <Icons.Feather name="calendar" size={12} color="#94A3B8" style={styles.metaIcon} />
-            )}
-            <Text style={styles.dateText}>{item.date || 'Recent'}</Text>
+      <TouchableOpacity activeOpacity={0.7} style={styles.cardContainer}>
+        <View style={styles.leftRow}>
+          <View style={styles.avatarWrapper}>
+            <Image
+                source={
+                  item.user_profile
+                      ? { uri: `${BASIC_URL}uploads/${item.user_profile}` }
+                      : require('../../Assets/Images/logo.png')
+                }
+                style={styles.avatar}
+                resizeMode="cover"
+            />
+          </View>
+          <View style={styles.infoCol}>
+            <Text style={styles.nameText} numberOfLines={1}>
+              {item.user_name || 'Customer'}
+            </Text>
+            <View style={styles.metaRow}>
+              {Icons?.Feather && (
+                  <Icons.Feather name="calendar" size={12} color="#94A3B8" style={styles.metaIcon} />
+              )}
+              <Text style={styles.dateText}>{item.date || 'Recent'}</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.rightCol}>
-        <Text style={styles.balanceLabel}>Amount</Text>
-        <Text style={styles.balanceValue}>₦{item.amount || 0}</Text>
-      </View>
-    </View>
+        <View style={styles.rightCol}>
+          <Text style={styles.balanceLabel}>Amount</Text>
+          <View style={styles.amountBadge}>
+            <Text style={styles.balanceValue}>₦{item.amount || 0}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.flexFill} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <SafeAreaView style={styles.flexFill} edges={['top']}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <View style={styles.topHeaderRow}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => navigation.goBack()}
-          style={styles.backArrowBtn}>
-          {Icons?.Feather ? (
-            <Icons.Feather name="arrow-left" size={22} color="#0F172A" />
-          ) : (
-            <Text style={styles.fallbackBackText}>←</Text>
-          )}
-        </TouchableOpacity>
+        <View style={styles.topHeaderRow}>
+          <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.goBack()}
+              style={styles.backArrowBtn}>
+            {Icons?.Feather ? (
+                <Icons.Feather name="arrow-left" size={22} color="#0F172A" />
+            ) : (
+                <Text style={styles.fallbackBackText}>←</Text>
+            )}
+          </TouchableOpacity>
 
-        <View style={styles.titleWrapper}>
-          <Text style={styles.centerHeaderText}>Earned Balance</Text>
-        </View>
-      </View>
-
-      <SearchHeader
-        onSearch={handleSearch}
-        searchQuery={searchQuery}
-        onSearchIconPress={handleSearchIconPress}
-      />
-
-      <View style={styles.listWrapper}>
-        {loading ? (
-          <View style={styles.loaderCenter}>
-            <ActivityIndicator size="large" color={color.defalt} />
+          <View style={styles.titleWrapper}>
+            <Text style={styles.centerHeaderText}>Earned Balance</Text>
           </View>
-        ) : (
-          <FlatList
-            data={filteredData}
-            renderItem={renderItem}
-            keyExtractor={(item, index) =>
-              item.id?.toString() || index.toString()
-            }
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={
-              <View style={styles.emptyBox}>
-                <View style={styles.emptyIconCircle}>
-                  {Icons?.Feather && (
-                    <Icons.Feather name="credit-card" size={32} color="#94A3B8" />
-                  )}
-                </View>
-                <Text style={styles.emptyTitle}>No Transactions Found</Text>
-                <Text style={styles.emptySubtitle}>
-                  Your completed earnings and transaction history will appear here.
-                </Text>
+        </View>
+
+        <SearchHeader
+            onSearch={handleSearch}
+            searchQuery={searchQuery}
+            onSearchIconPress={handleSearchIconPress}
+        />
+
+        <View style={styles.listWrapper}>
+          {loading ? (
+              <View style={styles.loaderCenter}>
+                <ActivityIndicator size="large" color={color.defalt} />
               </View>
-            }
-          />
-        )}
-      </View>
-    </SafeAreaView>
+          ) : (
+              <FlatList
+                  data={filteredData}
+                  renderItem={renderItem}
+                  keyExtractor={(item, index) =>
+                      item.id?.toString() || index.toString()
+                  }
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.listContent}
+                  ListEmptyComponent={
+                    <View style={styles.emptyBox}>
+                      <View style={styles.emptyIconCircle}>
+                        {Icons?.Feather && (
+                            <Icons.Feather name="credit-card" size={32} color="#94A3B8" />
+                        )}
+                      </View>
+                      <Text style={styles.emptyTitle}>No Transactions Found</Text>
+                      <Text style={styles.emptySubtitle}>
+                        Your completed earnings and transaction history will appear here.
+                      </Text>
+                    </View>
+                  }
+              />
+          )}
+        </View>
+      </SafeAreaView>
   );
 };
 
@@ -194,14 +196,14 @@ const styles = StyleSheet.create({
     borderColor: '#EEF2F6',
     zIndex: 10,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)' }
-      : {
-        elevation: 2,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 4,
-      }),
+        ? { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)' }
+        : {
+          elevation: 2,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.04,
+          shadowRadius: 4,
+        }),
   },
   fallbackBackText: {
     fontSize: 20,
@@ -226,7 +228,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 12,
     paddingBottom: 32,
     flexGrow: 1,
   },
@@ -241,14 +243,14 @@ const styles = StyleSheet.create({
     borderColor: '#EEF2F6',
     marginBottom: 12,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)' }
-      : {
-        elevation: 2,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      }),
+        ? { boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)' }
+        : {
+          elevation: 2,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
+        }),
   },
   leftRow: {
     flexDirection: 'row',
@@ -260,7 +262,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -302,10 +304,16 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    marginBottom: 2,
+    marginBottom: 3,
+  },
+  amountBadge: {
+    backgroundColor: '#FAF4F0',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   balanceValue: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     color: color.defalt,
     letterSpacing: -0.3,

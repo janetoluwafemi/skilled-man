@@ -53,7 +53,7 @@ const Cash = () => {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.cardContainer}>
+    <TouchableOpacity activeOpacity={0.7} style={styles.cardContainer}>
       <View style={styles.leftRow}>
         <View style={styles.avatarWrapper}>
           <Image
@@ -76,9 +76,11 @@ const Cash = () => {
       </View>
       <View style={styles.rightCol}>
         <Text style={styles.balanceLabel}>Balance</Text>
-        <Text style={styles.balanceValue}>₦{item.balance}</Text>
+        <View style={styles.amountBadge}>
+          <Text style={styles.balanceValue}>₦{item.balance}</Text>
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 12,
     paddingBottom: 32,
     flexGrow: 1,
   },
@@ -229,7 +231,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -271,10 +273,16 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    marginBottom: 2,
+    marginBottom: 3,
+  },
+  amountBadge: {
+    backgroundColor: '#FAF4F0',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   balanceValue: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     color: color.defalt,
     letterSpacing: -0.3,

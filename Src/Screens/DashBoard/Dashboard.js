@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { BarChart } from 'react-native-chart-kit';
 import * as DocumentPicker from 'expo-document-picker';
-import { Country, State } from 'country-state-city';
+import { Country } from 'country-state-city';
 import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
@@ -155,6 +155,12 @@ const Dashboard = () => {
     }
   };
 
+  const handleNavigateToAddBank = () => {
+    setsigninmodal(false);
+    setModalVisible(false);
+    navigation.navigate('AddBankGoogle');
+  };
+
   const handlADdetail = async () => {
     if (
       selectedBusiness === 'Select Business' ||
@@ -204,8 +210,7 @@ const Dashboard = () => {
       });
 
       setLoad(false);
-      setsigninmodal(false);
-      navigation.navigate('AddBank');
+      handleNavigateToAddBank();
     } catch (error) {
       setLoad(false);
       console.log('Error submitting details:', error);
@@ -240,7 +245,7 @@ const Dashboard = () => {
             <TouchableOpacity
               activeOpacity={0.8}
               style={styles.actionPill}
-              onPress={() => navigation.navigate('PublicRoutes', { screen: 'AddBankGoogle' })}>
+              onPress={handleNavigateToAddBank}>
               <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
                 {Icons?.Feather && (
                   <Icons.Feather name="credit-card" size={20} color={color.defalt} />
@@ -363,6 +368,7 @@ const Dashboard = () => {
         </View>
       </ScrollView>
 
+      {/* Disclaimer Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -561,12 +567,7 @@ const Dashboard = () => {
                 <TouchableOpacity
                   activeOpacity={0.8}
                   style={styles.outlineAddBankBtn}
-                  onPress={() => {
-                    setsigninmodal(false);
-                    navigation.navigate('PublicRoutes', {
-                      screen: 'AddBankGoogle',
-                    });
-                  }}>
+                  onPress={handleNavigateToAddBank}>
                   <Text style={styles.outlineAddBankText}>Add Bank</Text>
                 </TouchableOpacity>
               </View>
@@ -1063,8 +1064,10 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     padding: 0,
     ...(Platform.OS === 'web' && {
-      outline: 'none',
-      border: 'none',
+      outlineWidth: 0,
+      outlineColor: 'transparent',
+      outlineStyle: 'none',
+      borderStyle: 'none',
     }),
   },
   optionRow: {

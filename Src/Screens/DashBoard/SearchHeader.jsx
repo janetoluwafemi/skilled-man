@@ -1,27 +1,26 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
-import color from '../../Assets/colors/colors';
+import { StyleSheet, View, TouchableOpacity, TextInput, Platform } from 'react-native';
 import { Icons } from '../../Components/Icons';
 
 const SearchHeader = ({ onSearch, searchQuery, onSearchIconPress }) => {
   return (
-    <View style={styles.containerStyle}>
-      {/*<Text style={styles.userStyle}>Earned Balance</Text>*/}
-      <View style={styles.searchStyle}>
-        <View style={styles.searchContainer}>
-          <TouchableOpacity onPress={onSearchIconPress} activeOpacity={0.8} style={styles.searchIconBtn}>
-            <Icons.Feather name="search" size={20} color="#64748B" />
-          </TouchableOpacity>
-          <TextInput
-            style={styles.inputStyle}
-            value={searchQuery}
-            placeholder="Search transactions..."
-            placeholderTextColor="#94A3B8"
-            onChangeText={onSearch}
-          />
+      <View style={styles.containerStyle}>
+        <View style={styles.searchStyle}>
+          <View style={styles.searchContainer}>
+            <TouchableOpacity onPress={onSearchIconPress} activeOpacity={0.8} style={styles.searchIconBtn}>
+              <Icons.Feather name="search" size={20} color="#64748B" />
+            </TouchableOpacity>
+            <TextInput
+                style={styles.inputStyle}
+                value={searchQuery}
+                placeholder="Search transactions..."
+                placeholderTextColor="#94A3B8"
+                onChangeText={onSearch}
+                underlineColorAndroid="transparent"
+            />
+          </View>
         </View>
       </View>
-    </View>
   );
 };
 
@@ -34,13 +33,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 8,
-  },
-  userStyle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 12,
-    letterSpacing: -0.3,
   },
   searchStyle: {
     width: '100%',
@@ -71,5 +63,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     height: '100%',
     fontWeight: '500',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    paddingVertical: 0,
+    ...(Platform.OS === 'web' && {
+      outlineWidth: 0,
+      outlineColor: 'transparent',
+      outlineStyle: 'none',
+      borderStyle: 'none',
+      boxShadow: 'none',
+    }),
   },
 });
