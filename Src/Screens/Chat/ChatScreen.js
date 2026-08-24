@@ -9,9 +9,13 @@ import {
   Platform,
   SafeAreaView,
   StatusBar,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import ProflHader from '../../Components/ProfileHeader';
@@ -42,11 +46,14 @@ const ChatScreen = props => {
   const insets = useSafeAreaInsets();
 
   const [getChat, setALlChat] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [countUnread, setCountUnread] = useState(0);
   const [isToggled, setIsToggled] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const getAllChats = useCallback(async () => {
+  const getAllChats = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
     try {
       const formdata = new FormData();
       formdata.append('own_id', global.id);
@@ -62,6 +69,9 @@ const ChatScreen = props => {
       }
     } catch (error) {
       console.log('Error fetching chat list:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -109,66 +119,106 @@ const ChatScreen = props => {
   const bottomPadding =
     height * 0.085 +
     Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
-    20;
+    28;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <ProflHader
         rightIcon="search"
-        screenTitle="Chat"
+        screenTitle="Messages"
         onPress={() => navigation.openDrawer()}
         onPressnotification={() => setIsToggled(!isToggled)}
       />
 
-      {isToggled ? (
-        <View style={styles.searchContainer}>
-          <Icons.Feather
-            name="search"
-            size={getResponsiveSize(16, 17, 18)}
-            color={color.defalt}
-          />
-          <TextInput
-            style={StyleSheet.flatten([
-              styles.searchInput,
-              { fontSize: getResponsiveSize(14, 15, 16) },
-            ])}
-            value={searchTerm}
-            placeholder="Search conversations..."
-            placeholderTextColor="#94A3B8"
-            onChangeText={setSearchTerm}
-          />
-        </View>
-      ) : null}
-
-      <FlatList
-        data={sortedData}
-        keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        contentContainerStyle={StyleSheet.flatten([
-          styles.listContainer,
-          { paddingBottom: bottomPadding },
-        ])}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Icons.Feather name="message-square" size={40} color="#CBD5E1" />
-            <Text style={styles.emptyText}>No chats found</Text>
+      {isToggled && (
+        <Animatable.View animation="fadeInDown" duration={250} style={styles.searchWrapper}>
+          <View style={styles.searchContainer}>
+            <Icons.Feather
+              name="search"
+              size={getResponsiveSize(16, 17, 18)}
+              color="#94A3B8"
+            />
+            <TextInput
+              style={StyleSheet.flatten([
+                styles.searchInput,
+                { fontSize: getResponsiveSize(14, 14.5, 15) },
+              ])}
+              value={searchTerm}
+              placeholder="Search conversations..."
+              placeholderTextColor="#94A3B8"
+              onChangeText={setSearchTerm}
+              autoFocus={true}
+            />
+            {searchTerm.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchTerm('')} activeOpacity={0.7}>
+                <Icons.Ionicons name="close-circle" size={18} color="#94A3B8" />
+              </TouchableOpacity>
+            )}
           </View>
-        }
-        renderItem={({ item }) => (
-          <ProflCrd
-            showProfile={() =>
-              navigation.navigate('IndividualChat', { currentuser: item })
-            }
-            profile={item.image}
-            cardTitle={item.name}
-            time={item.created_at}
-            msgTitle={item.message}
-            noOfMsg={Number(item.unread_count)}
-          />
-        )}
-      />
+        </Animatable.View>
+      )}
+
+      {getChat.length > 0 && (
+        <View style={styles.topInfoBar}>
+          <Text style={styles.conversationsHeading}>Recent Conversations</Text>
+          {countUnread > 0 && (
+            <View style={styles.unreadPill}>
+              <Text style={styles.unreadPillText}>{countUnread} New</Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {loading && getChat.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={color.defalt} />
+          <Text style={styles.loadingText}>Loading conversations...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={sortedData}
+          keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+          contentContainerStyle={StyleSheet.flatten([
+            styles.listContainer,
+            { paddingBottom: bottomPadding },
+          ])}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => getAllChats(true)}
+              colors={[color.defalt]}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconCircle}>
+                <Icons.Feather name="message-square" size={32} color="#94A3B8" />
+              </View>
+              <Text style={styles.emptyTitle}>No Conversations Yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Your chats and messages with artisans will appear here.
+              </Text>
+            </View>
+          }
+          renderItem={({ item }) => (
+            <View style={styles.chatCardWrap}>
+              <ProflCrd
+                showProfile={() =>
+                  navigation.navigate('IndividualChat', { currentuser: item })
+                }
+                profile={item.image}
+                cardTitle={item.name}
+                time={item.created_at}
+                msgTitle={item.message}
+                noOfMsg={Number(item.unread_count)}
+              />
+            </View>
+          )}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -180,39 +230,131 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+  searchWrapper: {
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 4,
+  },
   searchContainer: {
     flexDirection: 'row',
-    height: getResponsiveSize(46, 48, 50),
+    height: 48,
     alignItems: 'center',
-    paddingHorizontal: getResponsiveSpacing(12, 14, 16),
-    borderRadius: 14,
+    paddingHorizontal: 14,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
-    marginHorizontal: getResponsiveSpacing(16, 18, 20),
-    marginTop: getResponsiveSpacing(8, 10, 12),
-    marginBottom: getResponsiveSpacing(8, 10, 12),
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)' }
+      : {
+        elevation: 2,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 6,
+      }),
   },
   searchInput: {
     flex: 1,
     paddingLeft: 10,
     color: '#0F172A',
     fontWeight: '500',
+    height: '100%',
+    paddingVertical: 0,
+    ...(Platform.OS === 'web' && {
+      outlineWidth: 0,
+      outlineColor: 'transparent',
+      outlineStyle: 'none',
+      borderStyle: 'none',
+    }),
+  },
+  topInfoBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: 6,
+  },
+  conversationsHeading: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: -0.2,
+    textTransform: 'uppercase',
+  },
+  unreadPill: {
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+  },
+  unreadPillText: {
+    color: '#EF4444',
+    fontSize: 12,
+    fontWeight: '700',
   },
   listContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingHorizontal: 16,
+    paddingTop: 6,
+  },
+  chatCardWrap: {
+    marginBottom: 8,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)' }
+      : {
+        elevation: 1,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 4,
+      }),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 60,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
+    paddingHorizontal: 30,
   },
-  emptyText: {
-    fontSize: getResponsiveSize(14, 15, 16),
-    color: '#94A3B8',
-    fontWeight: '600',
-    marginTop: 10,
+  emptyIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#EEF2F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: 13.5,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

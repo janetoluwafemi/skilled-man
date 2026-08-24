@@ -6,11 +6,10 @@ import {
   View,
   Platform,
   StatusBar,
-  Dimensions,
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from 'react-native-vector-icons/Feather';
 import { useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -18,23 +17,7 @@ import color from '../Assets/colors/colors';
 import SarchInpt from './SearchInput';
 import { BASIC_URL } from '../Screens/Signin/Signin';
 
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
-const isSmallDevice = SCREEN_HEIGHT < 700;
-const isMediumDevice = SCREEN_HEIGHT >= 700 && SCREEN_HEIGHT < 900;
-
-const getResponsiveSize = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
-
-const getResponsiveSpacing = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
-
-const HomStakWSarch = ({
+const HomeStackWithSearch = ({
                          onPress,
                          onPressnotification,
                          onChangeText,
@@ -73,122 +56,130 @@ const HomStakWSarch = ({
     ? `${BASIC_URL}uploads/${profileData.profile}`
     : null;
 
-  const avatarSize = getResponsiveSize(45, 48, 50);
-
-  const containerStyle = StyleSheet.flatten([
-    styles.containerStyle,
-    {
-      paddingTop: Math.max(
-        insets.top,
-        Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0
-      ),
-    },
-  ]);
-
-  const avatarStyle = StyleSheet.flatten([
-    styles.imgStyle,
-    {
-      width: avatarSize,
-      height: avatarSize,
-    },
-  ]);
-
-  const userTextStyle = StyleSheet.flatten([
-    styles.userStyle,
-    { fontSize: getResponsiveSize(14, 15, 16) },
-  ]);
-
   return (
-    <View style={containerStyle}>
+    <View
+      style={[
+        styles.headerWrapper,
+        {
+          paddingTop: Math.max(
+            insets.top + 6,
+            Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 8 : 14
+          ),
+        },
+      ]}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={color.defalt}
         translucent={false}
       />
-      <View style={styles.topCont}>
+
+      <View style={styles.topRow}>
         <TouchableOpacity
           onPress={onPress}
-          style={styles.menuStyle}
+          style={styles.iconCircleBtn}
           activeOpacity={0.7}>
-          <Icon
-            name="menu"
-            size={getResponsiveSize(30, 33, 35)}
-            color={color.wite}
-          />
+          <Icon name="menu" size={22} color="#FFFFFF" />
         </TouchableOpacity>
 
-        <View style={styles.rightCont}>
-          <TouchableOpacity onPress={onPressnotification} activeOpacity={0.7}>
-            <Image
-              source={
-                imageUri
-                  ? { uri: imageUri }
-                  : require('../Assets/Images/user.jpg')
-              }
-              resizeMode="cover"
-              style={avatarStyle}
-            />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          onPress={onPressnotification}
+          activeOpacity={0.8}
+          style={styles.avatarBorderWrap}>
+          <Image
+            source={
+              imageUri
+                ? { uri: imageUri }
+                : require('../Assets/Images/user.jpg')
+            }
+            resizeMode="cover"
+            style={styles.avatarImg}
+          />
+        </TouchableOpacity>
       </View>
 
-      <Text style={userTextStyle} numberOfLines={1}>
-        Hi, {profileData?.name || 'User'}
-      </Text>
+      <View style={styles.greetingContainer}>
+        <Text style={styles.welcomeSubText}>Welcome back,</Text>
+        <Text style={styles.userNameText} numberOfLines={1}>
+          {profileData?.name ? `Hi, ${profileData.name}` : 'Hi, User'}
+        </Text>
+      </View>
 
-      <View style={styles.searchStyle}>
+      <View style={styles.searchCardContainer}>
         <SarchInpt onChangeText={onChangeText} value={value} />
       </View>
     </View>
   );
 };
 
-export default HomStakWSarch;
+export default HomeStackWithSearch;
 
 const styles = StyleSheet.create({
-  containerStyle: {
+  headerWrapper: {
     backgroundColor: color.defalt,
-    paddingHorizontal: getResponsiveSpacing(12, 15, 18),
-    paddingVertical: getResponsiveSpacing(6, 8, 10),
-    borderBottomRightRadius: 10,
-    borderBottomLeftRadius: 10,
-    paddingBottom: getResponsiveSpacing(25, 30, 35),
-    minHeight: getResponsiveSpacing(140, 160, 180),
+    paddingHorizontal: 18,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)' }
+      : {
+        elevation: 4,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+      }),
   },
-  topCont: {
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Platform.OS === 'android' ? 8 : 4,
   },
-  rightCont: {
-    flexDirection: 'row',
+  iconCircleBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  menuStyle: {
-    padding: 4,
+  avatarBorderWrap: {
+    padding: 2,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
   },
-  imgStyle: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: color.wite,
+  avatarImg: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#E2E8F0',
   },
-  userStyle: {
+  greetingContainer: {
+    marginTop: 12,
+    marginBottom: 14,
+  },
+  welcomeSubText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.78)',
+  },
+  userNameText: {
+    fontSize: 20,
     fontWeight: '800',
-    color: color.wite,
-    marginTop: getResponsiveSpacing(8, 10, 12),
-    marginBottom: getResponsiveSpacing(15, 20, 25),
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+    marginTop: 2,
   },
-  searchStyle: {
-    position: 'absolute',
-    bottom: getResponsiveSpacing(-20, -25, -30),
-    alignSelf: 'center',
-    width: '95%',
-    maxWidth: SCREEN_WIDTH - 30,
+  searchCardContainer: {
+    width: '100%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
   },
 });

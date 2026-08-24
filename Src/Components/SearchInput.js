@@ -1,9 +1,9 @@
 import React from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View, Platform } from 'react-native';
 import { Icons } from './Icons';
 import color from '../Assets/colors/colors';
 
-const SarchInpt = props => {
+const SearchInput = props => {
   return (
     <View style={[styles.searchContainer, props.containerStyle]}>
       <Icons.FontAwesome name="search" size={18} color={color.defalt} />
@@ -13,12 +13,13 @@ const SarchInpt = props => {
         placeholderTextColor={color.defalt}
         onChangeText={props.onChangeText}
         value={props.value}
+        underlineColorAndroid="transparent"
       />
     </View>
   );
 };
 
-export default SarchInpt;
+export default SearchInput;
 
 const styles = StyleSheet.create({
   searchContainer: {
@@ -34,5 +35,14 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     color: color.defalt,
     fontSize: 14,
+    height: '100%',
+    paddingVertical: 0,
+    borderWidth: 0,
+    ...(Platform.OS === 'web' && {
+      outlineWidth: 0,
+      outlineColor: 'transparent',
+      outlineStyle: 'none',
+      boxShadow: 'none',
+    }),
   },
 });

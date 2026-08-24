@@ -16,7 +16,7 @@ import { Icons } from './Icons';
 import OpningCrd from './OpeningCard';
 import { BASIC_URL } from '../Screens/Signin/Signin';
 
-const HomStakwithoutsarch = ({
+const HomeStackWithoutSearch = ({
                                onPress,
                                onPressnotification,
                                cardStyle,
@@ -120,7 +120,7 @@ const HomStakwithoutsarch = ({
   );
 };
 
-export default HomStakwithoutsarch;
+export default HomeStackWithoutSearch;
 
 const styles = StyleSheet.create({
   containerStyle: {
