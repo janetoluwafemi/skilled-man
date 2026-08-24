@@ -7,14 +7,14 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
+  TextInput,
   Alert,
+  Platform,
 } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
-import ProfileInput from '../../Components/ProfileInput';
-import MultiLineInput from '../../Components/MultiLineInput';
 
 const ContactUs = props => {
   const [name, setName] = useState('');
@@ -44,7 +44,6 @@ const ContactUs = props => {
           style={styles.backArrowBtn}>
           <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Contact Us</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -75,19 +74,18 @@ const ContactUs = props => {
           <View style={styles.cardWrapper}>
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Your Name</Text>
-              <ProfileInput
+              <TextInput
                 style={styles.inputStyle}
                 placeholder="Enter your name"
                 placeholderTextColor="#94A3B8"
                 value={name}
                 onChangeText={setName}
-                icon="user-circle"
               />
             </View>
 
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Email Address</Text>
-              <ProfileInput
+              <TextInput
                 style={styles.inputStyle}
                 placeholder="Enter your email"
                 placeholderTextColor="#94A3B8"
@@ -95,20 +93,20 @@ const ContactUs = props => {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                icon="envelope"
               />
             </View>
 
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Message</Text>
-              <MultiLineInput
-                style={styles.inputStyle}
+              <TextInput
+                style={[styles.inputStyle, styles.multiLineExtra]}
                 placeholder="Type your message here..."
                 placeholderTextColor="#94A3B8"
                 value={message}
                 onChangeText={setMessage}
+                multiline
                 numberOfLines={5}
-                styles={styles.multiLineExtra}
+                textAlignVertical="top"
               />
             </View>
 
@@ -153,11 +151,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
   },
   scrollContent: {
     flexGrow: 1,
@@ -222,9 +215,20 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   inputStyle: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
     color: '#0F172A',
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none',
+    }),
   },
   multiLineExtra: {
+    minHeight: 110,
     textAlignVertical: 'top',
     paddingTop: 12,
   },

@@ -9,11 +9,13 @@ import {
   Alert,
   ActivityIndicator,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
@@ -62,7 +64,6 @@ const EditUserProfile = () => {
       const userObj = storedUser ? JSON.parse(storedUser) : null;
       const userId = global.id || userObj?.id || '255';
 
-      // GET endpoint matching Postman documentation
       const response = await fetch(`${BASIC_URL}user/get_profile.php?id=${userId}`, {
         method: 'GET',
       });
@@ -162,7 +163,7 @@ const EditUserProfile = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.headerBar}>
@@ -172,21 +173,17 @@ const EditUserProfile = () => {
           style={styles.backArrowBtn}>
           <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 20 },
-        ]}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <View style={styles.container}>
-          <View style={styles.cardWrapper}>
-            <View style={styles.imageContainer}>
+        <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
+
+          <View style={styles.badgeRow}>
+            <View style={styles.badgeCircle}>
               <Image
                 source={
                   image?.uri
@@ -198,10 +195,17 @@ const EditUserProfile = () => {
                 style={styles.profileImage}
               />
               <TouchableOpacity activeOpacity={0.8} onPress={onGalry} style={styles.cameraButton}>
-                <Icons.Feather name="camera" color="#FFFFFF" size={16} />
+                <Icons.Feather name="camera" color="#FFFFFF" size={14} />
               </TouchableOpacity>
             </View>
+          </View>
 
+          <Text style={styles.welcomeTitle}>Edit Profile</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Update your personal profile information and contact details.
+          </Text>
+
+          <View style={styles.cardWrapper}>
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Full Name</Text>
               <InputEdtProfil
@@ -266,14 +270,18 @@ const EditUserProfile = () => {
             </TouchableOpacity>
 
             <BotonComp
-              BtnStyle={styles.BtnStyle}
+              BtnStyle={styles.submitBtn}
               onPressFunc={handleUpdate}
               btnText={
-                load ? <ActivityIndicator color="#fff" size="small" /> : 'Update Profile'
+                load ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  'Update Profile'
+                )
               }
             />
           </View>
-        </View>
+        </Animatable.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -308,21 +316,67 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  scrollView: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 40,
   },
-  container: {
+  formContainer: {
     paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 20,
+    paddingTop: 4,
+  },
+  badgeRow: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  badgeCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    position: 'relative',
+  },
+  profileImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#E2E8F0',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: color.defalt,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    elevation: 2,
+  },
+  welcomeTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: 4,
+    lineHeight: 20,
+    paddingHorizontal: 12,
   },
   cardWrapper: {
     backgroundColor: '#FFFFFF',
@@ -333,42 +387,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
-    marginBottom: 16,
-  },
-  imageContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-    position: 'relative',
-    alignSelf: 'center',
-  },
-  profileImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    backgroundColor: '#E2E8F0',
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    backgroundColor: color.defalt,
-    borderRadius: 18,
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    elevation: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
+    marginBottom: 20,
   },
   fieldGroup: {
-    marginBottom: 12,
+    marginBottom: 14,
     width: '100%',
   },
   fieldLabel: {
@@ -402,12 +424,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  BtnStyle: {
+  submitBtn: {
     width: '100%',
     backgroundColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 14,
-    marginTop: 12,
+    marginTop: 10,
     elevation: 3,
     shadowColor: color.defalt,
     shadowOffset: { width: 0, height: 3 },

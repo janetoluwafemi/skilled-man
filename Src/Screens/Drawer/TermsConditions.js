@@ -29,7 +29,6 @@ const TermCondition = props => {
           style={styles.backArrowBtn}>
           <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Terms & Conditions</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -40,7 +39,12 @@ const TermCondition = props => {
           { paddingBottom: bottomPadding },
         ]}
         showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={600}>
+        <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
+          <Text style={styles.welcomeTitle}>Terms & Conditions</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Please read these terms carefully before using the Skilledman platform.
+          </Text>
+
           <View style={styles.cardWrapper}>
             <Text style={styles.lastUpdated}>Last Updated: April 22, 2025</Text>
 
@@ -137,18 +141,49 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
   containerStyle: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 40,
+  },
+  formContainer: {
     paddingHorizontal: 20,
-    paddingTop: 14,
+    paddingTop: 4,
+  },
+  badgeRow: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  badgeCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  welcomeTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: 4,
+    lineHeight: 20,
+    paddingHorizontal: 12,
   },
   cardWrapper: {
     backgroundColor: '#FFFFFF',

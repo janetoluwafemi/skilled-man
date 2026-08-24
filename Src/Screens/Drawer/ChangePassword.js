@@ -82,7 +82,6 @@ const ChangePassword = props => {
           style={styles.backArrowBtn}>
           <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Change Password</Text>
         <View style={{ width: 40 }} />
       </View>
 

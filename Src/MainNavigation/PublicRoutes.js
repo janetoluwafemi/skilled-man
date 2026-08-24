@@ -85,7 +85,7 @@ import Balance from '../Screens/DashBoard/Balance';
 
 const Stack = createNativeStackNavigator();
 
-const PblicRout = () => {
+const PublicRoute = () => {
   return (
     <Stack.Navigator
       initialRouteName="SplashScreen"
@@ -117,4 +117,4 @@ const PblicRout = () => {
   );
 };
 
-export default PblicRout;
+export default PublicRoute;

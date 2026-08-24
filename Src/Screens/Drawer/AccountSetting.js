@@ -54,7 +54,7 @@ const AccSetting = props => {
     Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 24;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.headerBar}>
@@ -62,9 +62,8 @@ const AccSetting = props => {
           activeOpacity={0.7}
           onPress={() => props.navigation.goBack()}
           style={styles.backArrowBtn}>
-          <Icons.Feather name="arrow-left" size={22} color="#0F172A" />
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -74,9 +73,19 @@ const AccSetting = props => {
           { paddingBottom: bottomPadding },
         ]}
         showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={500}>
+        <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
 
-          {/* Account Section */}
+          <View style={styles.badgeRow}>
+            <View style={styles.badgeCircle}>
+              <Icons.Feather name="settings" size={34} color={color.defalt} />
+            </View>
+          </View>
+
+          <Text style={styles.welcomeTitle}>Settings</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Manage your account details and notification preferences.
+          </Text>
+
           <Text style={styles.sectionLabel}>Account</Text>
           <View style={styles.cardWrapper}>
             <TouchableOpacity
@@ -108,7 +117,6 @@ const AccSetting = props => {
             </TouchableOpacity>
           </View>
 
-          {/* Notifications Section */}
           <Text style={styles.sectionLabel}>Preferences</Text>
           <View style={styles.cardWrapper}>
             <View style={styles.settingRow}>
@@ -145,8 +153,8 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 8,
+    paddingTop: 12,
+    paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -165,14 +173,46 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  headerTitle: {
-    fontSize: 18,
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  formContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+  },
+  badgeRow: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  badgeCircle: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  welcomeTitle: {
+    fontSize: 26,
     fontWeight: '800',
     color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: -0.3,
   },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: 4,
+    lineHeight: 20,
+    paddingHorizontal: 12,
   },
   sectionLabel: {
     fontSize: 13,
@@ -181,7 +221,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
-    marginTop: 12,
+    marginTop: 4,
     marginLeft: 4,
   },
   cardWrapper: {
@@ -189,14 +229,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 6,
-    elevation: 1,
+    elevation: 2,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
-    shadowRadius: 6,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    marginBottom: 12,
+    shadowRadius: 10,
+    marginBottom: 16,
   },
   settingRow: {
     flexDirection: 'row',

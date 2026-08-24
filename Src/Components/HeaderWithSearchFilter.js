@@ -19,28 +19,14 @@ import InputSarchFiltr from './InputSearchFilter';
 import { Icons } from './Icons';
 import { BASIC_URL } from '../Screens/Signin/Signin';
 
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
-const isSmallDevice = SCREEN_HEIGHT < 700;
-const isMediumDevice = SCREEN_HEIGHT >= 700 && SCREEN_HEIGHT < 900;
-
-const getResponsiveSize = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
-
-const getResponsiveSpacing = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const HeaderWSarchFiltr = ({
                              onPress,
                              onPressNotifiction,
                              onPressProfile,
-                             bellIcon = 'bell-outline',
-                             titleText,
+                             bellIcon = 'bell',
+                             titleText = 'What service are you searching for?',
                              onChangeText,
                              value,
                              toggleModal,
@@ -76,73 +62,42 @@ const HeaderWSarchFiltr = ({
   }, [focus, getProfileData]);
 
   const imageUri =
-    profileData?.profile && typeof profileData.profile === 'string' && profileData.profile.trim() !== ''
+    profileData?.profile &&
+    typeof profileData.profile === 'string' &&
+    profileData.profile.trim() !== ''
       ? `${BASIC_URL}uploads/${profileData.profile}`
       : null;
 
-  const avatarSize = getResponsiveSize(45, 48, 50);
-
-  const containerStyleCombined = StyleSheet.flatten([
-    styles.containerStyle,
-    {
-      paddingTop: Math.max(
-        insets.top,
-        Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0
-      ),
-    },
-  ]);
-
-  const imageStyleCombined = StyleSheet.flatten([
-    styles.imgStyle,
-    {
-      width: avatarSize,
-      height: avatarSize,
-    },
-  ]);
-
-  const titleStyleCombined = StyleSheet.flatten([
-    styles.userStyle,
-    { fontSize: getResponsiveSize(15, 16, 17) },
-  ]);
-
-  const BellIconComponent = Icons?.MaterialCommunityIcons;
-
   return (
-    <View style={containerStyleCombined}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={color.defalt}
-        translucent={false}
-      />
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: Math.max(
+            insets.top,
+            Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 4 : 8
+          ),
+        },
+      ]}>
+      <StatusBar barStyle="light-content" backgroundColor={color.defalt} />
 
-      <View style={styles.topCont}>
-        <TouchableOpacity
-          onPress={onPress}
-          style={styles.menuStyle}
-          activeOpacity={0.7}>
-          <Icon
-            name="menu"
-            size={getResponsiveSize(30, 33, 35)}
-            color={color.wite}
-          />
+      <View style={styles.topRow}>
+        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.iconBtn}>
+          <Icon name="menu" size={28} color="#FFFFFF" />
         </TouchableOpacity>
 
-        <View style={styles.rightCont}>
-          {bellIcon && BellIconComponent ? (
-            <TouchableOpacity
-              onPress={onPressNotifiction}
-              style={styles.menuStyle}
-              activeOpacity={0.7}>
-              <BellIconComponent
-                name={bellIcon}
-                size={getResponsiveSize(26, 28, 30)}
-                color={color.wite}
-                style={styles.bellStyle}
-              />
-            </TouchableOpacity>
-          ) : null}
+        <View style={styles.rightActions}>
+          <TouchableOpacity
+            onPress={onPressNotifiction}
+            activeOpacity={0.7}
+            style={styles.iconBtn}>
+            <Icons.Feather name={bellIcon || 'bell'} size={22} color="#FFFFFF" />
+          </TouchableOpacity>
 
-          <TouchableOpacity onPress={onPressProfile} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={onPressProfile}
+            activeOpacity={0.8}
+            style={styles.avatarWrap}>
             <Image
               source={
                 imageUri
@@ -150,19 +105,15 @@ const HeaderWSarchFiltr = ({
                   : require('../Assets/Images/user.jpg')
               }
               resizeMode="cover"
-              style={imageStyleCombined}
+              style={styles.avatarImg}
             />
           </TouchableOpacity>
         </View>
       </View>
 
-      {titleText ? (
-        <Text style={titleStyleCombined} numberOfLines={1}>
-          {titleText}
-        </Text>
-      ) : null}
+      <Text style={styles.titleText}>{titleText}</Text>
 
-      <View style={styles.searchStyle}>
+      <View style={styles.searchWrapper}>
         <InputSarchFiltr
           onChangeText={onChangeText}
           value={value}
@@ -177,57 +128,45 @@ const HeaderWSarchFiltr = ({
 export default HeaderWSarchFiltr;
 
 const styles = StyleSheet.create({
-  containerStyle: {
+  container: {
     backgroundColor: color.defalt,
-    paddingHorizontal: getResponsiveSpacing(12, 15, 18),
-    paddingVertical: getResponsiveSpacing(10, 12, 15),
-    borderBottomRightRadius: 10,
-    borderBottomLeftRadius: 10,
-    paddingBottom: getResponsiveSpacing(25, 30, 35),
-    minHeight: getResponsiveSpacing(140, 160, 180),
+    paddingHorizontal: 16,
+    paddingBottom: 14,
   },
-  topCont: {
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Platform.OS === 'android' ? 8 : 4,
+    marginBottom: 10,
   },
-  rightCont: {
+  rightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    gap: 12,
   },
-  menuStyle: {
+  iconBtn: {
     padding: 4,
   },
-  bellStyle: {
-    marginRight: getResponsiveSpacing(8, 10, 12),
-  },
-  imgStyle: {
+  avatarWrap: {
+    width: 38,
+    height: 38,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: color.wite,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    overflow: 'hidden',
   },
-  userStyle: {
-    fontWeight: '800',
-    color: color.wite,
-    marginTop: getResponsiveSpacing(8, 10, 12),
-    marginBottom: getResponsiveSpacing(15, 20, 25),
+  avatarImg: {
+    width: '100%',
+    height: '100%',
   },
-  searchStyle: {
-    position: 'absolute',
-    bottom: getResponsiveSpacing(-20, -25, -30),
-    alignSelf: 'center',
-    width: '95%',
-    maxWidth: SCREEN_WIDTH - 30,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)' }
-      : {
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      }),
+  titleText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  searchWrapper: {
+    width: '100%',
   },
 });

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   FlatList,
-  Image,
   StyleSheet,
   Text,
   View,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
@@ -55,13 +55,6 @@ const Cash = () => {
   const renderItem = ({ item }) => (
     <TouchableOpacity activeOpacity={0.7} style={styles.cardContainer}>
       <View style={styles.leftRow}>
-        <View style={styles.avatarWrapper}>
-          <Image
-            source={require('../../Assets/Images/logo.png')}
-            style={styles.avatar}
-            resizeMode="cover"
-          />
-        </View>
         <View style={styles.infoCol}>
           <Text style={styles.nameText} numberOfLines={1}>
             {item.name}
@@ -87,51 +80,55 @@ const Cash = () => {
     <SafeAreaView style={styles.flexFill} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <View style={styles.topHeaderRow}>
+      <View style={styles.headerBar}>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => navigation.goBack()}
           style={styles.backArrowBtn}>
           {Icons?.Feather ? (
-            <Icons.Feather name="arrow-left" size={22} color="#0F172A" />
+            <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
           ) : (
             <Text style={styles.fallbackBackText}>←</Text>
           )}
         </TouchableOpacity>
-
-        <View style={styles.titleWrapper}>
-          <Text style={styles.centerHeaderText}>Cash In</Text>
-        </View>
+        <View style={{ width: 40 }} />
       </View>
 
-      <SearchHeader
-        onSearch={handleSearch}
-        searchQuery={searchQuery}
-        onSearchIconPress={handleSearchIconPress}
-      />
+      <Animatable.View animation="fadeInUp" duration={600} style={styles.contentContainer}>
+        <Text style={styles.welcomeTitle}>Cash In</Text>
+        <Text style={styles.welcomeSubtitle}>
+          View and monitor your earnings, receipts, and cash history.
+        </Text>
 
-      <View style={styles.listWrapper}>
-        <FlatList
-          data={filteredData}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={styles.emptyBox}>
-              <View style={styles.emptyIconCircle}>
-                {Icons?.Feather && (
-                  <Icons.Feather name="dollar-sign" size={32} color="#94A3B8" />
-                )}
-              </View>
-              <Text style={styles.emptyTitle}>No Cash Records Found</Text>
-              <Text style={styles.emptySubtitle}>
-                No transactions matched your search query.
-              </Text>
-            </View>
-          }
+        <SearchHeader
+          onSearch={handleSearch}
+          searchQuery={searchQuery}
+          onSearchIconPress={handleSearchIconPress}
         />
-      </View>
+
+        <View style={styles.listWrapper}>
+          <FlatList
+            data={filteredData}
+            renderItem={renderItem}
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <View style={styles.emptyBox}>
+                <View style={styles.emptyIconCircle}>
+                  {Icons?.Feather && (
+                    <Icons.Feather name="dollar-sign" size={32} color="#94A3B8" />
+                  )}
+                </View>
+                <Text style={styles.emptyTitle}>No Cash Records Found</Text>
+                <Text style={styles.emptySubtitle}>
+                  No transactions matched your search query.
+                </Text>
+              </View>
+            }
+          />
+        </View>
+      </Animatable.View>
     </SafeAreaView>
   );
 };
@@ -143,61 +140,59 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-  topHeaderRow: {
-    position: 'relative',
-    height: 52,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
+  headerBar: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#F8FAFC',
-    marginTop: Platform.OS === 'android' ? 6 : 2,
   },
   backArrowBtn: {
-    position: 'absolute',
-    left: 16,
-    top: 0,
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#EEF2F6',
-    zIndex: 10,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)' }
-      : {
-        elevation: 2,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 4,
-      }),
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   fallbackBackText: {
     fontSize: 20,
     fontWeight: '700',
     color: '#0F172A',
   },
-  titleWrapper: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 4,
   },
-  centerHeaderText: {
-    fontSize: 20,
+  welcomeTitle: {
+    fontSize: 26,
     fontWeight: '800',
     color: '#0F172A',
-    letterSpacing: -0.3,
     textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 16,
+    marginTop: 4,
+    lineHeight: 20,
+    paddingHorizontal: 12,
   },
   listWrapper: {
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 8,
     paddingBottom: 32,
     flexGrow: 1,
   },
@@ -227,21 +222,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
-  avatarWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: '#F8FAFC',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  avatar: {
-    width: '100%',
-    height: '100%',
-  },
   infoCol: {
-    marginLeft: 12,
     flex: 1,
   },
   rightCol: {
@@ -291,7 +272,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 90,
+    paddingVertical: 60,
   },
   emptyIconCircle: {
     width: 72,

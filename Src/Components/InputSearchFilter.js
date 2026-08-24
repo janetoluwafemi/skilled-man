@@ -4,6 +4,7 @@ import {
   TextInput,
   View,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { Icons } from './Icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,6 +30,7 @@ const InputSarchFiltr = props => {
         placeholder="Search for services"
         placeholderTextColor={color.defalt}
         onChangeText={props.onChangeText}
+        underlineColorAndroid="transparent"
       />
       {props.screen ? null : (
         <TouchableOpacity onPress={toggleModal} activeOpacity={0.7}>
@@ -61,6 +63,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingLeft: 10,
     color: color.defalt,
+    borderWidth: 0,
+    outlineStyle: 'none',
+    ...(Platform.OS === 'web' && {
+      outlineWidth: 0,
+      outlineColor: 'transparent',
+    }),
   },
   sliderStyle: {
     paddingHorizontal: 8,

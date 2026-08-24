@@ -9,10 +9,10 @@ import {
   FlatList,
   Modal,
   Alert,
-  SafeAreaView,
   StatusBar,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
@@ -273,7 +273,7 @@ const FindExpert = props => {
   const serviceTitle = initialData[0]?.service_name || '';
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.headerBar}>
@@ -281,38 +281,46 @@ const FindExpert = props => {
           activeOpacity={0.7}
           onPress={() => navigation.goBack()}
           style={styles.backArrowBtn}>
-          <Icons.Feather name="arrow-left" size={22} color="#0F172A" />
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {serviceTitle ? `Experts: ${serviceTitle}` : 'Find Experts'}
-        </Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <View style={styles.searchSection}>
-        <InputSarchFiltr
-          toggleModal={toggleModal}
-          onChangeText={val => setSearchTerm(val)}
-          value={searchTerm}
-        />
-      </View>
+      <Animatable.View animation="fadeInUp" duration={600} style={styles.contentContainer}>
+        <Text style={styles.welcomeTitle}>
+          {serviceTitle ? `Experts: ${serviceTitle}` : 'Find Experts'}
+        </Text>
+        <Text style={styles.welcomeSubtitle}>
+          Browse top-rated professionals and filter by location or status.
+        </Text>
 
-      <FlatList
-        data={sortedData}
-        keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-        renderItem={renderExpertItem}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Icons.Feather name="users" size={42} color="#CBD5E1" />
-            <Text style={styles.emptyTitle}>No Experts Found</Text>
-            <Text style={styles.emptySubtitle}>
-              Try adjusting your search criteria or filter options.
-            </Text>
-          </View>
-        }
-      />
+        <View style={styles.searchSection}>
+          <InputSarchFiltr
+            toggleModal={toggleModal}
+            onChangeText={val => setSearchTerm(val)}
+            value={searchTerm}
+          />
+        </View>
+
+        <FlatList
+          data={sortedData}
+          keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+          renderItem={renderExpertItem}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconCircle}>
+                <Icons.Feather name="users" size={32} color="#94A3B8" />
+              </View>
+              <Text style={styles.emptyTitle}>No Experts Found</Text>
+              <Text style={styles.emptySubtitle}>
+                Try adjusting your search criteria or filter options.
+              </Text>
+            </View>
+          }
+        />
+      </Animatable.View>
 
       <Modal
         animationType="slide"
@@ -415,8 +423,8 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 6,
+    paddingTop: 12,
+    paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -435,41 +443,58 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  headerTitle: {
-    fontSize: 18,
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+  },
+  welcomeTitle: {
+    fontSize: 26,
     fontWeight: '800',
     color: '#0F172A',
-    flex: 1,
     textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 16,
+    marginTop: 4,
+    lineHeight: 20,
+    paddingHorizontal: 12,
   },
   searchSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    marginBottom: 12,
   },
   listContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 30,
+    paddingTop: 4,
+    paddingBottom: 32,
+    flexGrow: 1,
   },
   expertCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 14,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#EEF2F6',
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)' }
+      : {
+        elevation: 2,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+      }),
   },
   providerImg: {
-    width: 68,
-    height: 68,
-    borderRadius: 14,
+    width: 60,
+    height: 60,
+    borderRadius: 16,
     marginRight: 12,
   },
   providerCardInfo: {
@@ -488,8 +513,9 @@ const styles = StyleSheet.create({
   },
   providerCardName: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#0F172A',
+    letterSpacing: -0.2,
   },
   favBadge: {
     padding: 4,
@@ -506,6 +532,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     marginRight: 6,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   statBadgeText: {
     fontSize: 11,
@@ -519,17 +547,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 60,
   },
+  emptyIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: '#EEF2F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   emptyTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: '#0F172A',
-    marginTop: 12,
+    letterSpacing: -0.2,
   },
   emptySubtitle: {
     fontSize: 13,
     color: '#64748B',
-    marginTop: 4,
+    marginTop: 6,
     textAlign: 'center',
+    paddingHorizontal: 32,
+    lineHeight: 19,
   },
   modalOverlay: {
     flex: 1,

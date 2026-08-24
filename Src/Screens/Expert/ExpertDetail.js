@@ -11,10 +11,10 @@ import {
   Alert,
   Linking,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -260,7 +260,7 @@ const ExpertDetails = () => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.headerBar}>
@@ -268,9 +268,9 @@ const ExpertDetails = () => {
           activeOpacity={0.7}
           onPress={() => navigation.goBack()}
           style={styles.backArrowBtn}>
-          <Icons.Feather name="arrow-left" size={22} color="#0F172A" />
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Expert Detail</Text>
+
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={toggleReview}
@@ -282,7 +282,12 @@ const ExpertDetails = () => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={500}>
+        <Animatable.View animation="fadeInUp" duration={600} style={styles.contentContainer}>
+
+          <Text style={styles.welcomeTitle}>Expert Profile</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Review credentials, client ratings, and book your service.
+          </Text>
 
           <View style={styles.heroCard}>
             <Image
@@ -432,7 +437,6 @@ const ExpertDetails = () => {
         </Animatable.View>
       </ScrollView>
 
-      {/* Booking Modal */}
       <Modal
         animationType="slide"
         visible={modalVisible}
@@ -568,7 +572,6 @@ const ExpertDetails = () => {
         </SafeAreaView>
       </Modal>
 
-      {/* Submit Feedback / Review Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -611,7 +614,6 @@ const ExpertDetails = () => {
         </View>
       </Modal>
 
-      {/* Options Menu Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -644,7 +646,6 @@ const ExpertDetails = () => {
         </View>
       </Modal>
 
-      {/* Single Review Modal */}
       <Modal
         visible={singleReviewModal}
         transparent={true}
@@ -681,7 +682,6 @@ const ExpertDetails = () => {
         </View>
       </Modal>
 
-      {/* All Reviews Modal */}
       <Modal
         visible={allReviewsModal}
         animationType="slide"
@@ -730,7 +730,6 @@ const ExpertDetails = () => {
         </SafeAreaView>
       </Modal>
 
-      {/* Skill / Certificate Modal */}
       <Modal
         visible={skillModal}
         transparent
@@ -775,8 +774,8 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 8,
+    paddingTop: 12,
+    paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -795,11 +794,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
   moreBtn: {
     width: 40,
     height: 40,
@@ -814,17 +808,37 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   scrollContent: {
-    paddingHorizontal: 20,
     paddingBottom: 40,
+  },
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+  },
+  welcomeTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 16,
+    marginTop: 4,
+    lineHeight: 20,
+    paddingHorizontal: 12,
   },
   heroCard: {
     width: '100%',
-    height: 210,
+    height: 200,
     borderRadius: 20,
     overflow: 'hidden',
-    marginTop: 10,
     marginBottom: 16,
     position: 'relative',
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
   },
   heroImg: {
     width: '100%',
@@ -858,6 +872,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 10,
     marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
   },
   profileHeaderRow: {
     flexDirection: 'row',
@@ -886,6 +902,8 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 12,
     backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   divider: {
     height: 1,
@@ -928,7 +946,7 @@ const styles = StyleSheet.create({
   statsCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 20,
     paddingVertical: 14,
     paddingHorizontal: 20,
     marginBottom: 18,
@@ -937,6 +955,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
   },
   statBox: {
     flex: 1,
@@ -1007,6 +1027,8 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
   },
   emptyCardText: {
     fontSize: 13,
@@ -1018,7 +1040,7 @@ const styles = StyleSheet.create({
   reviewCard: {
     width: 250,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 14,
     marginRight: 12,
     elevation: 1,
@@ -1027,7 +1049,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 6,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#EEF2F6',
   },
   reviewCardHeader: {
     flexDirection: 'row',

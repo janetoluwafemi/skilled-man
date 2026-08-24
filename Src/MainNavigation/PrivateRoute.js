@@ -23,6 +23,7 @@ import HistryScren from '../Screens/Drawer/HistoryScreen';
 import PrivcyPlcy from '../Screens/Drawer/PrivacyPolicy';
 import Term_Condition from '../Screens/Drawer/TermsConditions';
 import AbutUs from '../Screens/Drawer/AboutUs';
+import ContactUs from '../Screens/Drawer/ContactUs';
 import UsrHstry from '../Screens/UserHistory/UserHistory';
 import Balance from '../Screens/DashBoard/Balance';
 import Cash from '../Screens/DashBoard/Cash';
@@ -33,7 +34,7 @@ import Congratulation from '../Screens/Congratulations/Congratulations';
 
 const Stack = createNativeStackNavigator();
 
-const PrivatRout = () => {
+const PrivateRoute = () => {
   return (
     <Stack.Navigator
       initialRouteName="Parent"
@@ -60,6 +61,7 @@ const PrivatRout = () => {
       <Stack.Screen name="privacy_policy" component={PrivcyPlcy} />
       <Stack.Screen name="terms_condidtions" component={Term_Condition} />
       <Stack.Screen name="AboutUs" component={AbutUs} />
+      <Stack.Screen name="ContactUs" component={ContactUs} />
       <Stack.Screen name="UserHistory" component={UsrHstry} />
       <Stack.Screen name="Balance" component={Balance} />
       <Stack.Screen name="Cash" component={Cash} />
@@ -71,4 +73,4 @@ const PrivatRout = () => {
   );
 };
 
-export default PrivatRout;
+export default PrivateRoute;

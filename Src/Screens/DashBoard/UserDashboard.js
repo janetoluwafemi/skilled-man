@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
 import HeaderWSarchFiltr from '../../Components/HeaderWithSearchFilter';
@@ -50,10 +51,10 @@ const UserDashboard = () => {
         navigation.navigate('FindExpert', { data: result.add_skills });
       } else if (result?.error) {
         Alert.alert(
-          'Error',
-          typeof result.error === 'string'
-            ? result.error
-            : String(result.error)
+            'Error',
+            typeof result.error === 'string'
+                ? result.error
+                : String(result.error)
         );
       }
     } catch (error) {
@@ -92,232 +93,256 @@ const UserDashboard = () => {
   }, [state?.isAuth, getOverallServices]);
 
   const filteredData = Array.isArray(skill)
-    ? skill.filter(item =>
-      item?.select_bussiness?.toLowerCase().includes((searchTerm || '').toLowerCase())
-    )
-    : [];
+      ? skill.filter(item =>
+          item?.select_bussiness?.toLowerCase().includes((searchTerm || '').toLowerCase())
+      )
+      : [];
 
   const bottomPadding =
-    height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 24;
-
-  const scrollContentFlattened = StyleSheet.flatten([
-    styles.scrollContent,
-    { paddingBottom: bottomPadding },
-  ]);
+      height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 24;
 
   return (
-    <SafeAreaView style={styles.flexContainer} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <SafeAreaView style={styles.safeContainer} edges={['top']}>
+        <StatusBar barStyle="light-content" backgroundColor={color.defalt} />
 
-      <HeaderWSarchFiltr
-        onPress={() => navigation.openDrawer()}
-        onPressNotifiction={() => navigation.navigate('notification_screen')}
-        onPressProfile={() => navigation.navigate('editUserProfile')}
-        titleText="What service are you searching for?"
-        bellIcon="bell"
-        onChangeText={val => setSearchTerm(val)}
-        value={searchTerm}
-        screen="user"
-      />
+        <HeaderWSarchFiltr
+            onPress={() => navigation.openDrawer()}
+            onPressNotifiction={() => navigation.navigate('notification_screen')}
+            onPressProfile={() => navigation.navigate('editUserProfile')}
+            titleText="What service are you searching for?"
+            bellIcon="bell"
+            onChangeText={val => setSearchTerm(val)}
+            value={searchTerm}
+            screen="user"
+        />
 
-      {loading ? (
-        <View style={styles.centerLoading}>
-          <ActivityIndicator size="large" color={color.defalt} />
-        </View>
-      ) : (
-        <ScrollView
-          style={styles.scrollStyle}
-          contentContainerStyle={scrollContentFlattened}
-          showsVerticalScrollIndicator={false}>
-          <View style={styles.innerSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Available Services</Text>
-              <Text style={styles.sectionSubtitle}>
-                Choose a category to find certified artisans
-              </Text>
+        {loading ? (
+            <View style={styles.centerLoading}>
+              <ActivityIndicator size="large" color={color.defalt} />
+              <Text style={styles.loadingText}>Fetching available services...</Text>
             </View>
+        ) : (
+            <ScrollView
+                style={styles.scrollStyle}
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+                showsVerticalScrollIndicator={false}>
 
-            <View style={styles.gridContainer}>
-              {filteredData.length > 0 ? (
-                filteredData.map((itemdata, ind) => (
-                  <View
-                    key={itemdata?.id?.toString() || ind.toString()}
-                    style={styles.gridItemWrapper}>
-                    <SrvicCrd
-                      showProfile={() => fetchSpecificData(itemdata?.select_bussiness)}
-                      serviceTitle={itemdata?.select_bussiness || 'Service'}
-                      iconUrl={`${BASIC_URL}uploads/${itemdata?.image || ''}`}
-                    />
-                  </View>
-                ))
-              ) : (
-                <View style={styles.noDataContainer}>
-                  <View style={styles.emptyIconCircle}>
-                    {Icons?.Feather && (
-                      <Icons.Feather name="search" size={28} color="#94A3B8" />
-                    )}
-                  </View>
-                  <Text style={styles.noDataText}>No services found</Text>
-                  <Text style={styles.noDataSubtext}>
-                    Try searching with another keyword
+              <Animatable.View
+                  animation="fadeInUp"
+                  duration={600}
+                  style={styles.cardContainer}>
+
+                <View style={styles.headerCentered}>
+                  <View style={styles.topIndicatorPill} />
+                  <Text style={styles.sectionTitle}>Available Services</Text>
+                  <Text style={styles.sectionSubtitle}>
+                    Choose a category to find certified artisans near you
                   </Text>
                 </View>
-              )}
-            </View>
-          </View>
-        </ScrollView>
-      )}
 
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalIconWrapper}>
-                {Icons?.Feather && (
-                  <Icons.Feather name="shield" size={24} color={color.defalt} />
-                )}
-              </View>
-              <Text style={styles.modalTitle}>Disclaimer Notice</Text>
-              <Text style={styles.modalSubheading}>
-                Please review terms before continuing
-              </Text>
-            </View>
+                <View style={styles.gridContainer}>
+                  {filteredData.length > 0 ? (
+                      filteredData.map((itemdata, ind) => (
+                          <Animatable.View
+                              key={itemdata?.id?.toString() || ind.toString()}
+                              animation="zoomIn"
+                              duration={450}
+                              delay={Math.min(ind * 50, 700)}
+                              useNativeDriver
+                              style={styles.gridItemWrapper}>
+                            <View style={styles.centerCardWrap}>
+                              <SrvicCrd
+                                  showProfile={() => fetchSpecificData(itemdata?.select_bussiness)}
+                                  serviceTitle={itemdata?.select_bussiness || 'Service'}
+                                  iconUrl={`${BASIC_URL}uploads/${itemdata?.image || ''}`}
+                              />
+                            </View>
+                          </Animatable.View>
+                      ))
+                  ) : (
+                      <Animatable.View animation="fadeIn" duration={400} style={styles.noDataContainer}>
+                        <View style={styles.emptyIconCircle}>
+                          <Icons.Feather name="search" size={26} color="#94A3B8" />
+                        </View>
+                        <Text style={styles.noDataText}>No services found</Text>
+                        <Text style={styles.noDataSubtext}>
+                          Try searching with another keyword
+                        </Text>
+                      </Animatable.View>
+                  )}
+                </View>
+              </Animatable.View>
+            </ScrollView>
+        )}
 
-            <View style={styles.modalBody}>
-              <ScrollView
-                showsVerticalScrollIndicator={true}
-                style={styles.disclaimerScroll}
-                contentContainerStyle={styles.disclaimerScrollContent}>
-                <Text style={styles.disclaimerText}>
-                  The following disclaimer outlines the terms of use for the
-                  Skilledman App, a platform designed to connect artisans and
-                  users.{'\n\n'}
-                  By accessing or using the Skilledman application, you agree to
-                  comply with the terms and conditions outlined below. The app
-                  serves as a medium for facilitating communication and
-                  transactions between artisans and users. We do not take
-                  responsibility for the quality, guarantee, pricing, delivery,
-                  or any other aspect of the products or services offered by
-                  artisans.{'\n\n'}
-                  We do not endorse or take responsibility for the accuracy,
-                  reliability, or legality of any content, products, or services
-                  provided by artisans on the platform. Users are advised to
-                  exercise their own discretion and judgment before engaging in
-                  any transactions.{'\n\n'}
-                  Skilledman App is not liable for any direct, indirect,
-                  incidental, special, or consequential damages that may arise
-                  from the use of the platform, including, but not limited to,
-                  losses incurred from transactions with artisans.{'\n\n'}
-                  Users are responsible for conducting their own due diligence,
-                  including verifying the credentials, qualifications, and
-                  background of artisans before engaging in any business
-                  transactions.{'\n\n'}
-                  We reserve the right to suspend, terminate, or modify any part
-                  of the platform without prior notice. We are not liable for
-                  any damages or losses resulting from such actions.{'\n\n'}
-                  By using the Skilledman App, you acknowledge that you have
-                  read and understood this disclaimer and agree to be bound by
-                  its terms. If you do not agree with any part of this
-                  disclaimer, please refrain from using the Skilledman
-                  application.
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <Animatable.View animation="zoomIn" duration={350} style={styles.modalView}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalIconWrapper}>
+                  {Icons?.Feather && (
+                      <Icons.Feather name="shield" size={24} color={color.defalt} />
+                  )}
+                </View>
+                <Text style={styles.modalTitle}>Disclaimer Notice</Text>
+                <Text style={styles.modalSubheading}>
+                  Please review terms before continuing
                 </Text>
-              </ScrollView>
-
-              <View style={styles.btnContainer}>
-                <BotonComp
-                  BtnStyle={styles.acceptStyle}
-                  btnTextStyle={styles.btnTextStyle}
-                  btnText="I Understand & Agree"
-                  onPressFunc={() => setModalVisible(false)}
-                />
               </View>
-            </View>
+
+              <View style={styles.modalBody}>
+                <ScrollView
+                    showsVerticalScrollIndicator={true}
+                    style={styles.disclaimerScroll}
+                    contentContainerStyle={styles.disclaimerScrollContent}>
+                  <Text style={styles.disclaimerText}>
+                    The following disclaimer outlines the terms of use for the
+                    Skilledman App, a platform designed to connect artisans and
+                    users.{'\n\n'}
+                    By accessing or using the Skilledman application, you agree to
+                    comply with the terms and conditions outlined below. The app
+                    serves as a medium for facilitating communication and
+                    transactions between artisans and users. We do not take
+                    responsibility for the quality, guarantee, pricing, delivery,
+                    or any other aspect of the products or services offered by
+                    artisans.
+                  </Text>
+                </ScrollView>
+
+                <View style={styles.btnContainer}>
+                  <BotonComp
+                      BtnStyle={styles.acceptStyle}
+                      btnTextStyle={styles.btnTextStyle}
+                      btnText="I Understand & Agree"
+                      onPressFunc={() => setModalVisible(false)}
+                  />
+                </View>
+              </View>
+            </Animatable.View>
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
   );
 };
 
 export default UserDashboard;
 
 const styles = StyleSheet.create({
-  flexContainer: {
+  safeContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  centerLoading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: color.defalt,
   },
   scrollStyle: {
     flex: 1,
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
     flexGrow: 1,
-    paddingTop: 10,
   },
-  innerSection: {
+  cardContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     paddingHorizontal: 16,
+    paddingTop: 12,
+    flex: 1,
+    minHeight: '100%',
+    alignItems: 'center',
   },
-  sectionHeader: {
-    marginTop: 8,
+  topIndicatorPill: {
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E2E8F0',
+    alignSelf: 'center',
     marginBottom: 14,
   },
+  headerCentered: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 12,
+  },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.3,
+    textAlign: 'center',
   },
   sectionSubtitle: {
-    fontSize: 12,
-    color: '#94A3B8',
-    marginTop: 2,
+    fontSize: 12.5,
+    color: '#64748B',
+    marginTop: 4,
     fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 18,
   },
   gridContainer: {
     flexDirection: 'row',
     width: '100%',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     flexWrap: 'wrap',
+    gap: 12,
   },
   gridItemWrapper: {
-    width: '48.5%',
-    marginBottom: 12,
+    width: '46%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  centerCardWrap: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+  },
+  centerLoading: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '600',
   },
   noDataContainer: {
     width: '100%',
-    paddingVertical: 60,
+    paddingVertical: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyIconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: '#EEF2F6',
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   noDataText: {
     fontSize: 15,
     color: '#0F172A',
     fontWeight: '700',
-    letterSpacing: -0.2,
-  },
-  noDataSubtext: {
-    fontSize: 12,
-    color: '#64748B',
     marginTop: 4,
   },
-  modalContainer: {
+  noDataSubtext: {
+    fontSize: 12.5,
+    color: '#64748B',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'center',
@@ -325,42 +350,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   modalView: {
-    borderRadius: 24,
+    borderRadius: 22,
     width: '100%',
     maxWidth: 420,
-    height: Math.min(height * 0.72, 540),
+    height: Math.min(height * 0.72, 520),
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
-      : {
-        elevation: 8,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.18,
-        shadowRadius: 20,
-      }),
   },
   modalHeader: {
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    paddingTop: 24,
-    paddingBottom: 12,
+    paddingTop: 22,
+    paddingBottom: 10,
     paddingHorizontal: 20,
   },
   modalIconWrapper: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
+    width: 50,
+    height: 50,
+    borderRadius: 16,
     backgroundColor: '#F7ECE4',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 19,
     color: '#0F172A',
     fontWeight: '800',
     letterSpacing: -0.3,
@@ -368,21 +381,20 @@ const styles = StyleSheet.create({
   modalSubheading: {
     fontSize: 13,
     color: '#64748B',
-    marginTop: 4,
-    fontWeight: '500',
+    marginTop: 3,
     textAlign: 'center',
+    fontWeight: '500',
   },
   modalBody: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    paddingTop: 4,
+    paddingHorizontal: 18,
+    paddingBottom: 18,
     flex: 1,
     justifyContent: 'space-between',
   },
   disclaimerScroll: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#EEF2F6',
     marginVertical: 12,
@@ -392,28 +404,17 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     color: '#475569',
-    textAlign: 'left',
-    lineHeight: 20,
     fontSize: 13,
+    lineHeight: 19.5,
   },
   btnContainer: {
     width: '100%',
-    paddingTop: 4,
   },
   acceptStyle: {
     width: '100%',
     backgroundColor: color.defalt,
     borderRadius: 14,
-    paddingVertical: 15,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 4px 14px rgba(192, 122, 80, 0.25)' }
-      : {
-        elevation: 3,
-        shadowColor: color.defalt,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-      }),
+    paddingVertical: 14,
   },
   btnTextStyle: {
     fontSize: 15,

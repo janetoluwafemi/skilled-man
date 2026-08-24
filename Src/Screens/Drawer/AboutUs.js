@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,100 +10,78 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
+import NavigationService from '../../MainNavigation/NavigationService';
+
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 
 const FAQ_DATA_ARTISAN = [
   {
-    q: '1. What is Skilledman and what does it do?',
+    q: 'What is Skilledman and what does it do?',
     a: 'Skilledman is a platform that connects skilled artisans (such as electricians, plumbers, tailors, carpenters, etc.) with individuals or businesses in need of their services quickly and conveniently.',
   },
   {
-    q: '2. How do I register as an artisan?',
+    q: 'How do I register as an artisan?',
     a: 'Download the app, select "Register as Artisan," and complete the registration form. Once your details are verified, you\'ll be listed as an available service provider.',
   },
   {
-    q: '3. How do I get started as an artisan on Skilled Man?',
+    q: 'How do I get started as an artisan on Skilled Man?',
     a: 'Simply download the Skilled Man app, register as an artisan, complete your profile with your skills, experience, and certifications (if any), and start receiving job requests from nearby customers.',
   },
   {
-    q: '4. Is there a service fee?',
+    q: 'Is there a service fee?',
     a: 'Skilledman charges a small service fee for each completed booking to maintain the platform and ensure quality service delivery. Fees will be transparently displayed during the booking process.',
   },
   {
-    q: '5. Do I need to pay to use the platform as an artisan?',
-    a: 'Creating a profile is free. However, a small service fee or commission may apply for completed jobs. Full pricing details are available in your dashboard.',
-  },
-  {
-    q: '6. How are artisans verified?',
+    q: 'How are artisans verified?',
     a: 'All artisans undergo a verification process that includes ID checks, experience confirmation, and customer reviews to ensure trust and safety.',
   },
   {
-    q: '7. What if I have a complaint or issue?',
-    a: 'You can reach out to our customer support team directly through the app or email us at support@skilledman.com. We\'ll do our best to resolve the issue promptly.',
-  },
-  {
-    q: '8. Can I set my own working hours and availability?',
+    q: 'Can I set my own working hours and availability?',
     a: 'Yes! You have full control over your schedule. Update your availability anytime so customers can book you when you\'re free.',
   },
   {
-    q: '9. How will I get paid for my services?',
+    q: 'How will I get paid for my services?',
     a: 'Payments are processed securely through the app. Once the job is completed and confirmed by the customer, your earnings will be transferred directly to your registered bank account or wallet.',
   },
   {
-    q: '10. What if a customer cancels a job last minute?',
-    a: 'We understand your time is valuable. In case of last-minute cancellations, a cancellation fee may apply based on the app’s policy, which will be credited to you if applicable.',
+    q: 'What if a customer cancels a job last minute?',
+    a: 'In case of last-minute cancellations, a cancellation fee may apply based on the app’s policy, which will be credited to you if applicable.',
   },
   {
-    q: '11. How do I get verified as a skilled artisan?',
-    a: 'After signing up, complete your profile and upload valid identification and samples of your work. Our team will review and verify your account within 48 hours.',
-  },
-  {
-    q: '12. Can I set my own rates for services?',
-    a: 'Yes! Skilled Man gives you full control over your pricing. Be transparent and fair to attract more customers.',
-  },
-  {
-    q: '13. How do I get more job requests?',
+    q: 'How do I get more job requests?',
     a: 'Keep your profile updated with reviews, photos, and completed projects. Active and highly rated artisans receive greater visibility.',
-  },
-  {
-    q: '14. Is there a fee to use the app as an artisan?',
-    a: 'Signing up is free. A small service fee is deducted from completed job payments to maintain the platform.',
   },
 ];
 
 const FAQ_DATA_USER = [
   {
-    q: '1. What is Skilledman and what does it do?',
+    q: 'What is Skilledman and what does it do?',
     a: 'Skilledman is a platform that connects skilled artisans (such as electricians, plumbers, tailors, carpenters, etc.) with individuals or businesses in need of their services quickly and conveniently.',
   },
   {
-    q: '2. How do I find an artisan on Skilledman?',
+    q: 'How do I find an artisan on Skilledman?',
     a: 'Download the app, create an account, and search for artisans by category or location. You can view profiles, reviews, and ratings to choose the best artisan for your needs.',
   },
   {
-    q: '3. How do I book an artisan?',
+    q: 'How do I book an artisan?',
     a: 'Select an artisan, check their availability, and send a booking request. Once the artisan accepts, you\'ll receive a confirmation.',
   },
   {
-    q: '4. Is there a service fee?',
-    a: 'Skilledman charges a small service fee for each completed booking to maintain the platform and ensure quality service delivery. Fees will be transparently displayed during the booking process.',
+    q: 'Is there a service fee?',
+    a: 'Skilledman charges a small service fee for each completed booking to maintain the platform and ensure quality service delivery.',
   },
   {
-    q: '5. How do I pay for services?',
+    q: 'How do I pay for services?',
     a: 'Payments are processed securely through the app. You can pay using your preferred payment method, and the funds will be released to the artisan after the job is completed.',
   },
   {
-    q: '6. What if I have a complaint or issue?',
-    a: 'You can reach out to our customer support team directly through the app or email us at support@skilledman.com. We\'ll do our best to resolve the issue promptly.',
-  },
-  {
-    q: '7. Can I cancel a booking?',
+    q: 'Can I cancel a booking?',
     a: 'Yes, you can cancel a booking. However, cancellation fees may apply based on the app’s policy.',
   },
   {
-    q: '8. How do I leave a review for an artisan?',
-    a: 'After the job is completed, you\'ll have the option to leave a review and rating for the artisan. Your feedback helps improve the platform and assists other users in making informed decisions.',
+    q: 'How do I leave a review for an artisan?',
+    a: 'After the job is completed, you\'ll have the option to leave a review and rating for the artisan to help others make informed decisions.',
   },
 ];
 
@@ -113,18 +91,23 @@ const AboutUs = props => {
   const faqList = isArtisan ? FAQ_DATA_ARTISAN : FAQ_DATA_USER;
   const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 24;
 
+  const [expandedIndex, setExpandedIndex] = useState(0);
+
+  const toggleAccordion = index => {
+    setExpandedIndex(expandedIndex === index ? null : index);
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.headerBar}>
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => props.navigation.goBack()}
+          onPress={() => NavigationService.goBack()}
           style={styles.backArrowBtn}>
-          <Icons.Feather name="arrow-left" size={22} color="#0F172A" />
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Help & Support</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -134,37 +117,66 @@ const AboutUs = props => {
           { paddingBottom: bottomPadding },
         ]}
         showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={500}>
-          <View style={styles.badgeRow}>
-            <View style={styles.badgeCircle}>
-              <Icons.Feather
-                name="help-circle"
-                size={34}
-                color={color.defalt}
-              />
-            </View>
-          </View>
-
-          <Text style={styles.welcomeTitle}>Frequently Asked Questions</Text>
+        <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
+          <Text style={styles.welcomeTitle}>Help & Support</Text>
           <Text style={styles.welcomeSubtitle}>
-            Find answers to common questions about using the Skilledman platform.
+            Have questions? Browse our FAQ or reach out to our team directly.
           </Text>
 
-          <View style={styles.faqList}>
-            {faqList.map((item, index) => (
-              <View key={index} style={styles.faqCard}>
-                <View style={styles.faqHeaderRow}>
-                  <Icons.Feather
-                    name="info"
-                    size={16}
-                    color={color.defalt}
-                    style={{ marginTop: 2, marginRight: 8 }}
-                  />
-                  <Text style={styles.faqQuestion}>{item.q}</Text>
-                </View>
-                <Text style={styles.faqAnswer}>{item.a}</Text>
+          <View style={styles.supportCard}>
+            <View style={styles.supportHeader}>
+              <View style={styles.supportIconWrap}>
+                <Icons.Feather name="headphones" size={20} color={color.defalt} />
               </View>
-            ))}
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.supportTitle}>Need Direct Assistance?</Text>
+                <Text style={styles.supportSubText}>Our support team is active 24/7</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.contactBtn}
+              onPress={() => NavigationService.navigate('ContactUs')}>
+              <Icons.Feather name="mail" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Text style={styles.contactBtnText}>Contact Us</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.sectionHeader}>Frequently Asked Questions</Text>
+          <View style={styles.faqList}>
+            {faqList.map((item, index) => {
+              const isOpen = expandedIndex === index;
+              return (
+                <View key={index} style={[styles.faqCard, isOpen && styles.faqCardOpen]}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => toggleAccordion(index)}
+                    style={styles.faqHeaderRow}>
+                    <View style={styles.faqIndexWrap}>
+                      <Text style={[styles.faqIndexText, isOpen && { color: color.defalt }]}>
+                        {index + 1}
+                      </Text>
+                    </View>
+                    <Text style={[styles.faqQuestion, isOpen && { color: color.defalt }]}>
+                      {item.q}
+                    </Text>
+                    <Icons.Feather
+                      name={isOpen ? 'chevron-up' : 'chevron-down'}
+                      size={18}
+                      color={isOpen ? color.defalt : '#94A3B8'}
+                    />
+                  </TouchableOpacity>
+
+                  {isOpen && (
+                    <View style={styles.faqBody}>
+                      <View style={styles.faqDivider} />
+                      <Text style={styles.faqAnswer}>{item.a}</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </View>
         </Animatable.View>
       </ScrollView>
@@ -181,8 +193,8 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 8,
+    paddingTop: 12,
+    paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -201,34 +213,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
   scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  formContainer: {
     paddingHorizontal: 20,
-    paddingTop: 10,
-  },
-  badgeRow: {
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  badgeCircle: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    paddingTop: 4,
   },
   welcomeTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
@@ -243,38 +237,119 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     paddingHorizontal: 12,
   },
+  supportCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+  },
+  supportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  supportIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#FAF4F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  supportTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  supportSubText: {
+    fontSize: 12.5,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  contactBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.defalt,
+    borderRadius: 14,
+    paddingVertical: 12,
+  },
+  contactBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  sectionHeader: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 12,
+    marginLeft: 2,
+  },
   faqList: {
     width: '100%',
   },
   faqCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
     elevation: 1,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+  },
+  faqCardOpen: {
+    borderColor: color.defalt,
   },
   faqHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
+    alignItems: 'center',
+  },
+  faqIndexWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  faqIndexText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
   },
   faqQuestion: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: '#0F172A',
     flex: 1,
-    lineHeight: 20,
+    marginRight: 6,
+    lineHeight: 19,
+  },
+  faqBody: {
+    marginTop: 10,
+  },
+  faqDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginBottom: 10,
   },
   faqAnswer: {
     fontSize: 13,
     color: '#475569',
     lineHeight: 20,
-    paddingLeft: 24,
+    paddingHorizontal: 4,
   },
 });

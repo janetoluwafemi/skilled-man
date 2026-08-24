@@ -86,6 +86,11 @@ const CustomDrawer = () => {
             drawerIcon="info-circle"
           />
           <DrarCstmBtn
+            DrawerBtnPress={() => navigation.navigate('ContactUs')}
+            title="Contact Us"
+            drawerIcon="envelope-o"
+          />
+          <DrarCstmBtn
             DrawerBtnPress={() => navigation.navigate('privacy_policy')}
             title="Privacy Policy"
             drawerIcon="file-powerpoint-o"

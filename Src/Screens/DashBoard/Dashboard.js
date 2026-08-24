@@ -368,7 +368,6 @@ const Dashboard = () => {
         </View>
       </ScrollView>
 
-      {/* Disclaimer Modal */}
       <Modal
         animationType="fade"
         transparent={true}
