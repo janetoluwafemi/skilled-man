@@ -58,11 +58,11 @@ const SignupValidationSchema = yup.object().shape({
     .required('Street Address is required'),
 });
 
-const Signup = props => {
+const SignUp = props => {
   const navigation = useNavigation();
   const focus = useIsFocused();
 
-  const [role, setRole] = useState(0); // 0 = User, 1 = Provider
+  const [role, setRole] = useState(0);
   const [load, setLoad] = useState(false);
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
@@ -652,7 +652,7 @@ const Signup = props => {
   );
 };
 
-export default Signup;
+export default SignUp;
 
 const styles = StyleSheet.create({
   safeArea: {

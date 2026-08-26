@@ -22,7 +22,9 @@ const ServiceCard = props => {
             : require('../Assets/Images/logo.png')
         }
       />
-      <Text style={styles.TextStyle}>{props.serviceTitle}</Text>
+      <Text numberOfLines={1} style={styles.TextStyle}>
+        {props.serviceTitle}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -31,27 +33,28 @@ export default ServiceCard;
 
 const styles = StyleSheet.create({
   textContainer: {
-    paddingHorizontal: 13,
-    paddingVertical: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     backgroundColor: colors.wite,
     borderRadius: 10,
     elevation: 0,
-    width: '31%',
-    marginBottom: 12,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 8,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   TextStyle: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.defalt,
-    fontWeight: '400',
-    marginTop: 10,
-    flexWrap: 'wrap',
-    textAlign: 'center',
+    fontWeight: '600',
+    marginLeft: 10,
+    marginTop: 0,
+    flex: 1,
+    textAlign: 'left',
   },
   logoImg: {
-    width: 60,
-    height: 60,
+    width: 42,
+    height: 42,
   },
 });

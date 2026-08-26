@@ -44,7 +44,7 @@ const SaveScreen = () => {
 
       const result = await response.json();
       if (result?.error) {
-        showToast(result.error);
+        console.log(result.error);
       }
     } catch (error) {
       console.log('Error updating favorite status:', error);
@@ -66,7 +66,7 @@ const SaveScreen = () => {
         if (result?.favorite_providers) {
           setFavoriteList(result.favorite_providers);
         } else if (result?.error) {
-          showToast(result.error);
+          console.log(result.error);
         }
       } catch (error) {
         console.log('Error fetching favorite providers:', error);

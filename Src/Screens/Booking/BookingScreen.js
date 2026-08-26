@@ -71,7 +71,7 @@ const BookingScreen = () => {
       }
 
       if (result.error) {
-        showToast(result.error);
+        console.log(result.error);
       }
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to fetch booking data');

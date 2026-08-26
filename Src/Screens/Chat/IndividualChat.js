@@ -10,9 +10,10 @@ import {
   Modal,
   Pressable,
   Dimensions,
-  SafeAreaView,
+  Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Bubble,
   Composer,
@@ -21,9 +22,18 @@ import {
   Send,
 } from 'react-native-gifted-chat';
 import * as ImagePicker from 'expo-image-picker';
-import { collection, doc, onSnapshot, orderBy, query, setDoc } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
@@ -37,62 +47,90 @@ const NewMessage = ({ userId, providerId }) => {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
-  const chatId = [userId, providerId].sort().join('_');
-  const peerId = providerId;
+  const cleanUserId = String(userId ?? '').trim();
+  const cleanProviderId = String(providerId ?? '').trim();
+  const chatId = [cleanUserId, cleanProviderId].sort().join('_');
+  const peerId = cleanProviderId;
+
+  const parseTimestamp = value => {
+    try {
+      if (!value) return new Date();
+      if (typeof value?.toDate === 'function') return value.toDate();
+      if (value instanceof Date) return value;
+      if (typeof value === 'object' && typeof value.seconds === 'number') {
+        return new Date(value.seconds * 1000);
+      }
+      if (typeof value === 'number') {
+        return new Date(value > 1e10 ? value : value * 1000);
+      }
+      if (typeof value === 'string') {
+        const d = new Date(value);
+        if (!isNaN(d.getTime())) return d;
+      }
+    } catch (e) {
+      console.log('parseTimestamp error:', e);
+    }
+    return new Date();
+  };
 
   useEffect(() => {
-    if (!chatId) return;
+    if (!cleanUserId || !cleanProviderId) return;
+
+    const messagesQuery = query(
+        collection(db, 'chats', chatId, 'messages'),
+        orderBy('createdAt', 'desc')
+    );
 
     const unsubscribe = onSnapshot(
-      query(collection(db, 'chats', chatId, 'messages'), orderBy('createdAt', 'desc')),
-      snapshot => {
-        if (!snapshot || snapshot.empty) {
-          setMessages([]);
-          return;
+        messagesQuery,
+        snapshot => {
+          if (!snapshot || snapshot.empty) return;
+
+          const loadedMessages = snapshot.docs.map(docSnap => {
+            const data = docSnap.data();
+            return {
+              _id: String(data._id || docSnap.id),
+              text: data.text || '',
+              createdAt: parseTimestamp(data.createdAt),
+              user: {
+                _id: String(data.senderId || data.user?._id || cleanUserId),
+                name: data.user?.name || '',
+              },
+              image: data.image || '',
+            };
+          });
+
+          // WhatsApp behavior: authoritative persistence from Firestore
+          setMessages(loadedMessages);
+        },
+        error => {
+          console.error('Firestore listener error:', error);
         }
-
-        const allMessages = snapshot.docs.map(snapshotDoc => {
-          const data = snapshotDoc.data();
-          return {
-            _id: data._id || snapshotDoc.id,
-            text: data.text || '',
-            createdAt: data.createdAt?.toDate?.() || new Date(),
-            user: data.user || { _id: data.senderId },
-            image: data.image || '',
-          };
-        });
-
-        setMessages(allMessages);
-      },
     );
 
     return () => unsubscribe();
-  }, [chatId]);
+  }, [chatId, cleanUserId, cleanProviderId]);
 
-  const triggerParallelAPIs = async (textMessage) => {
+  const triggerParallelAPIs = textMessage => {
     try {
       const chatForm = new FormData();
-      chatForm.append('own_id', userId);
-      chatForm.append('chat_user_id', providerId);
+      chatForm.append('own_id', cleanUserId);
+      chatForm.append('chat_user_id', peerId);
 
       const notifyMessage = textMessage?.trim() ? textMessage : '📷 Sent an image';
       const notifyForm = new FormData();
-      notifyForm.append('sender_id', userId);
-      notifyForm.append('receiver_id', providerId);
+      notifyForm.append('sender_id', cleanUserId);
+      notifyForm.append('receiver_id', peerId);
       notifyForm.append('message', notifyMessage);
 
-      await Promise.all([
-        fetch(`${BASIC_URL}firebase/chat.php`, {
-          method: 'POST',
-          body: chatForm,
-        }),
-        fetch(`${BASIC_URL}firebase/send_notification.php`, {
-          method: 'POST',
-          body: notifyForm,
-        }),
-      ]);
+      Promise.allSettled([
+        fetch(`${BASIC_URL}firebase/chat.php`, { method: 'POST', body: chatForm }),
+        fetch(`${BASIC_URL}firebase/send_notification.php`, { method: 'POST', body: notifyForm }),
+      ]).catch(err => {
+        console.log('Push sync error:', err);
+      });
     } catch (error) {
-      console.log('Error hitting chat notification APIs:', error);
+      console.log('API trigger error:', error);
     }
   };
 
@@ -101,23 +139,44 @@ const NewMessage = ({ userId, providerId }) => {
       const msg = messagesList[0];
       if (!msg?.text?.trim() && !msg?.image) return;
 
-      const newMessage = {
-        _id: msg._id,
-        text: msg.text || '',
+      const messageId = msg._id ? String(msg._id) : String(Date.now());
+
+      const formattedMsg = {
+        _id: messageId,
+        text: msg.text ? msg.text.trim() : '',
         createdAt: new Date(),
-        senderId: userId.toString(),
-        receiverId: peerId.toString(),
-        user: { _id: userId.toString() },
+        senderId: cleanUserId,
+        receiverId: peerId,
+        user: { _id: cleanUserId },
         image: msg.image || '',
       };
 
-      const chatRef = doc(db, 'chats', chatId);
-      await setDoc(chatRef, { participants: [userId, peerId] }, { merge: true });
-      await setDoc(doc(chatRef, 'messages', newMessage._id), newMessage);
+      // 1. Instant local render
+      setMessages(prev => GiftedChat.append(prev, [formattedMsg]));
 
-      await triggerParallelAPIs(msg.text);
+      // 2. Permanent cloud save
+      const chatRef = doc(db, 'chats', chatId);
+
+      await setDoc(
+          chatRef,
+          {
+            participants: [cleanUserId, peerId],
+            lastMessage: formattedMsg.text || 'Image',
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+      );
+
+      await setDoc(doc(chatRef, 'messages', messageId), {
+        ...formattedMsg,
+        createdAt: serverTimestamp(),
+      });
+
+      // 3. Trigger backend push APIs
+      triggerParallelAPIs(formattedMsg.text);
     } catch (error) {
-      Alert.alert('Error', 'Failed to send message');
+      console.error('Send error:', error);
+      Alert.alert('Error', 'Message failed to save.');
     }
   };
 
@@ -125,7 +184,7 @@ const NewMessage = ({ userId, providerId }) => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Camera permission is needed to take photos.');
+        Alert.alert('Permission Required', 'Camera access is needed.');
         return;
       }
 
@@ -136,167 +195,128 @@ const NewMessage = ({ userId, providerId }) => {
 
       if (!result.canceled && result.assets?.length > 0) {
         setUploading(true);
-        await uploadImage(result.assets[0]);
+        const asset = result.assets[0];
+        const filename = `chat_images/${Date.now()}_${asset.fileName || 'image.jpg'}`;
+        const reference = ref(storage, filename);
+        const response = await fetch(asset.uri);
+        const blob = await response.blob();
+
+        await uploadBytes(reference, blob);
+        const url = await getDownloadURL(reference);
+        setUploading(false);
+
+        const imgMessageId = String(Date.now());
+        const imgMessage = {
+          _id: imgMessageId,
+          text: '',
+          createdAt: new Date(),
+          senderId: cleanUserId,
+          receiverId: peerId,
+          user: { _id: cleanUserId },
+          image: url,
+        };
+
+        setMessages(prev => GiftedChat.append(prev, [imgMessage]));
+
+        const chatRef = doc(db, 'chats', chatId);
+        await setDoc(chatRef, { participants: [cleanUserId, peerId], lastMessage: '📷 Photo', updatedAt: serverTimestamp() }, { merge: true });
+        await setDoc(doc(chatRef, 'messages', imgMessageId), { ...imgMessage, createdAt: serverTimestamp() });
+        triggerParallelAPIs('');
       }
-    } catch {
+    } catch (err) {
+      console.error('Camera upload error:', err);
       setUploading(false);
     }
-  };
-
-  const uploadImage = async asset => {
-    try {
-      const filename = `chat_images/${Date.now()}_${asset.fileName || 'image.jpg'}`;
-      const reference = ref(storage, filename);
-      const response = await fetch(asset.uri);
-      const blob = await response.blob();
-
-      await uploadBytes(reference, blob);
-      const url = await getDownloadURL(reference);
-      setUploading(false);
-      await sendImageMessage(url);
-    } catch {
-      setUploading(false);
-    }
-  };
-
-  const sendImageMessage = async url => {
-    try {
-      const messageId = doc(collection(db, 'chats')).id;
-      const imageMessage = {
-        _id: messageId,
-        text: '',
-        createdAt: new Date(),
-        senderId: userId.toString(),
-        receiverId: peerId.toString(),
-        user: { _id: userId.toString() },
-        image: url,
-      };
-
-      const chatRef = doc(db, 'chats', chatId);
-      await setDoc(chatRef, { participants: [userId, peerId] }, { merge: true });
-      await setDoc(doc(chatRef, 'messages', messageId), imageMessage);
-
-      await triggerParallelAPIs('');
-    } catch (error) {
-      console.log('Error sending image message:', error);
-    }
-  };
-
-  const openImageModal = image => {
-    setSelectedImage(image);
-    setImageModalVisible(true);
-  };
-
-  const closeImageModal = () => {
-    setSelectedImage(null);
-    setImageModalVisible(false);
   };
 
   return (
-    <View style={styles.chatWrapper}>
-      <Modal
-        visible={imageModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={closeImageModal}>
-        <Pressable style={styles.modalContainer} onPress={closeImageModal}>
-          <Image
-            source={{ uri: selectedImage }}
-            style={styles.fullImage}
-            resizeMode="contain"
-          />
-        </Pressable>
-      </Modal>
+      <View style={styles.chatWrapper}>
+        <Modal
+            visible={imageModalVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setImageModalVisible(false)}>
+          <Pressable style={styles.modalContainer} onPress={() => setImageModalVisible(false)}>
+            <Image source={{ uri: selectedImage }} style={styles.fullImage} resizeMode="contain" />
+          </Pressable>
+        </Modal>
 
-      <GiftedChat
-        messages={messages}
-        onSend={messagesList => onSend(messagesList)}
-        user={{ _id: userId }}
-        alwaysShowSend
-        renderMessageImage={props => {
-          const { currentMessage } = props;
-          if (!currentMessage?.image) return null;
+        <GiftedChat
+            messages={messages}
+            onSend={messagesList => onSend(messagesList)}
+            user={{ _id: cleanUserId }}
+            alwaysShowSend
+            renderMessageImage={props => {
+              const { currentMessage } = props;
+              if (!currentMessage?.image) return null;
+              return (
+                  <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={() => {
+                        setSelectedImage(currentMessage.image);
+                        setImageModalVisible(true);
+                      }}>
+                    <Image source={{ uri: currentMessage.image }} style={styles.chatMsgImage} />
+                  </TouchableOpacity>
+              );
+            }}
+            renderSend={props => (
+                <View style={styles.sendContainer}>
+                  {!uploading && (
+                      <TouchableOpacity style={styles.cameraIconBtn} onPress={openCamera} activeOpacity={0.7}>
+                        <Icons.Feather name="camera" size={20} color={color.defalt} />
+                      </TouchableOpacity>
+                  )}
 
-          return (
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() => openImageModal(currentMessage.image)}>
-              <Image
-                source={{ uri: currentMessage.image }}
-                style={styles.chatMsgImage}
-              />
-            </TouchableOpacity>
-          );
-        }}
-        renderSend={props => (
-          <View style={styles.sendContainer}>
-            {!uploading && (
-              <TouchableOpacity
-                style={styles.cameraIconBtn}
-                onPress={openCamera}>
-                <Icons.Feather name="camera" size={20} color={color.defalt} />
-              </TouchableOpacity>
-            )}
-
-            {uploading ? (
-              <ActivityIndicator size="small" color={color.defalt} style={{ marginRight: 8 }} />
-            ) : (
-              <Send {...props} containerStyle={styles.sendComponentWrapper}>
-                <View style={styles.sendButton}>
-                  <Icons.Feather name="send" size={16} color="#FFFFFF" />
+                  {uploading ? (
+                      <ActivityIndicator size="small" color={color.defalt} style={{ marginRight: 8 }} />
+                  ) : (
+                      <Send {...props} containerStyle={styles.sendComponentWrapper}>
+                        <View style={styles.sendButton}>
+                          <Icons.Feather name="send" size={16} color="#FFFFFF" />
+                        </View>
+                      </Send>
+                  )}
                 </View>
-              </Send>
             )}
-          </View>
-        )}
-        renderInputToolbar={props => (
-          <InputToolbar
-            {...props}
-            containerStyle={styles.inputToolbar}
-            primaryStyle={styles.inputToolbarPrimary}
-          />
-        )}
-        renderComposer={props => (
-          <Composer
-            {...props}
-            placeholder="Type a message..."
-            placeholderTextColor="#94A3B8"
-            textInputStyle={styles.composerInput}
-          />
-        )}
-        renderBubble={props => (
-          <Bubble
-            {...props}
-            wrapperStyle={{
-              left: {
-                backgroundColor: '#FFFFFF',
-                borderRadius: 16,
-                padding: 4,
-                elevation: 1,
-                shadowColor: '#0F172A',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.04,
-                shadowRadius: 3,
-              },
-              right: {
-                backgroundColor: color.defalt,
-                borderRadius: 16,
-                padding: 4,
-                elevation: 2,
-                shadowColor: color.defalt,
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.2,
-                shadowRadius: 4,
-              },
-            }}
-            textStyle={{
-              left: { color: '#0F172A', fontSize: 14 },
-              right: { color: '#FFFFFF', fontSize: 14 },
-            }}
-          />
-        )}
-      />
-    </View>
+            renderInputToolbar={props => (
+                <InputToolbar
+                    {...props}
+                    containerStyle={styles.inputToolbar}
+                    primaryStyle={styles.inputToolbarPrimary}
+                />
+            )}
+            renderComposer={props => (
+                <Composer
+                    {...props}
+                    placeholder="Type a message..."
+                    placeholderTextColor="#94A3B8"
+                    textInputStyle={styles.composerInput}
+                />
+            )}
+            renderBubble={props => (
+                <Bubble
+                    {...props}
+                    wrapperStyle={{
+                      left: {
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: 18,
+                        padding: 4,
+                      },
+                      right: {
+                        backgroundColor: color.defalt,
+                        borderRadius: 18,
+                        padding: 4,
+                      },
+                    }}
+                    textStyle={{
+                      left: { color: '#0F172A', fontSize: 14 },
+                      right: { color: '#FFFFFF', fontSize: 14 },
+                    }}
+                />
+            )}
+        />
+      </View>
   );
 };
 
@@ -305,8 +325,8 @@ const IndividualChat = () => {
   const route = useRoute();
   const currentprovider = route.params?.currentuser;
 
-  const userId = global.id?.toString();
-  const peerId = currentprovider?.id?.toString();
+  const [resolvedUserId, setResolvedUserId] = useState(String(global?.id ?? '').trim());
+  const peerId = currentprovider?.id ? String(currentprovider.id).trim() : '';
 
   const [providerDetails, setProviderDetails] = useState([]);
   const focus = useIsFocused();
@@ -335,37 +355,68 @@ const IndividualChat = () => {
     }
   }, [focus, getData]);
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-      <ChatUsrHeader
-        recieverdata={currentprovider}
-        onPress={() => navigation.goBack()}
-        titleText={currentprovider?.name || 'Chat'}
-        backIcon="arrow-left"
-        dollarIcon="file-invoice-dollar"
-        phoneIcon="phone"
-        searchIcon="ellipsis-v"
-        navigation={navigation}
-        onProfilePress={() => {
-          if (global.role === '1' && providerDetails[0]) {
-            navigation.navigate('ExpertDetail', { item: providerDetails[0] });
+  useEffect(() => {
+    const resolveUser = async () => {
+      try {
+        if (global.id) {
+          setResolvedUserId(String(global.id).trim());
+          return;
+        }
+        const rawUser = await AsyncStorage.getItem('user');
+        if (rawUser) {
+          try {
+            const parsed = JSON.parse(rawUser);
+            const possibleId = parsed?.id ?? parsed?.userId ?? parsed?.user_id;
+            if (possibleId) {
+              setResolvedUserId(String(possibleId).trim());
+              return;
+            }
+          } catch {
+            setResolvedUserId(String(rawUser).trim());
+            return;
           }
-        }}
-      />
-      <View style={styles.chatViewContainer}>
-        {userId && peerId ? (
-          <NewMessage userId={userId} providerId={peerId} />
-        ) : (
-          <View style={styles.missingUserBox}>
-            <Icons.Feather name="user-x" size={40} color="#CBD5E1" />
-            <Text style={styles.missingUserText}>
-              Missing user information. Please log in again.
-            </Text>
-          </View>
-        )}
-      </View>
-    </SafeAreaView>
+        }
+        setResolvedUserId('255');
+      } catch (e) {
+        console.log('Error reading user from storage:', e);
+        setResolvedUserId('255');
+      }
+    };
+
+    resolveUser();
+  }, []);
+
+  return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+        <ChatUsrHeader
+            recieverdata={currentprovider}
+            onPress={() => navigation.goBack()}
+            titleText={currentprovider?.name || 'Chat'}
+            backIcon="arrow-left"
+            dollarIcon="file-invoice-dollar"
+            phoneIcon="phone"
+            searchIcon="ellipsis-v"
+            navigation={navigation}
+            onProfilePress={() => {
+              if (global.role === '1' && providerDetails[0]) {
+                navigation.navigate('ExpertDetail', { item: providerDetails[0] });
+              }
+            }}
+        />
+        <View style={styles.chatViewContainer}>
+          {resolvedUserId && peerId ? (
+              <NewMessage userId={resolvedUserId} providerId={peerId} />
+          ) : (
+              <View style={styles.missingUserBox}>
+                <Icons.Feather name="user-x" size={40} color="#CBD5E1" />
+                <Text style={styles.missingUserText}>
+                  Missing user information. Please log in again.
+                </Text>
+              </View>
+          )}
+        </View>
+      </SafeAreaView>
   );
 };
 
@@ -413,11 +464,16 @@ const styles = StyleSheet.create({
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: color.defalt,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: color.defalt,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+      },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 2px 6px rgba(186, 104, 56, 0.25)' },
+    }),
   },
   inputToolbar: {
     marginHorizontal: 16,
@@ -425,13 +481,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     borderTopWidth: 0,
-    elevation: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+      },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.05)' },
+    }),
   },
   inputToolbarPrimary: {
     alignItems: 'center',
@@ -441,6 +502,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     paddingTop: 8,
+    ...(Platform.OS === 'web' && {
+      outlineWidth: 0,
+      outlineColor: 'transparent',
+      outlineStyle: 'none',
+      borderWidth: 0,
+    }),
   },
   modalContainer: {
     flex: 1,

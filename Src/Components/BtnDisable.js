@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import color from '../Assets/colors/colors';
 
@@ -14,7 +15,7 @@ const BtnDisable = ({
                       load = false,
                       btnText,
                       BtnStyle,
-                      activeOpacity = 0.7,
+                      activeOpacity = 0.85,
                       ...rest
                     }) => {
   return (
@@ -22,14 +23,14 @@ const BtnDisable = ({
       activeOpacity={activeOpacity}
       style={[
         styles.loginBtn,
-        isDisabled && styles.disabledBg,
+        isDisabled && styles.disabledBtn,
         BtnStyle,
       ]}
       onPress={onPressFunc}
       disabled={isDisabled || load}
       {...rest}>
       {load ? (
-        <ActivityIndicator size="small" color="#f8f8ff" />
+        <ActivityIndicator size="small" color="#FFFFFF" />
       ) : (
         <Text style={[styles.btnText, btnTextStyle]}>{btnText}</Text>
       )}
@@ -41,22 +42,46 @@ export default BtnDisable;
 
 const styles = StyleSheet.create({
   loginBtn: {
-    borderRadius: 8,
+    width: '100%',
+    borderRadius: 14,
     backgroundColor: color.defalt,
-    width: '46%',
-    alignSelf: 'center',
-    paddingVertical: 13,
-    elevation: 1,
+    paddingVertical: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 14,
+    ...Platform.select({
+      ios: {
+        shadowColor: color.defalt,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 4px 12px rgba(186, 104, 56, 0.25)',
+      },
+    }),
   },
-  disabledBg: {
-    backgroundColor: 'gray',
+  disabledBtn: {
+    opacity: 0.5,
+    ...Platform.select({
+      ios: {
+        shadowOpacity: 0,
+      },
+      android: {
+        elevation: 0,
+      },
+      web: {
+        boxShadow: 'none',
+      },
+    }),
   },
   btnText: {
-    color: color.wite,
-    fontSize: 20,
-    fontWeight: '800',
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
     textAlign: 'center',
   },
 });
