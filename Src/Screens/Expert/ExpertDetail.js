@@ -15,7 +15,7 @@ import {
   Platform,
   TextInput,
   KeyboardAvoidingView,
-  Share
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -266,7 +266,7 @@ const ExpertDetails = () => {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 1,
       });
 
@@ -288,7 +288,7 @@ const ExpertDetails = () => {
       activeOpacity={0.8}
       onPress={() => openSingleReview(reviewItem)}
       style={styles.reviewCard}
-      key={index}>
+      key={`review_card_${reviewItem?.id || index}_${index}`}>
       <View style={styles.reviewCardHeader}>
         <Image
           style={styles.reviewAvatar}
@@ -316,7 +316,7 @@ const ExpertDetails = () => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.headerBar}>
@@ -338,7 +338,7 @@ const ExpertDetails = () => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={600} style={styles.contentContainer}>
+        <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
           <Text style={styles.welcomeTitle}>Expert Profile</Text>
           <Text style={styles.welcomeSubtitle}>
             View artisan qualifications, reviews, and book services.
@@ -425,7 +425,7 @@ const ExpertDetails = () => {
             <View style={styles.skillsWrapper}>
               {skills.map((skillItem, idx) => (
                 <TouchableOpacity
-                  key={idx}
+                  key={`skill_chip_${skillItem?.id || idx}_${idx}`}
                   activeOpacity={0.8}
                   onPress={() => {
                     setSelectedSkill(skillItem);
@@ -463,7 +463,7 @@ const ExpertDetails = () => {
             horizontal
             showsHorizontalScrollIndicator={false}
             data={(item?.people_review || []).filter(r => r?.rating)}
-            keyExtractor={(r, idx) => idx.toString()}
+            keyExtractor={(r, idx) => `review_horiz_${r?.id || idx}_${idx}`}
             contentContainerStyle={styles.reviewsListScroll}
             renderItem={renderReviewItem}
             ListEmptyComponent={
@@ -506,7 +506,6 @@ const ExpertDetails = () => {
               style={styles.backArrowBtn}>
               <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
             </TouchableOpacity>
-            <View style={{ width: 40 }} />
           </View>
 
           <KeyboardAvoidingView
@@ -797,7 +796,6 @@ const ExpertDetails = () => {
               style={styles.backArrowBtn}>
               <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
             </TouchableOpacity>
-            <View style={{ width: 40 }} />
           </View>
 
           <Animatable.View animation="fadeInUp" duration={500} style={styles.formContainer}>
@@ -808,7 +806,7 @@ const ExpertDetails = () => {
 
             <FlatList
               data={(item?.people_review || []).filter(r => r?.rating)}
-              keyExtractor={(r, index) => index.toString()}
+              keyExtractor={(r, index) => `review_full_${r?.id || index}_${index}`}
               contentContainerStyle={{ paddingBottom: 30 }}
               showsVerticalScrollIndicator={false}
               renderItem={({ item: reviewItem }) => (
@@ -889,7 +887,7 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
@@ -913,12 +911,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 40,
   },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 4,
-  },
   formContainer: {
-    flex: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },
@@ -933,10 +926,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
     marginTop: 4,
-    lineHeight: 20,
-    paddingHorizontal: 12,
   },
   heroCard: {
     width: '100%',
@@ -979,7 +970,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
-    marginBottom: 14,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#EEF2F6',
   },
@@ -1057,7 +1048,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 14,
     paddingHorizontal: 20,
-    marginBottom: 18,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#EEF2F6',
     elevation: 2,
@@ -1338,7 +1329,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 14,
-    marginTop: 14,
+    marginTop: 10,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 3,

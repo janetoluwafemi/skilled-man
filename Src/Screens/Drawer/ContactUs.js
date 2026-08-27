@@ -72,8 +72,9 @@ const ContactUs = () => {
       });
 
       const result = await response.json();
-      setLoading(false);
 
+      setLoading(false);
+      navigation.goBack();
       if (result && (result.status === 'success' || result.success)) {
         Alert.alert(
           'Success',

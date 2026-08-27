@@ -66,65 +66,65 @@ const CustomDrawer = () => {
   ]);
 
   return (
-    <LinearGradient
-      colors={['#c07a50', '#bc7950', '#f3a260']}
-      style={containerStyle}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        <DrarUsr />
-        <View style={styles.menuContainer}>
-          <DrarCstmBtn
-            DrawerBtnPress={() => navigation.navigate('Dshbord')}
-            title="Dashboard"
-            drawerIcon="th-large"
-          />
-          <DrarCstmBtn
-            DrawerBtnPress={() => navigation.navigate('AboutUs')}
-            title="About Us"
-            drawerIcon="info-circle"
-          />
-          <DrarCstmBtn
-            DrawerBtnPress={() => navigation.navigate('ContactUs')}
-            title="Contact Us"
-            drawerIcon="envelope-o"
-          />
-          <DrarCstmBtn
-            DrawerBtnPress={() => navigation.navigate('privacy_policy')}
-            title="Privacy Policy"
-            drawerIcon="file-powerpoint-o"
-          />
-          <DrarCstmBtn
-            DrawerBtnPress={() => navigation.navigate('terms_condidtions')}
-            title="Terms & Conditions"
-            drawerIcon="file-powerpoint-o"
-          />
+      <LinearGradient
+          colors={['#c07a50', '#bc7950', '#f3a260']}
+          style={containerStyle}>
+        <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}>
+          <DrarUsr />
+          <View style={styles.menuContainer}>
+            <DrarCstmBtn
+                DrawerBtnPress={() => navigation.navigate('Dashboard')}
+                title="Dashboard"
+                drawerIcon="th-large"
+            />
+            <DrarCstmBtn
+                DrawerBtnPress={() => navigation.navigate('AboutUs')}
+                title="About Us"
+                drawerIcon="info-circle"
+            />
+            <DrarCstmBtn
+                DrawerBtnPress={() => navigation.navigate('ContactUs')}
+                title="Contact Us"
+                drawerIcon="envelope-o"
+            />
+            <DrarCstmBtn
+                DrawerBtnPress={() => navigation.navigate('privacy_policy')}
+                title="Privacy Policy"
+                drawerIcon="file-powerpoint-o"
+            />
+            <DrarCstmBtn
+                DrawerBtnPress={() => navigation.navigate('terms_condidtions')}
+                title="Terms & Conditions"
+                drawerIcon="file-powerpoint-o"
+            />
 
-          <DrarCstmBtn
-            DrawerBtnPress={() =>
-              navigation.navigate(isArtisanRole ? 'HistoryScreen' : 'UserHistory')
-            }
-            title="History"
-            drawerIcon="history"
-          />
+            <DrarCstmBtn
+                DrawerBtnPress={() =>
+                    navigation.navigate(isArtisanRole ? 'HistoryScreen' : 'UserHistory')
+                }
+                title="History"
+                drawerIcon="history"
+            />
 
+            <DrarCstmBtn
+                DrawerBtnPress={() => navigation.navigate('account_setting')}
+                title="Setting"
+                drawerIcon="cog"
+            />
+          </View>
+        </ScrollView>
+
+        <View style={logoutStyle}>
           <DrarCstmBtn
-            DrawerBtnPress={() => navigation.navigate('account_setting')}
-            title="Setting"
-            drawerIcon="cog"
+              title="Logout"
+              drawerIcon="sign-out"
+              DrawerBtnPress={logOut}
           />
         </View>
-      </ScrollView>
-
-      <View style={logoutStyle}>
-        <DrarCstmBtn
-          title="Logout"
-          drawerIcon="sign-out"
-          DrawerBtnPress={logOut}
-        />
-      </View>
-    </LinearGradient>
+      </LinearGradient>
   );
 };
 

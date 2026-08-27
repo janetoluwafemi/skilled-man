@@ -35,7 +35,7 @@ const GOOGLE_WEB_CLIENT_ID =
 
 export const BASIC_URL = 'https://theskilledman.com/api/';
 
-const Signin = () => {
+const SignIn = () => {
   const { dispatch } = useAuth();
   const navigation = useNavigation();
 
@@ -364,7 +364,7 @@ const Signin = () => {
   );
 };
 
-export default Signin;
+export default SignIn;
 
 const styles = StyleSheet.create({
   safeArea: {
