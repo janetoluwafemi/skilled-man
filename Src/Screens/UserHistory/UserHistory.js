@@ -19,21 +19,6 @@ import { BASIC_URL } from '../Signin/Signin';
 
 const { height } = Dimensions.get('window');
 
-const isSmallDevice = height < 700;
-const isMediumDevice = height >= 700 && height < 900;
-
-const getResponsiveSize = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
-
-const getResponsiveSpacing = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
-
 const UserHistory = () => {
   const navigation = useNavigation();
   const focus = useIsFocused();
@@ -49,7 +34,7 @@ const UserHistory = () => {
   const fetchBookingData = async () => {
     try {
       const formdata = new FormData();
-      formdata.append('user_id', global.id);
+      formdata.append('user_id', global.id || '255');
 
       const response = await fetch(`${BASIC_URL}user/request_booking_service.php`, {
         method: 'POST',
@@ -65,7 +50,7 @@ const UserHistory = () => {
     }
   };
 
-  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 20;
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 24;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -78,39 +63,53 @@ const UserHistory = () => {
           style={styles.backArrowBtn}>
           <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Booking History</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <FlatList
-        data={bookData}
-        keyExtractor={(item, index) => item.booking_id?.toString() || index.toString()}
-        renderItem={({ item }) => (
-          <BookingCrd
-            cardTitle={item.name}
-            bookingId={`Booking ID - ${item.booking_id}`}
-            expertise={item.service}
-            status={item.status}
-            paidTitle={item.service_date}
-            dateCont={styles.dateCont}
-            filepress={item.file}
-          />
-        )}
-        contentContainerStyle={[
-          styles.cardContainer,
-          { paddingBottom: bottomPadding },
-        ]}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Icons.Feather name="clock" size={48} color="#CBD5E1" />
-            <Text style={styles.emptyTitle}>No Booking History</Text>
-            <Text style={styles.emptySubtitle}>
-              Completed and previous service bookings will appear here.
-            </Text>
-          </View>
-        }
-      />
+      <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
+        <Text style={styles.welcomeTitle}>Booking History</Text>
+        <Text style={styles.welcomeSubtitle}>
+          View and track all your previous service bookings and requests.
+        </Text>
+
+        <FlatList
+          data={bookData}
+          keyExtractor={(item, index) => item.booking_id?.toString() || index.toString()}
+          renderItem={({ item, index }) => (
+            <Animatable.View
+              animation="fadeInUp"
+              duration={400}
+              delay={Math.min(index * 50, 400)}
+              style={styles.cardItemWrapper}>
+              <BookingCrd
+                cardTitle={item.name}
+                bookingId={`Booking ID - ${item.booking_id}`}
+                expertise={item.service}
+                status={item.status}
+                paidTitle={item.service_date}
+                dateCont={styles.dateCont}
+                filepress={item.file}
+              />
+            </Animatable.View>
+          )}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: bottomPadding },
+          ]}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconBox}>
+                <Icons.Feather name="clock" size={32} color="#94A3B8" />
+              </View>
+              <Text style={styles.emptyTitle}>No Booking History</Text>
+              <Text style={styles.emptySubtitle}>
+                Completed and previous service bookings will appear here.
+              </Text>
+            </View>
+          }
+        />
+      </Animatable.View>
     </SafeAreaView>
   );
 };
@@ -144,34 +143,64 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  headerTitle: {
-    fontSize: 18,
+  formContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+  },
+  welcomeTitle: {
+    fontSize: 26,
     fontWeight: '800',
     color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: -0.3,
   },
-  cardContainer: {
-    paddingHorizontal: getResponsiveSpacing(16, 20, 24),
-    paddingTop: getResponsiveSpacing(10, 14, 16),
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: 4,
+    lineHeight: 20,
+    paddingHorizontal: 12,
+  },
+  listContent: {
     flexGrow: 1,
+    paddingTop: 4,
+  },
+  cardItemWrapper: {
+    marginBottom: 10,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 80,
+    paddingHorizontal: 24,
+  },
+  emptyIconBox: {
+    width: 68,
+    height: 68,
+    borderRadius: 20,
+    backgroundColor: '#EEF2F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: '#0F172A',
-    marginTop: 14,
+    letterSpacing: -0.2,
+    textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#64748B',
-    marginTop: 4,
+    marginTop: 6,
     textAlign: 'center',
-    paddingHorizontal: 20,
+    lineHeight: 19,
+    paddingHorizontal: 16,
   },
   dateCont: {
     fontWeight: '500',

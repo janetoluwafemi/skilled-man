@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
   Platform,
   Modal,
@@ -15,6 +14,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { Formik } from 'formik';
 import * as yup from 'yup';
@@ -191,97 +191,108 @@ const SignUp = props => {
         </TouchableOpacity>
       </View>
 
-      <Formik
-        initialValues={initialValues}
-        validationSchema={SignupValidationSchema}
-        onSubmit={async value => {
-          try {
-            setLoad(true);
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        <Animatable.View
+          animation="fadeInUp"
+          duration={600}
+          style={styles.formContainer}>
+          <View style={styles.logoRow}>
+            <View style={styles.logoCircle}>
+              <Image
+                source={require('../../Assets/Images/logo.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
 
-            const formdata = new FormData();
-            formdata.append('name', value.name);
-            const fullPhoneNumber = `+${selectedDialCode.phonecode}${value.phone_number}`;
-            formdata.append('phone_number', fullPhoneNumber);
-            formdata.append('email', value.email);
-            formdata.append('address', value.address);
-            formdata.append('state', selectedState ? selectedState.name : '');
-            formdata.append('country', selectedCountry ? selectedCountry.name : 'Nigeria');
-            formdata.append('account', 'VERIFIED');
-            formdata.append('role', String(role));
-            formdata.append('association', value.association || (role === 1 ? 'Artisan' : 'User'));
-            formdata.append('latitude', global.lat ? String(global.lat) : '33.5595769');
-            formdata.append('longitude', global.long ? String(global.long) : '73.1249139');
-            const apiUrl = `${BASIC_URL}otp_register.php?role=${role}`;
+          <Text style={styles.welcomeTitle}>Get Started</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Select your account type and fill in your details
+          </Text>
 
-            const response = await fetch(apiUrl, {
-              method: 'POST',
-              body: formdata,
-            });
+          <Formik
+            initialValues={initialValues}
+            validationSchema={SignupValidationSchema}
+            onSubmit={async value => {
+              try {
+                setLoad(true);
 
-            const result = await response.json();
-            setLoad(false);
+                const formdata = new FormData();
+                formdata.append('name', value.name);
+                const fullPhoneNumber = `+${selectedDialCode.phonecode}${value.phone_number}`;
+                formdata.append('phone_number', fullPhoneNumber);
+                formdata.append('email', value.email);
+                formdata.append('address', value.address);
+                formdata.append('state', selectedState ? selectedState.name : '');
+                formdata.append('country', selectedCountry ? selectedCountry.name : 'Nigeria');
+                formdata.append('account', 'VERIFIED');
+                formdata.append('role', String(role));
+                formdata.append('association', value.association || (role === 1 ? 'Artisan' : 'User'));
+                formdata.append('latitude', global.lat ? String(global.lat) : '33.5595769');
+                formdata.append('longitude', global.long ? String(global.long) : '73.1249139');
+                const apiUrl = `${BASIC_URL}otp_register.php?role=${role}`;
 
-            if (result && (result.success || !result.error)) {
-              global.id = result.id;
-              global.name = result.name || value.name;
-              global.role = result.role || String(role);
-              global.email = result.email || value.email;
-              global.address = result.address || value.address;
-              global.phone_number = result.phone_number || fullPhoneNumber;
+                const response = await fetch(apiUrl, {
+                  method: 'POST',
+                  body: formdata,
+                });
 
-              showToast(result.status || 'OTP sent to your email');
-              navigation.navigate('OtpScreen', { result });
-            } else {
-              Alert.alert('Registration Failed', result?.error || result?.Twilio_error || 'Something went wrong. Please try again.');
-            }
-          } catch (error) {
-            setLoad(false);
-            Alert.alert('Network Error', error?.message || 'Unable to connect to server');
-          }
-        }}>
-        {({
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            values,
-            errors,
-            touched,
-          }) => (
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled">
-            <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
+                const result = await response.json();
+                setLoad(false);
 
-              <View style={styles.logoRow}>
-                <View style={styles.logoCircle}>
-                  <Image
-                    source={require('../../Assets/Images/logo.png')}
-                    style={styles.logoImage}
-                    resizeMode="contain"
-                  />
-                </View>
-              </View>
+                if (result && (result.success || !result.error)) {
+                  global.id = result.id;
+                  global.name = result.name || value.name;
+                  global.role = result.role || String(role);
+                  global.email = result.email || value.email;
+                  global.address = result.address || value.address;
+                  global.phone_number = result.phone_number || fullPhoneNumber;
 
-              <Text style={styles.welcomeTitle}>Get Started</Text>
-              <Text style={styles.welcomeSubtitle}>
-                Select your account type and fill in your details
-              </Text>
-
+                  showToast(result.status || 'OTP sent to your email');
+                  navigation.navigate('OtpScreen', { result });
+                } else {
+                  Alert.alert(
+                    'Registration Failed',
+                    result?.error || result?.Twilio_error || 'Something went wrong. Please try again.'
+                  );
+                }
+              } catch (error) {
+                setLoad(false);
+                Alert.alert('Network Error', error?.message || 'Unable to connect to server');
+              }
+            }}>
+            {({
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                values,
+                errors,
+                touched,
+              }) => (
               <View style={styles.cardWrapper}>
-
                 <View style={styles.segmentContainer}>
                   <TouchableOpacity
                     activeOpacity={0.9}
                     onPress={() => setRole(0)}
-                    style={[styles.segmentBtn, role === 0 && styles.segmentActive]}>
+                    style={StyleSheet.flatten([
+                      styles.segmentBtn,
+                      role === 0 && styles.segmentActive,
+                    ])}>
                     <Icons.FontAwesome5
                       name="user"
                       size={13}
                       color={role === 0 ? color.defalt : '#64748B'}
                       style={styles.segmentIcon}
                     />
-                    <Text style={[styles.segmentText, role === 0 && styles.segmentTextActive]}>
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.segmentText,
+                        role === 0 && styles.segmentTextActive,
+                      ])}>
                       User
                     </Text>
                   </TouchableOpacity>
@@ -289,14 +300,21 @@ const SignUp = props => {
                   <TouchableOpacity
                     activeOpacity={0.9}
                     onPress={() => setRole(1)}
-                    style={[styles.segmentBtn, role === 1 && styles.segmentActive]}>
+                    style={StyleSheet.flatten([
+                      styles.segmentBtn,
+                      role === 1 && styles.segmentActive,
+                    ])}>
                     <Icons.FontAwesome5
                       name="briefcase"
                       size={13}
                       color={role === 1 ? color.defalt : '#64748B'}
                       style={styles.segmentIcon}
                     />
-                    <Text style={[styles.segmentText, role === 1 && styles.segmentTextActive]}>
+                    <Text
+                      style={StyleSheet.flatten([
+                        styles.segmentText,
+                        role === 1 && styles.segmentTextActive,
+                      ])}>
                       Provider
                     </Text>
                   </TouchableOpacity>
@@ -430,11 +448,10 @@ const SignUp = props => {
 
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  style={[
+                  style={StyleSheet.flatten([
                     styles.locationBtnCard,
                     isLocationSet && styles.locationBtnCardActive,
-                  ]}
-                  onPress={() => navigation.navigate('Maplatln')}>
+                  ])}>
                   <View style={styles.locationBtnLeft}>
                     <Icons.Ionicons
                       name={isLocationSet ? 'location' : 'location-outline'}
@@ -443,10 +460,10 @@ const SignUp = props => {
                     />
                     <View style={styles.locationBtnTextCol}>
                       <Text
-                        style={[
+                        style={StyleSheet.flatten([
                           styles.locationBtnTitle,
                           isLocationSet && styles.locationBtnTitleActive,
-                        ]}>
+                        ])}>
                         {isLocationSet ? 'Location Pinned' : 'Set Location on Map'}
                       </Text>
                       <Text style={styles.locationBtnSub}>
@@ -475,33 +492,36 @@ const SignUp = props => {
                   onPressFunc={handleSubmit}
                 />
               </View>
+            )}
+          </Formik>
 
-              <View style={styles.dividerRow}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or continue with</Text>
-                <View style={styles.dividerLine} />
-              </View>
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or continue with</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={handleGoogleSignInFlow}
-                style={styles.googleBtn}>
-                <Image source={require('../../Assets/Images/download (7).jpeg')} style={styles.googleImage} />
-                <Text style={styles.googleBtnText}>
-                  Continue with Google ({role === 0 ? 'User' : 'Provider'})
-                </Text>
-              </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleGoogleSignInFlow}
+            style={styles.googleBtn}>
+            <Image
+              source={require('../../Assets/Images/download (7).jpeg')}
+              style={styles.googleImage}
+            />
+            <Text style={styles.googleBtnText}>
+              Continue with Google ({role === 0 ? 'User' : 'Provider'})
+            </Text>
+          </TouchableOpacity>
 
-              <View style={styles.footerRow}>
-                <Text style={styles.footerText}>Already have an account? </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Signin')}>
-                  <Text style={styles.footerLink}>Sign In</Text>
-                </TouchableOpacity>
-              </View>
-            </Animatable.View>
-          </ScrollView>
-        )}
-      </Formik>
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Signin')}>
+              <Text style={styles.footerLink}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </Animatable.View>
+      </ScrollView>
 
       <Modal
         visible={dialCodeModalVisible}
@@ -725,7 +745,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
     marginTop: 4,
   },
   cardWrapper: {
@@ -737,22 +757,24 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   segmentContainer: {
     flexDirection: 'row',
-    backgroundColor: '#E2E8F0',
-    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
     padding: 3,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   segmentBtn: {
     flex: 1,
     flexDirection: 'row',
-    paddingVertical: 9,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 11,
+    borderRadius: 9,
   },
   segmentActive: {
     backgroundColor: '#FFFFFF',
@@ -925,7 +947,7 @@ const styles = StyleSheet.create({
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 14,
   },
   dividerLine: {
     flex: 1,
@@ -963,7 +985,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 22,
   },
   footerText: {
     color: '#64748B',

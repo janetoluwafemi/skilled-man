@@ -4,7 +4,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   TextInput,
@@ -13,6 +12,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 
@@ -76,21 +76,21 @@ const ContactUs = () => {
 
       if (result && (result.status === 'success' || result.success)) {
         Alert.alert(
-            'Success',
-            result.success || 'Your message has been received. We will get back to you shortly.',
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  setName('');
-                  setEmail('');
-                  setPhoneNumber('');
-                  setSubject('');
-                  setMessage('');
-                  navigation.goBack();
-                },
+          'Success',
+          result.success || 'Your message has been received. We will get back to you shortly.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setName('');
+                setEmail('');
+                setPhoneNumber('');
+                setSubject('');
+                setMessage('');
+                navigation.goBack();
               },
-            ]
+            },
+          ]
         );
       } else {
         Alert.alert('Submission Failed', result?.error || result?.message || 'Something went wrong. Please try again.');
@@ -102,111 +102,111 @@ const ContactUs = () => {
   };
 
   return (
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-        <View style={styles.headerBar}>
-          <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => navigation.goBack()}
-              style={styles.backArrowBtn}>
-            <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
+      </View>
 
-        <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled">
-            <Animatable.View
-                animation="fadeInUp"
-                duration={600}
-                style={styles.formContainer}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <Animatable.View
+            animation="fadeInUp"
+            duration={600}
+            style={styles.formContainer}>
 
-              <View style={styles.logoRow}>
-                <View style={styles.logoCircle}>
-                  <Icons.Feather name="headphones" size={36} color={color.defalt} />
-                </View>
+            <View style={styles.logoRow}>
+              <View style={styles.logoCircle}>
+                <Icons.Feather name="headphones" size={36} color={color.defalt} />
               </View>
+            </View>
 
-              <Text style={styles.welcomeTitle}>Get In Touch</Text>
-              <Text style={styles.welcomeSubtitle}>
-                Have questions or need assistance? Send us a message
-              </Text>
+            <Text style={styles.welcomeTitle}>Get In Touch</Text>
+            <Text style={styles.welcomeSubtitle}>
+              Have questions or need assistance? Send us a message
+            </Text>
 
-              <View style={styles.cardWrapper}>
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Full Name</Text>
-                  <C_TxtInput
-                      placeholder="e.g. John Doe"
-                      value={name}
-                      onChangeText={setName}
-                  />
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Email Address</Text>
-                  <C_TxtInput
-                      placeholder="name@example.com"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      value={email}
-                      onChangeText={setEmail}
-                  />
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Phone Number</Text>
-                  <C_TxtInput
-                      placeholder="e.g. 08012345678"
-                      keyboardType="phone-pad"
-                      value={phoneNumber}
-                      onChangeText={setPhoneNumber}
-                  />
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Subject</Text>
-                  <C_TxtInput
-                      placeholder="e.g. Issue with account creation"
-                      value={subject}
-                      onChangeText={setSubject}
-                  />
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Message</Text>
-                  <TextInput
-                      style={styles.textAreaInput}
-                      placeholder="Type your message here..."
-                      placeholderTextColor="#94A3B8"
-                      value={message}
-                      onChangeText={setMessage}
-                      multiline
-                      numberOfLines={4}
-                      textAlignVertical="top"
-                  />
-                </View>
-
-                <BotonComp
-                    BtnStyle={styles.submitBtn}
-                    btnText={
-                      loading ? (
-                          <ActivityIndicator color="#FFF" size="small" />
-                      ) : (
-                          'Send Message'
-                      )
-                    }
-                    onPressFunc={handleSubmit}
+            <View style={styles.cardWrapper}>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Full Name</Text>
+                <C_TxtInput
+                  placeholder="e.g. John Doe"
+                  value={name}
+                  onChangeText={setName}
                 />
               </View>
-            </Animatable.View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Email Address</Text>
+                <C_TxtInput
+                  placeholder="name@example.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Phone Number</Text>
+                <C_TxtInput
+                  placeholder="e.g. 08012345678"
+                  keyboardType="phone-pad"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Subject</Text>
+                <C_TxtInput
+                  placeholder="e.g. Issue with account creation"
+                  value={subject}
+                  onChangeText={setSubject}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Message</Text>
+                <TextInput
+                  style={styles.textAreaInput}
+                  placeholder="Type your message here..."
+                  placeholderTextColor="#94A3B8"
+                  value={message}
+                  onChangeText={setMessage}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              <BotonComp
+                BtnStyle={styles.submitBtn}
+                btnText={
+                  loading ? (
+                    <ActivityIndicator color="#FFF" size="small" />
+                  ) : (
+                    'Send Message'
+                  )
+                }
+                onPressFunc={handleSubmit}
+              />
+            </View>
+          </Animatable.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
     marginTop: 4,
   },
   cardWrapper: {
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   fieldGroup: {
     marginBottom: 14,

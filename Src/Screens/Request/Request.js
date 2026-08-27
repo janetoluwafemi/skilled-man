@@ -73,7 +73,7 @@ const RequestScreen = () => {
         if (result?.booking_request) {
           setBooklist(result.booking_request);
         } else if (result?.error) {
-          showToast(result.error);
+          console.log(result.error);
         }
       } catch (error) {
         console.error('Error fetching bookings:', error);

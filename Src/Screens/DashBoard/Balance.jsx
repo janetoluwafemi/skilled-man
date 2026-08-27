@@ -111,7 +111,6 @@ const Balance = () => {
     <SafeAreaView style={styles.flexFill} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      {/* Header bar: isolated back arrow only */}
       <View style={styles.headerBar}>
         <TouchableOpacity
           activeOpacity={0.7}
@@ -127,7 +126,6 @@ const Balance = () => {
       </View>
 
       <Animatable.View animation="fadeInUp" duration={600} style={styles.contentContainer}>
-        {/* Title and subtitle in the main body flow */}
         <Text style={styles.welcomeTitle}>Earned Balance</Text>
         <Text style={styles.welcomeSubtitle}>
           Track your transaction earnings and payment history.

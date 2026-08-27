@@ -55,7 +55,7 @@ const CompleteTab = props => {
       if (result?.booking_request) {
         setData(result.booking_request);
       } else if (result?.error) {
-        showToast(result.error);
+        console.log(result.error);
       }
     } catch (error) {
       Alert.alert('Error', error?.message || String(error) || 'An error occurred');

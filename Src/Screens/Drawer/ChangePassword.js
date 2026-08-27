@@ -5,10 +5,11 @@ import {
   View,
   ScrollView,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
+  Platform,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
@@ -82,15 +83,16 @@ const ChangePassword = props => {
           style={styles.backArrowBtn}>
           <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
-        <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
-
+        <Animatable.View
+          animation="fadeInUp"
+          duration={600}
+          style={styles.formContainer}>
           <View style={styles.badgeRow}>
             <View style={styles.badgeCircle}>
               <Icons.Feather
@@ -173,11 +175,10 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: '#F8FAFC',
   },
   backArrowBtn: {
@@ -193,11 +194,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 40,
@@ -211,9 +207,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   badgeCircle: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -234,10 +230,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
     marginTop: 4,
-    lineHeight: 20,
-    paddingHorizontal: 12,
   },
   cardWrapper: {
     backgroundColor: '#FFFFFF',
@@ -248,7 +242,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   fieldGroup: {
     marginBottom: 14,

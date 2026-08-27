@@ -67,6 +67,17 @@ const Dashboard = () => {
   const [address, setAddress] = useState('');
   const [association, setAssociation] = useState('');
 
+  const chartDataSets = {
+    Weekly: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{ data: [15, 30, 25, 60, 45, 80, 50] }],
+    },
+    Monthly: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+      datasets: [{ data: [20, 45, 28, 80, 99, 43, 110] }],
+    },
+  };
+
   const experienceOptions = [
     { id: 1, select_bussiness: 'Year of experience' },
     { id: 2, select_bussiness: '0-1' },
@@ -132,9 +143,9 @@ const Dashboard = () => {
   };
 
   const filteredCountries = countries.filter(
-    c =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.phonecode?.includes(searchQuery)
+      c =>
+          c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.phonecode?.includes(searchQuery)
   );
 
   const handlFilPik = async value => {
@@ -163,11 +174,11 @@ const Dashboard = () => {
 
   const handlADdetail = async () => {
     if (
-      selectedBusiness === 'Select Business' ||
-      selectedExperience === 'Year of experience' ||
-      !certficate ||
-      !guarantor ||
-      !jobReferences
+        selectedBusiness === 'Select Business' ||
+        selectedExperience === 'Year of experience' ||
+        !certficate ||
+        !guarantor ||
+        !jobReferences
     ) {
       showToast('Please fill the required fields');
       return;
@@ -218,7 +229,7 @@ const Dashboard = () => {
   };
 
   const bottomPadding =
-    height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 36;
+      height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 36;
 
   const scrollContentFlattened = StyleSheet.flatten([
     styles.scrollContent,
@@ -226,407 +237,409 @@ const Dashboard = () => {
   ]);
 
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor={color.defalt} />
+      <SafeAreaView style={styles.safeContainer} edges={['top']}>
+        <StatusBar barStyle="light-content" backgroundColor={color.defalt} />
 
-      <HomStakwithoutsarch
-        onPress={() => navigation.openDrawer()}
-        onPressnotification={() => navigation.navigate('edit_profile')}
-      />
+        <HomStakwithoutsarch
+            onPress={() => navigation.openDrawer()}
+            onPressnotification={() => navigation.navigate('edit_profile')}
+        />
 
-      <ScrollView
-        style={styles.scrollStyle}
-        contentContainerStyle={scrollContentFlattened}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.contentWrapper}>
-          <Two_Crd />
+        <ScrollView
+            style={styles.scrollStyle}
+            contentContainerStyle={scrollContentFlattened}
+            showsVerticalScrollIndicator={false}>
+          <View style={styles.contentWrapper}>
+            <Two_Crd />
 
-          <View style={styles.quickActionsContainer}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.actionPill}
-              onPress={handleNavigateToAddBank}>
-              <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
-                {Icons?.Feather && (
-                  <Icons.Feather name="credit-card" size={20} color={color.defalt} />
-                )}
-              </View>
-              <Text style={styles.actionText}>Add Bank</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.actionPill}
-              onPress={() => navigation.navigate('Cash')}>
-              <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
-                {Icons?.Feather && (
-                  <Icons.Feather name="dollar-sign" size={20} color={color.defalt} />
-                )}
-              </View>
-              <Text style={styles.actionText}>Cash In</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.actionPill}
-              onPress={() => navigation.navigate('Balance')}>
-              <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
-                {Icons?.Feather && (
-                  <Icons.Feather name="clock" size={20} color={color.defalt} />
-                )}
-              </View>
-              <Text style={styles.actionText}>History</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.actionPill}
-              onPress={() => setsigninmodal(true)}>
-              <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
-                {Icons?.Feather && (
-                  <Icons.Feather name="edit-3" size={20} color={color.defalt} />
-                )}
-              </View>
-              <Text style={styles.actionText}>Profile</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.chartCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.headerTextGroup}>
-                <Text style={styles.chartTitle}>Income Analytics</Text>
-                <Text style={styles.chartSubtitle}>Earnings overview over time</Text>
-              </View>
-
-              <View style={styles.periodSwitch}>
-                {['Weekly', 'Monthly'].map(p => (
-                  <TouchableOpacity
-                    key={p}
-                    activeOpacity={0.7}
-                    onPress={() => setChartPeriod(p)}
-                    style={[
-                      styles.periodTab,
-                      chartPeriod === p && styles.periodTabActive,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.periodTabText,
-                        chartPeriod === p && styles.periodTabTextActive,
-                      ]}>
-                      {p}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <BarChart
-              data={{
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                datasets: [{ data: [20, 45, 28, 80, 99, 43, 110] }],
-              }}
-              width={Math.min(width - 56, 540)}
-              height={220}
-              chartConfig={{
-                backgroundColor: '#FFFFFF',
-                backgroundGradientFrom: '#FFFFFF',
-                backgroundGradientTo: '#FFFFFF',
-                decimalPlaces: 0,
-                barPercentage: 0.52,
-                verticalLabelRotation: 0,
-                backgroundGradientToOpacity: 0,
-                showBarTops: false,
-                fillShadowGradient: color.defalt,
-                fillShadowGradientOpacity: 1,
-                strokeWidth: 2,
-                color: () => color.defalt,
-                labelColor: () => '#94A3B8',
-                propsForLabels: {
-                  fontSize: 12,
-                  fontWeight: '600',
-                },
-                propsForBackgroundLines: {
-                  strokeDasharray: '4',
-                  stroke: '#F1F5F9',
-                },
-              }}
-              style={StyleSheet.flatten(styles.chartStyle)}
-            />
-          </View>
-
-          <View style={styles.statusNoticeBanner}>
-            <View style={styles.noticeIconWrap}>
-              {Icons?.Feather && (
-                <Icons.Feather name="shield" size={22} color={color.defalt} />
-              )}
-            </View>
-            <View style={styles.noticeTextCol}>
-              <Text style={styles.noticeTitle}>Account Verified</Text>
-              <Text style={styles.noticeSub}>Your provider profile is active and eligible for bookings.</Text>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.disclaimerModalCard}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalIconWrapper}>
-                {Icons?.Feather && (
-                  <Icons.Feather name="shield" size={26} color={color.defalt} />
-                )}
-              </View>
-              <Text style={styles.modalTitle}>Disclaimer Notice</Text>
-              <Text style={styles.modalSubheading}>Please review before continuing</Text>
-            </View>
-
-            <View style={styles.disclaimerBody}>
-              <ScrollView
-                style={styles.disclaimerScroll}
-                contentContainerStyle={styles.disclaimerScrollContent}
-                showsVerticalScrollIndicator={true}>
-                <Text style={styles.disclaimerText}>
-                  The following disclaimer outlines the terms of use for the
-                  Skilledman App, a platform designed to connect artisans and
-                  users. By accessing or using the Skilledman application, you
-                  agree to comply with the terms and conditions outlined below.
-                  {'\n\n'}
-                  The app serves as a medium for facilitating communication and
-                  transactions between artisans and users. We do not take
-                  responsibility for the quality, guarantee, pricing, delivery,
-                  or any other aspect of the products or services offered by
-                  artisans.
-                  {'\n\n'}
-                  Users are responsible for conducting their own due diligence
-                  before engaging in any business transactions. By using the
-                  Skilledman App, you acknowledge that you have read and
-                  understood this disclaimer.
-                </Text>
-              </ScrollView>
-
-              <View style={styles.modalBtnContainer}>
-                <BotonComp
-                  BtnStyle={styles.primaryModalBtn}
-                  btnTextStyle={styles.primaryModalBtnText}
-                  btnText="I Understand & Agree"
-                  onPressFunc={() => setModalVisible(false)}
-                />
-              </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={signinmodal}
-        onRequestClose={() => setsigninmodal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.formModalCard}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalIconWrapper}>
-                {Icons?.Feather && (
-                  <Icons.Feather name="user-check" size={26} color={color.defalt} />
-                )}
-              </View>
-              <Text style={styles.modalTitle}>Complete Provider Profile</Text>
-              <Text style={styles.modalSubheading}>
-                Set up your service details to receive client bookings
-              </Text>
-            </View>
-
-            <View style={styles.formModalBody}>
-              <ScrollView
-                style={styles.formScroll}
-                contentContainerStyle={styles.formScrollContent}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled">
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Trade Service</Text>
-                  <C_Dropdwn
-                    selectedValue={selectedBusiness}
-                    options={items}
-                    onValueChange={setSelectedBusiness}
-                  />
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Years of Experience</Text>
-                  <C_Dropdwn
-                    selectedValue={selectedExperience}
-                    options={experienceOptions}
-                    onValueChange={setSelectedExperience}
-                  />
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Certifications</Text>
-                  <TouchableOpacity activeOpacity={0.8} onPress={() => handlFilPik('Certificates')}>
-                    <UploadfilwIcon
-                      placeholder="Upload Certificates"
-                      icon="upload-cloud"
-                      title={certficate ? certficate.name : ''}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Job References</Text>
-                  <TouchableOpacity activeOpacity={0.8} onPress={() => handlFilPik('Job References')}>
-                    <UploadfilwIcon
-                      placeholder="Upload Job References"
-                      icon="file-text"
-                      title={jobReferences ? jobReferences.name : ''}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Guarantor Letter</Text>
-                  <TouchableOpacity activeOpacity={0.8} onPress={() => handlFilPik('Guarantor')}>
-                    <UploadfilwIcon
-                      placeholder="Upload Guarantor Document"
-                      icon="file"
-                      title={guarantor ? guarantor.name : ''}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Phone Number</Text>
-                  <C_TxtInput
-                    placeholder="e.g. 08012345678"
-                    placeholderTextColor="#94A3B8"
-                    onChangeText={setNumber}
-                    value={number}
-                    keyboardType="numeric"
-                  />
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Business Address</Text>
-                  <C_TxtInput
-                    placeholder="Enter full physical address"
-                    placeholderTextColor="#94A3B8"
-                    onChangeText={setAddress}
-                    value={address}
-                  />
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Country</Text>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    style={styles.selectTile}
-                    onPress={() => setCountryModalVisible(true)}>
-                    {selectedCountry ? (
-                      <View style={styles.tileSelectedRow}>
-                        <Image
-                          source={{
-                            uri: `https://flagcdn.com/w40/${selectedCountry.isoCode.toLowerCase()}.png`,
-                          }}
-                          style={styles.flagImageSmall}
-                        />
-                        <Text style={styles.selectTileText}>{selectedCountry.name}</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.selectTilePlaceholder}>Select Country</Text>
-                    )}
-                    <Icons.Feather name="chevron-down" size={18} color="#64748B" />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Trade Association (Optional)</Text>
-                  <C_TxtInput
-                    placeholder="e.g. Nigerian Artisan Association"
-                    placeholderTextColor="#94A3B8"
-                    onChangeText={setAssociation}
-                    value={association}
-                  />
-                </View>
-              </ScrollView>
-
-              <View style={styles.actionButtonGroup}>
-                <BotonComp
-                  BtnStyle={styles.saveSubmitBtn}
-                  btnTextStyle={styles.primaryModalBtnText}
-                  btnText={
-                    load ? <ActivityIndicator size="small" color="#FFFFFF" /> : 'Save Profile'
-                  }
-                  onPressFunc={handlADdetail}
-                />
-                <TouchableOpacity
+            <View style={styles.quickActionsContainer}>
+              <TouchableOpacity
                   activeOpacity={0.8}
-                  style={styles.outlineAddBankBtn}
+                  style={styles.actionPill}
                   onPress={handleNavigateToAddBank}>
-                  <Text style={styles.outlineAddBankText}>Add Bank</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
+                <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
+                  {Icons?.Feather && (
+                      <Icons.Feather name="credit-card" size={20} color={color.defalt} />
+                  )}
+                </View>
+                <Text style={styles.actionText}>Add Bank</Text>
+              </TouchableOpacity>
 
-      <Modal
-        visible={countryModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setCountryModalVisible(false)}>
-        <View style={styles.bottomSheetOverlay}>
-          <View style={styles.sheetContainer}>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Select Country</Text>
-              <TouchableOpacity onPress={() => setCountryModalVisible(false)}>
-                <Icons.Ionicons name="close-circle" size={24} color="#94A3B8" />
+              <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={styles.actionPill}
+                  onPress={() => navigation.navigate('Cash')}>
+                <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
+                  {Icons?.Feather && (
+                      <Icons.Feather name="dollar-sign" size={20} color={color.defalt} />
+                  )}
+                </View>
+                <Text style={styles.actionText}>Cash In</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={styles.actionPill}
+                  onPress={() => navigation.navigate('Balance')}>
+                <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
+                  {Icons?.Feather && (
+                      <Icons.Feather name="clock" size={20} color={color.defalt} />
+                  )}
+                </View>
+                <Text style={styles.actionText}>History</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={styles.actionPill}
+                  onPress={() => setsigninmodal(true)}>
+                <View style={[styles.actionIconCircle, { backgroundColor: '#F7ECE4' }]}>
+                  {Icons?.Feather && (
+                      <Icons.Feather name="edit-3" size={20} color={color.defalt} />
+                  )}
+                </View>
+                <Text style={styles.actionText}>Profile</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.searchBar}>
-              <Icons.Feather name="search" size={18} color="#94A3B8" />
-              <TextInput
-                placeholder="Search country..."
-                placeholderTextColor="#94A3B8"
-                style={styles.searchInput}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
+            <View style={styles.chartCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.headerTextGroup}>
+                  <Text style={styles.chartTitle}>Income Analytics</Text>
+                  <Text style={styles.chartSubtitle}>
+                    {chartPeriod === 'Weekly'
+                        ? 'Daily earnings for this week'
+                        : 'Monthly revenue overview'}
+                  </Text>
+                </View>
+
+                <View style={styles.periodSwitch}>
+                  {['Weekly', 'Monthly'].map(p => (
+                      <TouchableOpacity
+                          key={p}
+                          activeOpacity={0.7}
+                          onPress={() => setChartPeriod(p)}
+                          style={[
+                            styles.periodTab,
+                            chartPeriod === p && styles.periodTabActive,
+                          ]}>
+                        <Text
+                            style={[
+                              styles.periodTabText,
+                              chartPeriod === p && styles.periodTabTextActive,
+                            ]}>
+                          {p}
+                        </Text>
+                      </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <BarChart
+                  key={chartPeriod}
+                  data={chartDataSets[chartPeriod]}
+                  width={Math.min(width - 56, 540)}
+                  height={220}
+                  chartConfig={{
+                    backgroundColor: '#FFFFFF',
+                    backgroundGradientFrom: '#FFFFFF',
+                    backgroundGradientTo: '#FFFFFF',
+                    decimalPlaces: 0,
+                    barPercentage: chartPeriod === 'Weekly' ? 0.44 : 0.52,
+                    verticalLabelRotation: 0,
+                    backgroundGradientToOpacity: 0,
+                    showBarTops: false,
+                    fillShadowGradient: color.defalt,
+                    fillShadowGradientOpacity: 1,
+                    strokeWidth: 2,
+                    color: () => color.defalt,
+                    labelColor: () => '#94A3B8',
+                    propsForLabels: {
+                      fontSize: 12,
+                      fontWeight: '600',
+                    },
+                    propsForBackgroundLines: {
+                      strokeDasharray: '4',
+                      stroke: '#F1F5F9',
+                    },
+                  }}
+                  style={StyleSheet.flatten(styles.chartStyle)}
               />
             </View>
 
-            <FlatList
-              data={filteredCountries}
-              keyExtractor={item => item.isoCode}
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.optionRow}
-                  onPress={() => onCountrySelect(item)}>
-                  <View style={styles.dialOptionLeft}>
-                    <Image
-                      source={{
-                        uri: `https://flagcdn.com/w40/${item.isoCode.toLowerCase()}.png`,
-                      }}
-                      style={styles.flagImageOption}
-                    />
-                    <Text style={styles.optionText}>{item.name}</Text>
-                  </View>
-                  {selectedCountry?.isoCode === item.isoCode && (
-                    <Icons.Feather name="check" size={18} color={color.defalt} />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
+            <View style={styles.statusNoticeBanner}>
+              <View style={styles.noticeIconWrap}>
+                {Icons?.Feather && (
+                    <Icons.Feather name="shield" size={22} color={color.defalt} />
+                )}
+              </View>
+              <View style={styles.noticeTextCol}>
+                <Text style={styles.noticeTitle}>Account Verified</Text>
+                <Text style={styles.noticeSub}>Your provider profile is active and eligible for bookings.</Text>
+              </View>
+            </View>
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        </ScrollView>
+
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.disclaimerModalCard}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalIconWrapper}>
+                  {Icons?.Feather && (
+                      <Icons.Feather name="shield" size={26} color={color.defalt} />
+                  )}
+                </View>
+                <Text style={styles.modalTitle}>Disclaimer Notice</Text>
+                <Text style={styles.modalSubheading}>Please review before continuing</Text>
+              </View>
+
+              <View style={styles.disclaimerBody}>
+                <ScrollView
+                    style={styles.disclaimerScroll}
+                    contentContainerStyle={styles.disclaimerScrollContent}
+                    showsVerticalScrollIndicator={true}>
+                  <Text style={styles.disclaimerText}>
+                    The following disclaimer outlines the terms of use for the
+                    Skilledman App, a platform designed to connect artisans and
+                    users. By accessing or using the Skilledman application, you
+                    agree to comply with the terms and conditions outlined below.
+                    {'\n\n'}
+                    The app serves as a medium for facilitating communication and
+                    transactions between artisans and users. We do not take
+                    responsibility for the quality, guarantee, pricing, delivery,
+                    or any other aspect of the products or services offered by
+                    artisans.
+                    {'\n\n'}
+                    Users are responsible for conducting their own due diligence
+                    before engaging in any business transactions. By using the
+                    Skilledman App, you acknowledge that you have read and
+                    understood this disclaimer.
+                  </Text>
+                </ScrollView>
+
+                <View style={styles.modalBtnContainer}>
+                  <BotonComp
+                      BtnStyle={styles.primaryModalBtn}
+                      btnTextStyle={styles.primaryModalBtnText}
+                      btnText="I Understand & Agree"
+                      onPressFunc={() => setModalVisible(false)}
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={signinmodal}
+            onRequestClose={() => setsigninmodal(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.formModalCard}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalIconWrapper}>
+                  {Icons?.Feather && (
+                      <Icons.Feather name="user-check" size={26} color={color.defalt} />
+                  )}
+                </View>
+                <Text style={styles.modalTitle}>Complete Provider Profile</Text>
+                <Text style={styles.modalSubheading}>
+                  Set up your service details to receive client bookings
+                </Text>
+              </View>
+
+              <View style={styles.formModalBody}>
+                <ScrollView
+                    style={styles.formScroll}
+                    contentContainerStyle={styles.formScrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled">
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Trade Service</Text>
+                    <C_Dropdwn
+                        selectedValue={selectedBusiness}
+                        options={items}
+                        onValueChange={setSelectedBusiness}
+                    />
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Years of Experience</Text>
+                    <C_Dropdwn
+                        selectedValue={selectedExperience}
+                        options={experienceOptions}
+                        onValueChange={setSelectedExperience}
+                    />
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Certifications</Text>
+                    <TouchableOpacity activeOpacity={0.8} onPress={() => handlFilPik('Certificates')}>
+                      <UploadfilwIcon
+                          placeholder="Upload Certificates"
+                          icon="upload-cloud"
+                          title={certficate ? certficate.name : ''}
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Job References</Text>
+                    <TouchableOpacity activeOpacity={0.8} onPress={() => handlFilPik('Job References')}>
+                      <UploadfilwIcon
+                          placeholder="Upload Job References"
+                          icon="file-text"
+                          title={jobReferences ? jobReferences.name : ''}
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Guarantor Letter</Text>
+                    <TouchableOpacity activeOpacity={0.8} onPress={() => handlFilPik('Guarantor')}>
+                      <UploadfilwIcon
+                          placeholder="Upload Guarantor Document"
+                          icon="file"
+                          title={guarantor ? guarantor.name : ''}
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Phone Number</Text>
+                    <C_TxtInput
+                        placeholder="e.g. 08012345678"
+                        placeholderTextColor="#94A3B8"
+                        onChangeText={setNumber}
+                        value={number}
+                        keyboardType="numeric"
+                    />
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Business Address</Text>
+                    <C_TxtInput
+                        placeholder="Enter full physical address"
+                        placeholderTextColor="#94A3B8"
+                        onChangeText={setAddress}
+                        value={address}
+                    />
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Country</Text>
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        style={styles.selectTile}
+                        onPress={() => setCountryModalVisible(true)}>
+                      {selectedCountry ? (
+                          <View style={styles.tileSelectedRow}>
+                            <Image
+                                source={{
+                                  uri: `https://flagcdn.com/w40/${selectedCountry.isoCode.toLowerCase()}.png`,
+                                }}
+                                style={styles.flagImageSmall}
+                            />
+                            <Text style={styles.selectTileText}>{selectedCountry.name}</Text>
+                          </View>
+                      ) : (
+                          <Text style={styles.selectTilePlaceholder}>Select Country</Text>
+                      )}
+                      <Icons.Feather name="chevron-down" size={18} color="#64748B" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Trade Association (Optional)</Text>
+                    <C_TxtInput
+                        placeholder="e.g. Nigerian Artisan Association"
+                        placeholderTextColor="#94A3B8"
+                        onChangeText={setAssociation}
+                        value={association}
+                    />
+                  </View>
+                </ScrollView>
+
+                <View style={styles.actionButtonGroup}>
+                  <BotonComp
+                      BtnStyle={styles.saveSubmitBtn}
+                      btnTextStyle={styles.primaryModalBtnText}
+                      btnText={
+                        load ? <ActivityIndicator size="small" color="#FFFFFF" /> : 'Save Profile'
+                      }
+                      onPressFunc={handlADdetail}
+                  />
+                  <TouchableOpacity
+                      activeOpacity={0.8}
+                      style={styles.outlineAddBankBtn}
+                      onPress={handleNavigateToAddBank}>
+                    <Text style={styles.outlineAddBankText}>Add Bank</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+            visible={countryModalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setCountryModalVisible(false)}>
+          <View style={styles.bottomSheetOverlay}>
+            <View style={styles.sheetContainer}>
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitle}>Select Country</Text>
+                <TouchableOpacity onPress={() => setCountryModalVisible(false)}>
+                  <Icons.Ionicons name="close-circle" size={24} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.searchBar}>
+                <Icons.Feather name="search" size={18} color="#94A3B8" />
+                <TextInput
+                    placeholder="Search country..."
+                    placeholderTextColor="#94A3B8"
+                    style={styles.searchInput}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                />
+              </View>
+
+              <FlatList
+                  data={filteredCountries}
+                  keyExtractor={item => item.isoCode}
+                  keyboardShouldPersistTaps="handled"
+                  renderItem={({ item }) => (
+                      <TouchableOpacity
+                          style={styles.optionRow}
+                          onPress={() => onCountrySelect(item)}>
+                        <View style={styles.dialOptionLeft}>
+                          <Image
+                              source={{
+                                uri: `https://flagcdn.com/w40/${item.isoCode.toLowerCase()}.png`,
+                              }}
+                              style={styles.flagImageOption}
+                          />
+                          <Text style={styles.optionText}>{item.name}</Text>
+                        </View>
+                        {selectedCountry?.isoCode === item.isoCode && (
+                            <Icons.Feather name="check" size={18} color={color.defalt} />
+                        )}
+                      </TouchableOpacity>
+                  )}
+              />
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
   );
 };
 
@@ -663,14 +676,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EEF2F6',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)' }
-      : {
-        elevation: 2,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.03,
-        shadowRadius: 6,
-      }),
+        ? { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)' }
+        : {
+          elevation: 2,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.03,
+          shadowRadius: 6,
+        }),
   },
   actionIconCircle: {
     width: 42,
@@ -694,14 +707,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EEF2F6',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 8px 24px rgba(15, 23, 42, 0.04)' }
-      : {
-        elevation: 2,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.04,
-        shadowRadius: 12,
-      }),
+        ? { boxShadow: '0 8px 24px rgba(15, 23, 42, 0.04)' }
+        : {
+          elevation: 2,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.04,
+          shadowRadius: 12,
+        }),
   },
   cardHeader: {
     flexDirection: 'row',
@@ -764,14 +777,14 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: color.defalt,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 4px 14px rgba(15, 23, 42, 0.03)' }
-      : {
-        elevation: 2,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.03,
-        shadowRadius: 6,
-      }),
+        ? { boxShadow: '0 4px 14px rgba(15, 23, 42, 0.03)' }
+        : {
+          elevation: 2,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.03,
+          shadowRadius: 6,
+        }),
   },
   noticeIconWrap: {
     width: 44,
@@ -814,14 +827,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EEF2F6',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
-      : {
-        elevation: 8,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.18,
-        shadowRadius: 20,
-      }),
+        ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
+        : {
+          elevation: 8,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.18,
+          shadowRadius: 20,
+        }),
   },
   formModalCard: {
     borderRadius: 24,
@@ -833,14 +846,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EEF2F6',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
-      : {
-        elevation: 8,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.18,
-        shadowRadius: 20,
-      }),
+        ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
+        : {
+          elevation: 8,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.18,
+          shadowRadius: 20,
+        }),
   },
   modalHeader: {
     backgroundColor: '#FFFFFF',
@@ -922,14 +935,14 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderWidth: 0,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 4px 14px rgba(192, 122, 80, 0.25)' }
-      : {
-        elevation: 3,
-        shadowColor: color.defalt,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-      }),
+        ? { boxShadow: '0 4px 14px rgba(192, 122, 80, 0.25)' }
+        : {
+          elevation: 3,
+          shadowColor: color.defalt,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 8,
+        }),
   },
   primaryModalBtnText: {
     fontSize: 16,
@@ -1026,14 +1039,14 @@ const styles = StyleSheet.create({
     maxHeight: '75%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 24,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.15)' }
-      : {
-        elevation: 10,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-      }),
+        ? { boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.15)' }
+        : {
+          elevation: 10,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 16,
+        }),
   },
   sheetHeader: {
     flexDirection: 'row',

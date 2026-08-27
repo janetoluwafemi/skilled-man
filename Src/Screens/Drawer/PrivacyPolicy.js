@@ -5,20 +5,15 @@ import {
   View,
   ScrollView,
   Platform,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
 
-import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 
 const PrivacyPolicy = props => {
-  const insets = useSafeAreaInsets();
-  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 20 : 0) + 20;
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -30,15 +25,11 @@ const PrivacyPolicy = props => {
           style={styles.backArrowBtn}>
           <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
         style={styles.containerStyle}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: bottomPadding },
-        ]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
           <Text style={styles.welcomeTitle}>Privacy Policy</Text>
@@ -111,11 +102,10 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: '#F8FAFC',
   },
   backArrowBtn: {
@@ -142,23 +132,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 4,
   },
-  badgeRow: {
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  badgeCircle: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-  },
   welcomeTitle: {
     fontSize: 26,
     fontWeight: '800',
@@ -170,7 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
     marginTop: 4,
     lineHeight: 20,
     paddingHorizontal: 12,
@@ -178,13 +151,13 @@ const styles = StyleSheet.create({
   cardWrapper: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 20,
+    padding: 18,
     elevation: 2,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   lastUpdated: {
     fontSize: 12,

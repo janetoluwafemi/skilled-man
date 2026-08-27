@@ -57,7 +57,7 @@ const AllTabs = props => {
       if (result?.booking_request) {
         setData(result.booking_request);
       } else if (result?.error) {
-        showToast(result.error);
+        console.log(result.error);
       }
     } catch (error) {
       console.log('Error fetching provider status:', error);
@@ -86,7 +86,7 @@ const AllTabs = props => {
         showToast(result.success);
         getData();
       } else if (result?.error) {
-        showToast(result.error);
+        console.log(result.error);
       }
     } catch (error) {
       Alert.alert('Error', error?.message || 'An error occurred');

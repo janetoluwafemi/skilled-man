@@ -44,7 +44,7 @@ const Signin = () => {
   const [password, setPassword] = useState('');
   const [hide, setHide] = useState(true);
   const [load, setLoad] = useState(false);
-  const [selectedRole, setSelectedRole] = useState(0); // 0 = Customer, 1 = Provider
+  const [selectedRole, setSelectedRole] = useState(0);
 
   const [googleRequest, googleResponse, promptGoogle] =
     Google.useIdTokenAuthRequest({

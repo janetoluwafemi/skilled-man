@@ -62,7 +62,7 @@ const FindExpert = props => {
       if (result?.provider_location) {
         setLocations(result.provider_location);
       } else if (result?.error) {
-        showToast(result.error);
+        console.log(result.error);
       }
     } catch (error) {
       console.log('Error fetching locations:', error);

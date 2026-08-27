@@ -6,12 +6,11 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   StatusBar,
   Platform,
 } from 'react-native';
-import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,13 +20,12 @@ import { showToast } from '../../utilis/showToast';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 import BotonComp from '../../Components/BtnComp';
-import InputEdtProfil from '../../Components/InputEditProfile';
+import InputEditProfile from '../../Components/InputEditProfile';
 import { BASIC_URL } from '../Signin/Signin';
 
 const EditUserProfile = () => {
   const navigation = useNavigation();
   const focus = useIsFocused();
-  const insets = useSafeAreaInsets();
 
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -163,7 +161,7 @@ const EditUserProfile = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <View style={styles.headerBar}>
@@ -171,7 +169,7 @@ const EditUserProfile = () => {
           activeOpacity={0.7}
           onPress={() => navigation.goBack()}
           style={styles.backArrowBtn}>
-          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+          <Icons.Feather name="arrow-left" size={20} color="#0F172A" />
         </TouchableOpacity>
         <View style={{ width: 40 }} />
       </View>
@@ -180,10 +178,10 @@ const EditUserProfile = () => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
+        <Animatable.View animation="fadeInUp" duration={500} style={styles.formContainer}>
 
-          <View style={styles.badgeRow}>
-            <View style={styles.badgeCircle}>
+          <View style={styles.avatarSection}>
+            <View style={styles.avatarWrapper}>
               <Image
                 source={
                   image?.uri
@@ -194,23 +192,20 @@ const EditUserProfile = () => {
                 }
                 style={styles.profileImage}
               />
-              <TouchableOpacity activeOpacity={0.8} onPress={onGalry} style={styles.cameraButton}>
+              <TouchableOpacity activeOpacity={0.85} onPress={onGalry} style={styles.cameraButton}>
                 <Icons.Feather name="camera" color="#FFFFFF" size={14} />
               </TouchableOpacity>
             </View>
+            <Text style={styles.userNameHeader}>{name || 'User Profile'}</Text>
+            <Text style={styles.userEmailHeader}>{email || 'Manage Account'}</Text>
           </View>
-
-          <Text style={styles.welcomeTitle}>Edit Profile</Text>
-          <Text style={styles.welcomeSubtitle}>
-            Update your personal profile information and contact details.
-          </Text>
 
           <View style={styles.cardWrapper}>
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Full Name</Text>
-              <InputEdtProfil
+              <InputEditProfile
                 value={name}
-                placeholder="Name"
+                placeholder="Your full name"
                 placeholderTextColor="#94A3B8"
                 onChangeText={setName}
                 icon="user"
@@ -219,9 +214,9 @@ const EditUserProfile = () => {
 
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Email Address</Text>
-              <InputEdtProfil
+              <InputEditProfile
                 value={email}
-                placeholder="Email"
+                placeholder="Email address"
                 placeholderTextColor="#94A3B8"
                 editable={false}
                 icon="mail"
@@ -230,9 +225,9 @@ const EditUserProfile = () => {
 
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Phone Number</Text>
-              <InputEdtProfil
+              <InputEditProfile
                 value={phone}
-                placeholder="Phone Number"
+                placeholder="Phone number"
                 placeholderTextColor="#94A3B8"
                 onChangeText={setPhone}
                 keyboardType="numeric"
@@ -241,11 +236,11 @@ const EditUserProfile = () => {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Address</Text>
+              <Text style={styles.fieldLabel}>Home / Delivery Address</Text>
               <View style={styles.relativeBox}>
-                <InputEdtProfil
+                <InputEditProfile
                   value={address}
-                  placeholder="Address"
+                  placeholder="Street address or landmark"
                   placeholderTextColor="#94A3B8"
                   onChangeText={setAddress}
                   icon="map-pin"
@@ -262,11 +257,11 @@ const EditUserProfile = () => {
             </View>
 
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               style={styles.mapBtnStyle}
               onPress={() => navigation.navigate('Maplatln')}>
-              <Icons.Feather name="map" size={16} color={color.defalt} style={{ marginRight: 8 }} />
-              <Text style={styles.mapBtnText}>Select Location from Map</Text>
+              <Icons.Feather name="map-pin" size={16} color={color.defalt} style={{ marginRight: 8 }} />
+              <Text style={styles.mapBtnText}>Pin Address from Map</Text>
             </TouchableOpacity>
 
             <BotonComp
@@ -276,7 +271,7 @@ const EditUserProfile = () => {
                 load ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  'Update Profile'
+                  'Save Changes'
                 )
               }
             />
@@ -296,12 +291,17 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 4,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#F8FAFC',
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   backArrowBtn: {
     width: 40,
@@ -310,11 +310,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    elevation: 1,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+      },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 2px 6px rgba(15, 23, 42, 0.04)' },
+    }),
   },
   scrollContent: {
     flexGrow: 1,
@@ -322,82 +329,92 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     paddingHorizontal: 20,
-    paddingTop: 4,
+    paddingTop: 8,
   },
-  badgeRow: {
+  avatarSection: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 20,
   },
-  badgeCircle: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
+  avatarWrapper: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
     backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    padding: 3,
+    borderWidth: 1.5,
+    borderColor: '#EEF2F6',
     position: 'relative',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: { elevation: 3 },
+      web: { boxShadow: '0 4px 14px rgba(15, 23, 42, 0.08)' },
+    }),
   },
   profileImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: '100%',
+    height: '100%',
+    borderRadius: 40,
     backgroundColor: '#E2E8F0',
   },
   cameraButton: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
+    bottom: 0,
+    right: 0,
     backgroundColor: color.defalt,
-    borderRadius: 12,
-    width: 24,
-    height: 24,
+    borderRadius: 14,
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: '#FFFFFF',
-    elevation: 2,
+    elevation: 3,
   },
-  welcomeTitle: {
-    fontSize: 26,
+  userNameHeader: {
+    fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
-    textAlign: 'center',
-    letterSpacing: -0.3,
+    marginTop: 10,
+    letterSpacing: -0.2,
   },
-  welcomeSubtitle: {
-    fontSize: 14,
+  userEmailHeader: {
+    fontSize: 13,
     color: '#64748B',
-    textAlign: 'center',
-    marginBottom: 20,
-    marginTop: 4,
-    lineHeight: 20,
-    paddingHorizontal: 12,
+    marginTop: 2,
   },
   cardWrapper: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
-    elevation: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
+    borderRadius: 22,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+      },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)' },
+    }),
     marginBottom: 20,
   },
   fieldGroup: {
-    marginBottom: 14,
+    marginBottom: 16,
     width: '100%',
   },
   fieldLabel: {
     fontSize: 13,
     fontWeight: '600',
     color: '#334155',
-    marginBottom: 6,
+    marginBottom: 8,
+    letterSpacing: -0.2,
   },
   relativeBox: {
     position: 'relative',
@@ -405,7 +422,7 @@ const styles = StyleSheet.create({
   addressLoader: {
     position: 'absolute',
     right: 14,
-    top: 14,
+    top: 16,
   },
   mapBtnStyle: {
     flexDirection: 'row',
@@ -415,8 +432,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     borderRadius: 14,
-    paddingVertical: 12,
-    marginVertical: 8,
+    paddingVertical: 13,
+    marginTop: 4,
+    marginBottom: 16,
     width: '100%',
   },
   mapBtnText: {
@@ -428,12 +446,16 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: color.defalt,
     borderRadius: 14,
-    paddingVertical: 14,
-    marginTop: 10,
-    elevation: 3,
-    shadowColor: color.defalt,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
+    paddingVertical: 15,
+    ...Platform.select({
+      ios: {
+        shadowColor: color.defalt,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+      },
+      android: { elevation: 3 },
+      web: { boxShadow: '0 4px 14px rgba(186, 104, 56, 0.25)' },
+    }),
   },
 });

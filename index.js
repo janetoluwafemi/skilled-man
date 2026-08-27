@@ -2,7 +2,6 @@ import { registerRootComponent } from 'expo';
 import { Platform } from 'react-native';
 import App from './App';
 
-// Inject full viewport height styling for web browsers to prevent flex collapse
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.textContent = `
