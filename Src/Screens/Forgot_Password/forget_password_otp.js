@@ -5,12 +5,12 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 
@@ -135,7 +135,7 @@ const ForgotPasswordOtpScreen = props => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" translucent={false} />
 
       <View style={styles.headerBar}>
         <TouchableOpacity
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   headerBar: {
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 4,
+    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
