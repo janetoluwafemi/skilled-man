@@ -56,7 +56,7 @@ const ChatScreen = props => {
     if (isRefresh) setRefreshing(true);
     try {
       const formdata = new FormData();
-      formdata.append('own_id', global.id);
+      formdata.append('own_id', String(global?.id || '256'));
 
       const response = await fetch(`${BASIC_URL}get_all_chats.php`, {
         method: 'POST',
@@ -65,7 +65,7 @@ const ChatScreen = props => {
 
       const result = await response.json();
       if (result?.chat) {
-        setALlChat(result.chat);
+        setALlChat(Array.isArray(result.chat) ? result.chat : []);
       }
     } catch (error) {
       console.log('Error fetching chat list:', error);
@@ -207,7 +207,10 @@ const ChatScreen = props => {
             <View style={styles.chatCardWrap}>
               <ProflCrd
                 showProfile={() =>
-                  navigation.navigate('IndividualChat', { currentuser: item })
+                  navigation.navigate('IndividualChat', {
+                    currentuser: item,
+                    receiver_id: item?.id || item?.provider_id || item?.user_id,
+                  })
                 }
                 profile={item.image}
                 cardTitle={item.name}

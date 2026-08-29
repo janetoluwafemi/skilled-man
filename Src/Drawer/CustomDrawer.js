@@ -53,7 +53,7 @@ const CustomDrawer = () => {
     }
   };
 
-  const isArtisanRole = global.role === 0 || global.role === '0';
+  const isUserRole = global.role === 0 || global.role === '0';
 
   const containerStyle = StyleSheet.flatten([
     styles.linearGradientStyle,
@@ -76,7 +76,9 @@ const CustomDrawer = () => {
           <DrarUsr />
           <View style={styles.menuContainer}>
             <DrarCstmBtn
-                DrawerBtnPress={() => navigation.navigate('Dashboard')}
+                DrawerBtnPress={() =>
+                    navigation.navigate(isUserRole ? 'UserDashboard' : 'Dashboard')
+                }
                 title="Dashboard"
                 drawerIcon="th-large"
             />
@@ -103,7 +105,7 @@ const CustomDrawer = () => {
 
             <DrarCstmBtn
                 DrawerBtnPress={() =>
-                    navigation.navigate(isArtisanRole ? 'HistoryScreen' : 'UserHistory')
+                    navigation.navigate(isUserRole ? 'UserHistory' : 'HistoryScreen')
                 }
                 title="History"
                 drawerIcon="history"

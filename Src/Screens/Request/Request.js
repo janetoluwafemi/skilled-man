@@ -136,6 +136,7 @@ const RequestScreen = () => {
         onPressnotification={() => navigation.navigate('edit_profile')}
         onChangeText={val => setSearchTerm(val)}
         value={searchTerm}
+        headerTitle="Booking Requests"
       />
 
       {booklist.length > 0 && (

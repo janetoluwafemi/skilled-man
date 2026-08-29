@@ -53,11 +53,12 @@ const SignIn = () => {
       scopes: ['profile', 'email'],
     });
 
-  const navigateToRoot = () => {
+  const navigateToRoot = roleValue => {
+    const isUser = roleValue === 0 || String(roleValue) === '0';
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{ name: 'Parent' }],
+        routes: [{ name: isUser ? 'UserDashboard' : 'Dashboard' }],
       })
     );
   };
@@ -106,7 +107,7 @@ const SignIn = () => {
             });
           }
 
-          navigateToRoot();
+          navigateToRoot(roleString);
         } else {
           showToast(result?.error || 'Google Login Failed');
         }
@@ -181,7 +182,7 @@ const SignIn = () => {
           });
         }
 
-        navigateToRoot();
+        navigateToRoot(roleString);
       } else {
         showToast(
           result?.error || result?.status || 'Invalid credentials, please try again'
@@ -602,5 +603,6 @@ const styles = StyleSheet.create({
   footerLink: {
     color: color.defalt,
     fontSize: 14,
+    fontWeight: '700',
   },
 });

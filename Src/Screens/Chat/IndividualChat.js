@@ -41,7 +41,7 @@ import ChatUsrHeader from '../../Components/ChatUserHeader';
 import { BASIC_URL } from '../Signin/Signin';
 import { db, storage } from '../../../firebase-config';
 
-const NewMessage = ({ userId, providerId }) => {
+const NewMessage = ({ userId, providerId, peerData }) => {
   const [messages, setMessages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
@@ -77,35 +77,34 @@ const NewMessage = ({ userId, providerId }) => {
     if (!cleanUserId || !cleanProviderId) return;
 
     const messagesQuery = query(
-        collection(db, 'chats', chatId, 'messages'),
-        orderBy('createdAt', 'desc')
+      collection(db, 'chats', chatId, 'messages'),
+      orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(
-        messagesQuery,
-        snapshot => {
-          if (!snapshot || snapshot.empty) return;
+      messagesQuery,
+      snapshot => {
+        if (!snapshot || snapshot.empty) return;
 
-          const loadedMessages = snapshot.docs.map(docSnap => {
-            const data = docSnap.data();
-            return {
-              _id: String(data._id || docSnap.id),
-              text: data.text || '',
-              createdAt: parseTimestamp(data.createdAt),
-              user: {
-                _id: String(data.senderId || data.user?._id || cleanUserId),
-                name: data.user?.name || '',
-              },
-              image: data.image || '',
-            };
-          });
+        const loadedMessages = snapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          return {
+            _id: String(data._id || docSnap.id),
+            text: data.text || '',
+            createdAt: parseTimestamp(data.createdAt),
+            user: {
+              _id: String(data.senderId || data.user?._id || cleanUserId),
+              name: data.user?.name || '',
+            },
+            image: data.image || '',
+          };
+        });
 
-          // WhatsApp behavior: authoritative persistence from Firestore
-          setMessages(loadedMessages);
-        },
-        error => {
-          console.error('Firestore listener error:', error);
-        }
+        setMessages(loadedMessages);
+      },
+      error => {
+        console.error('Firestore listener error:', error);
+      }
     );
 
     return () => unsubscribe();
@@ -151,20 +150,18 @@ const NewMessage = ({ userId, providerId }) => {
         image: msg.image || '',
       };
 
-      // 1. Instant local render
       setMessages(prev => GiftedChat.append(prev, [formattedMsg]));
 
-      // 2. Permanent cloud save
       const chatRef = doc(db, 'chats', chatId);
 
       await setDoc(
-          chatRef,
-          {
-            participants: [cleanUserId, peerId],
-            lastMessage: formattedMsg.text || 'Image',
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
+        chatRef,
+        {
+          participants: [cleanUserId, peerId],
+          lastMessage: formattedMsg.text || 'Image',
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
       );
 
       await setDoc(doc(chatRef, 'messages', messageId), {
@@ -172,11 +169,9 @@ const NewMessage = ({ userId, providerId }) => {
         createdAt: serverTimestamp(),
       });
 
-      // 3. Trigger backend push APIs
       triggerParallelAPIs(formattedMsg.text);
     } catch (error) {
       console.error('Send error:', error);
-      Alert.alert('Error', 'Message failed to save.');
     }
   };
 
@@ -189,7 +184,7 @@ const NewMessage = ({ userId, providerId }) => {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 0.8,
       });
 
@@ -219,8 +214,19 @@ const NewMessage = ({ userId, providerId }) => {
         setMessages(prev => GiftedChat.append(prev, [imgMessage]));
 
         const chatRef = doc(db, 'chats', chatId);
-        await setDoc(chatRef, { participants: [cleanUserId, peerId], lastMessage: '📷 Photo', updatedAt: serverTimestamp() }, { merge: true });
-        await setDoc(doc(chatRef, 'messages', imgMessageId), { ...imgMessage, createdAt: serverTimestamp() });
+        await setDoc(
+          chatRef,
+          {
+            participants: [cleanUserId, peerId],
+            lastMessage: '📷 Photo',
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+        await setDoc(doc(chatRef, 'messages', imgMessageId), {
+          ...imgMessage,
+          createdAt: serverTimestamp(),
+        });
         triggerParallelAPIs('');
       }
     } catch (err) {
@@ -230,93 +236,109 @@ const NewMessage = ({ userId, providerId }) => {
   };
 
   return (
-      <View style={styles.chatWrapper}>
-        <Modal
-            visible={imageModalVisible}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setImageModalVisible(false)}>
-          <Pressable style={styles.modalContainer} onPress={() => setImageModalVisible(false)}>
-            <Image source={{ uri: selectedImage }} style={styles.fullImage} resizeMode="contain" />
-          </Pressable>
-        </Modal>
+    <View style={styles.chatWrapper}>
+      <Modal
+        visible={imageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImageModalVisible(false)}>
+        <Pressable
+          style={styles.modalContainer}
+          onPress={() => setImageModalVisible(false)}>
+          <Image
+            source={{ uri: selectedImage }}
+            style={styles.fullImage}
+            resizeMode="contain"
+          />
+        </Pressable>
+      </Modal>
 
-        <GiftedChat
-            messages={messages}
-            onSend={messagesList => onSend(messagesList)}
-            user={{ _id: cleanUserId }}
-            alwaysShowSend
-            renderMessageImage={props => {
-              const { currentMessage } = props;
-              if (!currentMessage?.image) return null;
-              return (
-                  <TouchableOpacity
-                      activeOpacity={0.9}
-                      onPress={() => {
-                        setSelectedImage(currentMessage.image);
-                        setImageModalVisible(true);
-                      }}>
-                    <Image source={{ uri: currentMessage.image }} style={styles.chatMsgImage} />
-                  </TouchableOpacity>
-              );
-            }}
-            renderSend={props => (
-                <View style={styles.sendContainer}>
-                  {!uploading && (
-                      <TouchableOpacity style={styles.cameraIconBtn} onPress={openCamera} activeOpacity={0.7}>
-                        <Icons.Feather name="camera" size={20} color={color.defalt} />
-                      </TouchableOpacity>
-                  )}
+      <GiftedChat
+        messages={messages}
+        onSend={messagesList => onSend(messagesList)}
+        user={{ _id: cleanUserId }}
+        alwaysShowSend
+        renderMessageImage={props => {
+          const { currentMessage } = props;
+          if (!currentMessage?.image) return null;
+          return (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => {
+                setSelectedImage(currentMessage.image);
+                setImageModalVisible(true);
+              }}>
+              <Image
+                source={{ uri: currentMessage.image }}
+                style={styles.chatMsgImage}
+              />
+            </TouchableOpacity>
+          );
+        }}
+        renderSend={props => (
+          <View style={styles.sendContainer}>
+            {!uploading && (
+              <TouchableOpacity
+                style={styles.cameraIconBtn}
+                onPress={openCamera}
+                activeOpacity={0.7}>
+                <Icons.Feather name="camera" size={20} color={color.defalt} />
+              </TouchableOpacity>
+            )}
 
-                  {uploading ? (
-                      <ActivityIndicator size="small" color={color.defalt} style={{ marginRight: 8 }} />
-                  ) : (
-                      <Send {...props} containerStyle={styles.sendComponentWrapper}>
-                        <View style={styles.sendButton}>
-                          <Icons.Feather name="send" size={16} color="#FFFFFF" />
-                        </View>
-                      </Send>
-                  )}
+            {uploading ? (
+              <ActivityIndicator
+                size="small"
+                color={color.defalt}
+                style={{ marginRight: 8 }}
+              />
+            ) : (
+              <Send {...props} containerStyle={styles.sendComponentWrapper}>
+                <View style={styles.sendButton}>
+                  <Icons.Feather name="send" size={16} color="#FFFFFF" />
                 </View>
+              </Send>
             )}
-            renderInputToolbar={props => (
-                <InputToolbar
-                    {...props}
-                    containerStyle={styles.inputToolbar}
-                    primaryStyle={styles.inputToolbarPrimary}
-                />
-            )}
-            renderComposer={props => (
-                <Composer
-                    {...props}
-                    placeholder="Type a message..."
-                    placeholderTextColor="#94A3B8"
-                    textInputStyle={styles.composerInput}
-                />
-            )}
-            renderBubble={props => (
-                <Bubble
-                    {...props}
-                    wrapperStyle={{
-                      left: {
-                        backgroundColor: '#FFFFFF',
-                        borderRadius: 18,
-                        padding: 4,
-                      },
-                      right: {
-                        backgroundColor: color.defalt,
-                        borderRadius: 18,
-                        padding: 4,
-                      },
-                    }}
-                    textStyle={{
-                      left: { color: '#0F172A', fontSize: 14 },
-                      right: { color: '#FFFFFF', fontSize: 14 },
-                    }}
-                />
-            )}
-        />
-      </View>
+          </View>
+        )}
+        renderInputToolbar={props => (
+          <InputToolbar
+            {...props}
+            containerStyle={styles.inputToolbar}
+            primaryStyle={styles.inputToolbarPrimary}
+          />
+        )}
+        renderComposer={props => (
+          <Composer
+            {...props}
+            placeholder="Type a message..."
+            placeholderTextColor="#94A3B8"
+            textInputStyle={styles.composerInput}
+          />
+        )}
+        renderBubble={props => (
+          <Bubble
+            {...props}
+            wrapperStyle={{
+              left: {
+                backgroundColor: '#FFFFFF',
+                borderRadius: 18,
+                padding: 4,
+              },
+              right: {
+                backgroundColor: color.defalt,
+                borderRadius: 18,
+                padding: 4,
+              },
+            }}
+            textStyle={{
+              left: { color: '#0F172A', fontSize: 14 },
+              right: { color: '#FFFFFF', fontSize: 14 },
+            }}
+          />
+        )}
+      />
+    </View>
   );
 };
 
@@ -325,35 +347,18 @@ const IndividualChat = () => {
   const route = useRoute();
   const currentprovider = route.params?.currentuser;
 
-  const [resolvedUserId, setResolvedUserId] = useState(String(global?.id ?? '').trim());
-  const peerId = currentprovider?.id ? String(currentprovider.id).trim() : '';
+  // Resolve peer ID across all naming conventions: id, provider_id, or user_id
+  const peerId = String(
+    route.params?.receiver_id ||
+    currentprovider?.id ||
+    currentprovider?.provider_id ||
+    currentprovider?.user_id ||
+    ''
+  ).trim();
 
-  const [providerDetails, setProviderDetails] = useState([]);
-  const focus = useIsFocused();
-
-  const getData = useCallback(async () => {
-    if (!currentprovider?.id) return;
-    try {
-      const formdata = new FormData();
-      formdata.append('provider_id', currentprovider.id);
-      const response = await fetch(`${BASIC_URL}user/get_providers_detail.php`, {
-        method: 'POST',
-        body: formdata,
-      });
-      const result = await response.json();
-      if (result?.add_skills) {
-        setProviderDetails(result.add_skills);
-      }
-    } catch (error) {
-      console.log('Error fetching provider details:', error);
-    }
-  }, [currentprovider?.id]);
-
-  useEffect(() => {
-    if (focus) {
-      getData();
-    }
-  }, [focus, getData]);
+  const [resolvedUserId, setResolvedUserId] = useState(
+    String(global?.id ?? '').trim()
+  );
 
   useEffect(() => {
     const resolveUser = async () => {
@@ -364,22 +369,17 @@ const IndividualChat = () => {
         }
         const rawUser = await AsyncStorage.getItem('user');
         if (rawUser) {
-          try {
-            const parsed = JSON.parse(rawUser);
-            const possibleId = parsed?.id ?? parsed?.userId ?? parsed?.user_id;
-            if (possibleId) {
-              setResolvedUserId(String(possibleId).trim());
-              return;
-            }
-          } catch {
-            setResolvedUserId(String(rawUser).trim());
+          const parsed = JSON.parse(rawUser);
+          const possibleId =
+            parsed?.id ?? parsed?.userId ?? parsed?.user_id;
+          if (possibleId) {
+            setResolvedUserId(String(possibleId).trim());
             return;
           }
         }
-        setResolvedUserId('255');
+        setResolvedUserId('256');
       } catch (e) {
-        console.log('Error reading user from storage:', e);
-        setResolvedUserId('255');
+        setResolvedUserId('256');
       }
     };
 
@@ -387,36 +387,35 @@ const IndividualChat = () => {
   }, []);
 
   return (
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-        <ChatUsrHeader
-            recieverdata={currentprovider}
-            onPress={() => navigation.goBack()}
-            titleText={currentprovider?.name || 'Chat'}
-            backIcon="arrow-left"
-            dollarIcon="file-invoice-dollar"
-            phoneIcon="phone"
-            searchIcon="ellipsis-v"
-            navigation={navigation}
-            onProfilePress={() => {
-              if (global.role === '1' && providerDetails[0]) {
-                navigation.navigate('ExpertDetail', { item: providerDetails[0] });
-              }
-            }}
-        />
-        <View style={styles.chatViewContainer}>
-          {resolvedUserId && peerId ? (
-              <NewMessage userId={resolvedUserId} providerId={peerId} />
-          ) : (
-              <View style={styles.missingUserBox}>
-                <Icons.Feather name="user-x" size={40} color="#CBD5E1" />
-                <Text style={styles.missingUserText}>
-                  Missing user information. Please log in again.
-                </Text>
-              </View>
-          )}
-        </View>
-      </SafeAreaView>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <ChatUsrHeader
+        recieverdata={currentprovider}
+        onPress={() => navigation.goBack()}
+        titleText={currentprovider?.name || 'Chat'}
+        backIcon="arrow-left"
+        dollarIcon="file-invoice-dollar"
+        phoneIcon="phone"
+        searchIcon="ellipsis-v"
+        navigation={navigation}
+      />
+      <View style={styles.chatViewContainer}>
+        {resolvedUserId && peerId ? (
+          <NewMessage
+            userId={resolvedUserId}
+            providerId={peerId}
+            peerData={currentprovider}
+          />
+        ) : (
+          <View style={styles.missingUserBox}>
+            <Icons.Feather name="user-x" size={40} color="#CBD5E1" />
+            <Text style={styles.missingUserText}>
+              Connecting to conversation...
+            </Text>
+          </View>
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 

@@ -7,10 +7,10 @@ import {
   Alert,
   FlatList,
   Modal,
-  SafeAreaView,
   StatusBar,
   Share,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { showToast } from '../../utilis/showToast';
 
@@ -57,15 +57,15 @@ const BookingScreen = () => {
       };
 
       const response = await fetch(
-        `${BASIC_URL}user/request_booking_service.php`,
-        requestOptions
+          `${BASIC_URL}user/request_booking_service.php`,
+          requestOptions
       );
       const result = await response.json();
 
       if (result.booking_request) {
         const uniqueBookings = result.booking_request.filter(
-          (item, index, self) =>
-            index === self.findIndex((b) => b.booking_id === item.booking_id)
+            (item, index, self) =>
+                index === self.findIndex((b) => b.booking_id === item.booking_id)
         );
         setBookData(uniqueBookings);
       }
@@ -137,152 +137,152 @@ const BookingScreen = () => {
 
   const renderStarPicker = () => {
     return (
-      <View style={styles.starRow}>
-        {[1, 2, 3, 4, 5].map((starIndex) => (
-          <TouchableOpacity
-            key={starIndex}
-            onPress={() => setRating(starIndex)}
-            style={styles.starTouch}>
-            <Icons.FontAwesome
-              name={starIndex <= rating ? 'star' : 'star-o'}
-              size={32}
-              color={starIndex <= rating ? '#F59E0B' : '#CBD5E1'}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
+        <View style={styles.starRow}>
+          {[1, 2, 3, 4, 5].map((starIndex) => (
+              <TouchableOpacity
+                  key={starIndex}
+                  onPress={() => setRating(starIndex)}
+                  style={styles.starTouch}>
+                <Icons.FontAwesome
+                    name={starIndex <= rating ? 'star' : 'star-o'}
+                    size={32}
+                    color={starIndex <= rating ? '#F59E0B' : '#CBD5E1'}
+                />
+              </TouchableOpacity>
+          ))}
+        </View>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={submitReviewVisible}
-        onRequestClose={() => setSubmitReviewVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Your Opinion Matters</Text>
-              <TouchableOpacity
-                style={styles.cancelCont}
-                onPress={toggleSubmitReview}>
-                <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
-              </TouchableOpacity>
-            </View>
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={submitReviewVisible}
+            onRequestClose={() => setSubmitReviewVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalView}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Your Opinion Matters</Text>
+                <TouchableOpacity
+                    style={styles.cancelCont}
+                    onPress={toggleSubmitReview}>
+                  <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.modalBody}>
-              {renderStarPicker()}
+              <View style={styles.modalBody}>
+                {renderStarPicker()}
 
-              <C_TxtInput
-                styles={{ fontWeight: '400', width: '100%' }}
-                numberOfLines={4}
-                multiline={true}
-                placeholder="Give your feedback"
-                placeholderTextColor="#94A3B8"
-                onChangeText={(val) => setFeedback(val)}
-              />
+                <C_TxtInput
+                    styles={{ fontWeight: '400', width: '100%' }}
+                    numberOfLines={4}
+                    multiline={true}
+                    placeholder="Give your feedback"
+                    placeholderTextColor="#94A3B8"
+                    onChangeText={(val) => setFeedback(val)}
+                />
 
-              <BotonComp
-                onPressFunc={() => {
-                  sendRating();
-                  setSubmitReviewVisible(false);
-                }}
-                BtnStyle={styles.submitBtn}
-                btnText="Submit Review"
-              />
+                <BotonComp
+                    onPressFunc={() => {
+                      sendRating();
+                      setSubmitReviewVisible(false);
+                    }}
+                    BtnStyle={styles.submitBtn}
+                    btnText="Submit Review"
+                />
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={reviewVisible}
-        onRequestClose={() => setReviewVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Options</Text>
-              <TouchableOpacity
-                style={styles.cancelCont}
-                onPress={() => setReviewVisible(false)}>
-                <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
-              </TouchableOpacity>
-            </View>
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={reviewVisible}
+            onRequestClose={() => setReviewVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalView}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Options</Text>
+                <TouchableOpacity
+                    style={styles.cancelCont}
+                    onPress={() => setReviewVisible(false)}>
+                  <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.modalBody}>
-              <TouchableOpacity style={styles.attachCont}>
-                <Icons.Feather
-                  name="alert-circle"
-                  size={20}
-                  style={styles.attachIcon}
-                  color="#EF4444"
-                />
-                <Text style={[styles.labelStyle, { color: '#EF4444' }]}>Report</Text>
-              </TouchableOpacity>
+              <View style={styles.modalBody}>
+                <TouchableOpacity style={styles.attachCont}>
+                  <Icons.Feather
+                      name="alert-circle"
+                      size={20}
+                      style={styles.attachIcon}
+                      color="#EF4444"
+                  />
+                  <Text style={[styles.labelStyle, { color: '#EF4444' }]}>Report</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={toggleSubmitReview}
-                style={styles.attachCont}>
-                <Icons.Feather
-                  name="edit-3"
-                  size={20}
-                  style={styles.attachIcon}
-                  color={color.defalt}
-                />
-                <Text style={styles.labelStyle}>Write Review</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={toggleSubmitReview}
+                    style={styles.attachCont}>
+                  <Icons.Feather
+                      name="edit-3"
+                      size={20}
+                      style={styles.attachIcon}
+                      color={color.defalt}
+                  />
+                  <Text style={styles.labelStyle}>Write Review</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity onPress={handleShare} style={styles.attachCont}>
-                <Icons.Feather
-                  name="share-2"
-                  size={20}
-                  style={styles.attachIcon}
-                  color={color.defalt}
-                />
-                <Text style={styles.labelStyle}>Share Details</Text>
-              </TouchableOpacity>
+                <TouchableOpacity onPress={handleShare} style={styles.attachCont}>
+                  <Icons.Feather
+                      name="share-2"
+                      size={20}
+                      style={styles.attachIcon}
+                      color={color.defalt}
+                  />
+                  <Text style={styles.labelStyle}>Share Details</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      <DrarTitlProfilHeader
-        screenTitle="Booked Services"
-        onPress={() => navigation.openDrawer()}
-        userProfile={() => navigation.navigate('editUserProfile')}
-        imgUrl={require('../../Assets/Images/user.jpg')}
-      />
+        <DrarTitlProfilHeader
+            screenTitle="Booked Services"
+            onPress={() => navigation.openDrawer()}
+            userProfile={() => navigation.navigate('editUserProfile')}
+            imgUrl={require('../../Assets/Images/user.jpg')}
+        />
 
-      <FlatList
-        data={bookData}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={(item, index) =>
-          item.booking_id ? item.booking_id.toString() : index.toString()
-        }
-        renderItem={({ item }) => (
-          <BookingCrd
-            cardTitle={item.name}
-            bookingId={`Booking ID - ${item.booking_id}`}
-            expertise={`Expert ${item.service}`}
-            status={item.status}
-            paidTitle={item.service_date}
-            dateCont={styles.dateCont}
-            filepress={item.file}
-            toggleReviewModal={() => {
-              openReviewOptions(item.booking_id, item.provider_id);
-              setDetails(`Booking ID: ${item.booking_id}\nService: ${item.service}\nProvider: ${item.name}`);
-            }}
-          />
-        )}
-      />
-    </SafeAreaView>
+        <FlatList
+            data={bookData}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item, index) =>
+                `booking_${item?.booking_id || index}_${index}`
+            }
+            renderItem={({ item }) => (
+                <BookingCrd
+                    cardTitle={item.name}
+                    bookingId={`Booking ID - ${item.booking_id}`}
+                    expertise={`Expert ${item.service}`}
+                    status={item.status}
+                    paidTitle={item.service_date}
+                    dateCont={styles.dateCont}
+                    filepress={item.file}
+                    toggleReviewModal={() => {
+                      openReviewOptions(item.booking_id, item.provider_id);
+                      setDetails(`Booking ID: ${item.booking_id}\nService: ${item.service}\nProvider: ${item.name}`);
+                    }}
+                />
+            )}
+        />
+      </SafeAreaView>
   );
 };
 

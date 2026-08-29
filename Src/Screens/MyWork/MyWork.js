@@ -18,6 +18,7 @@ const MyWork = () => {
         onPressnotification={() => navigation.navigate('edit_profile')}
         onChangeText={val => setSearchTerm(val)}
         value={searchTerm}
+        headerTitle="Lists Of Jobs"
       />
       <View style={styles.tabWrapper}>
         <MyWrkTab value={searchTerm} />

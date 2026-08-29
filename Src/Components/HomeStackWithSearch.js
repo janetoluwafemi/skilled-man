@@ -18,11 +18,12 @@ import SarchInpt from './SearchInput';
 import { BASIC_URL } from '../Screens/Signin/Signin';
 
 const HomeStackWithSearch = ({
-                         onPress,
-                         onPressnotification,
-                         onChangeText,
-                         value,
-                       }) => {
+                               onPress,
+                               onPressnotification,
+                               onChangeText,
+                               value,
+                               headerTitle = 'Dashboard',
+                             }) => {
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
   const [profileData, setProfileData] = useState(null);
@@ -98,9 +99,8 @@ const HomeStackWithSearch = ({
       </View>
 
       <View style={styles.greetingContainer}>
-        <Text style={styles.welcomeSubText}>Welcome back,</Text>
         <Text style={styles.userNameText} numberOfLines={1}>
-          {profileData?.name ? `Hi, ${profileData.name}` : 'Hi, User'}
+          {headerTitle}
         </Text>
       </View>
 
@@ -158,11 +158,6 @@ const styles = StyleSheet.create({
   greetingContainer: {
     marginTop: 12,
     marginBottom: 14,
-  },
-  welcomeSubText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.78)',
   },
   userNameText: {
     fontSize: 20,

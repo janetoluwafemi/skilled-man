@@ -31,7 +31,11 @@ const NotificationScreen = props => {
   const fetchNotifications = useCallback(async () => {
     try {
       const formdata = new FormData();
-      formdata.append('own_id', global.id);
+      formdata.append('own_id', String(global?.id || '256'));
+      // Default integration of required params from API contract
+      formdata.append('only_unread', '0'); // set '1' to fetch only unread if you add a toggle
+      formdata.append('limit', '50');
+      formdata.append('offset', '0');
 
       const response = await fetch(
         `${BASIC_URL}firebase/get_notifications.php`,
@@ -44,7 +48,20 @@ const NotificationScreen = props => {
       const jsonData = await response.json();
 
       if (jsonData?.success) {
-        setNotifications(jsonData.notifications || []);
+        const list = Array.isArray(jsonData.notifications) ? jsonData.notifications : [];
+        setNotifications(list);
+
+        // Compute unread count for potential badge counters
+        try {
+          const unread = list.reduce((acc, n) => {
+            const isUnread =
+              String(n?.is_read ?? n?.read_status ?? '0') === '0';
+            return acc + (isUnread ? 1 : 0);
+          }, 0);
+          global.unreadnotification = unread;
+        } catch (e) {
+          // ignore counter calculation errors
+        }
       }
     } catch (error) {
       console.log('Error fetching notifications:', error);

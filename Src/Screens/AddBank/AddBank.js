@@ -5,7 +5,6 @@ import {
   View,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   Platform,
@@ -13,6 +12,7 @@ import {
   TextInput,
   FlatList,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';
@@ -169,10 +169,10 @@ const AddBank = props => {
 
       if (result && (result.status === true || result.account_name || result.data?.account_name)) {
         const resolvedName =
-          result.account_name ||
-          result.data?.account_name ||
-          result.accountName ||
-          'Verified Account';
+            result.account_name ||
+            result.data?.account_name ||
+            result.accountName ||
+            'Verified Account';
         currentFields[index].accountName = resolvedName;
         currentFields[index].isVerified = true;
         currentFields[index].error = '';
@@ -230,21 +230,21 @@ const AddBank = props => {
 
     if (updatedFields[activeCardIndex].accountNumber.length === 10) {
       verifyBankAccount(
-        updatedFields[activeCardIndex].accountNumber,
-        bankItem.code,
-        activeCardIndex
+          updatedFields[activeCardIndex].accountNumber,
+          bankItem.code,
+          activeCardIndex
       );
     }
   };
 
   const filteredBanks = ALL_BANKS.filter(b =>
-    b.name.toLowerCase().includes(searchBankQuery.toLowerCase())
+      b.name.toLowerCase().includes(searchBankQuery.toLowerCase())
   );
 
   const addBankDetails = async () => {
     const isAnyBankEmpty = inputFields.some(field => !field.bank.trim());
     const isAnyAccountNumberEmpty = inputFields.some(
-      field => !field.accountNumber.trim()
+        field => !field.accountNumber.trim()
     );
 
     if (isAnyBankEmpty || isAnyAccountNumberEmpty) {
@@ -253,7 +253,7 @@ const AddBank = props => {
     }
 
     const invalidAccountNumber = inputFields.find(
-      field => field.accountNumber.length !== 10
+        field => field.accountNumber.length !== 10
     );
 
     if (invalidAccountNumber) {
@@ -298,177 +298,178 @@ const AddBank = props => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <View style={styles.headerBar}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => props.navigation.goBack()}
-          style={styles.backArrowBtn}>
-          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-        <Animatable.View
-          animation="fadeInUp"
-          duration={600}
-          style={styles.formContainer}>
-          <View style={styles.badgeRow}>
-            <View style={styles.badgeCircle}>
-              <Icons.Ionicons
-                name="card-outline"
-                size={34}
-                color={color.defalt}
-              />
-            </View>
-          </View>
-
-          <Text style={styles.welcomeTitle}>Add Bank Details</Text>
-          <Text style={styles.welcomeSubtitle}>
-            Provide your payout account details to receive earnings directly.
-          </Text>
-
-          {inputFields.map((field, index) => (
-            <View key={index} style={styles.cardWrapper}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardCountTitle}>
-                  Bank Account #{index + 1}
-                </Text>
-                {index !== 0 && (
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    style={styles.deleteBadge}
-                    onPress={() => removeInputField(index)}>
-                    <Icons.Feather name="trash-2" color="#EF4444" size={16} />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Bank Name</Text>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={styles.selectTile}
-                  onPress={() => openBankPicker(index)}>
-                  <Text
-                    style={
-                      field.bank ? styles.selectTileText : styles.selectTilePlaceholder
-                    }>
-                    {field.bank || 'Select Bank'}
-                  </Text>
-                  <Icons.Feather name="chevron-down" size={18} color="#64748B" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Account Number (10 digits)</Text>
-                <View style={styles.accountInputWrapper}>
-                  <C_TxtInput
-                    placeholder="0123456789"
-                    placeholderTextColor={color.litGry}
-                    value={field.accountNumber}
-                    keyboardType="numeric"
-                    maxLength={10}
-                    onChangeText={text =>
-                      handleInputChange(text, index, 'accountNumber')
-                    }
-                  />
-                  {field.verifying && (
-                    <View style={styles.inputEndLoader}>
-                      <ActivityIndicator size="small" color={color.defalt} />
-                    </View>
-                  )}
-                </View>
-
-                {field.isVerified && field.accountName.length > 0 && (
-                  <Animatable.View animation="fadeIn" duration={400} style={styles.verifiedBanner}>
-                    <Icons.Feather name="check-circle" size={16} color="#16A34A" />
-                    <Text style={styles.verifiedNameText}>{field.accountName}</Text>
-                  </Animatable.View>
-                )}
-
-                {field.error.length > 0 && (
-                  <Animatable.View animation="fadeIn" duration={400} style={styles.errorBanner}>
-                    <Icons.Feather name="alert-circle" size={16} color="#EF4444" />
-                    <Text style={styles.errorText}>{field.error}</Text>
-                  </Animatable.View>
-                )}
-              </View>
-            </View>
-          ))}
-
+        <View style={styles.headerBar}>
           <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.addMoreBtn}
-            onPress={addInputField}>
-            <Icons.Feather name="plus-circle" color={color.defalt} size={18} />
-            <Text style={styles.addMoreText}>Add Another Account</Text>
+              activeOpacity={0.7}
+              onPress={() => props.navigation.goBack()}
+              style={styles.backArrowBtn}>
+            <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
           </TouchableOpacity>
+        </View>
 
-          <BotonComp
-            BtnStyle={styles.submitBtn}
-            btnText={
-              load ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                'Save & Continue'
-              )
-            }
-            onPressFunc={addBankDetails}
-          />
-        </Animatable.View>
-      </ScrollView>
-      <Modal
-        visible={bankModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setBankModalVisible(false)}>
-        <View style={styles.bottomSheetOverlay}>
-          <View style={styles.sheetContainer}>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Select Bank</Text>
-              <TouchableOpacity onPress={() => setBankModalVisible(false)}>
-                <Icons.Ionicons name="close-circle" size={24} color="#94A3B8" />
-              </TouchableOpacity>
+        <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
+          <Animatable.View
+              animation="fadeInUp"
+              duration={600}
+              style={styles.formContainer}>
+            <View style={styles.badgeRow}>
+              <View style={styles.badgeCircle}>
+                <Icons.Ionicons
+                    name="card-outline"
+                    size={36}
+                    color={color.defalt}
+                />
+              </View>
             </View>
 
-            <View style={styles.searchBar}>
-              <Icons.Feather name="search" size={18} color="#94A3B8" />
-              <TextInput
-                placeholder="Search bank..."
-                placeholderTextColor="#94A3B8"
-                style={styles.searchInput}
-                value={searchBankQuery}
-                onChangeText={setSearchBankQuery}
+            <Text style={styles.welcomeTitle}>Add Bank Details</Text>
+            <Text style={styles.welcomeSubtitle}>
+              Provide your payout account details to receive earnings directly.
+            </Text>
+
+            {inputFields.map((field, index) => (
+                <View key={index} style={styles.cardWrapper}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.cardCountTitle}>
+                      Bank Account #{index + 1}
+                    </Text>
+                    {index !== 0 && (
+                        <TouchableOpacity
+                            activeOpacity={0.7}
+                            style={styles.deleteBadge}
+                            onPress={() => removeInputField(index)}>
+                          <Icons.Feather name="trash-2" color="#EF4444" size={16} />
+                        </TouchableOpacity>
+                    )}
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Bank Name</Text>
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        style={styles.selectTile}
+                        onPress={() => openBankPicker(index)}>
+                      <Text
+                          style={
+                            field.bank ? styles.selectTileText : styles.selectTilePlaceholder
+                          }>
+                        {field.bank || 'Select Bank'}
+                      </Text>
+                      <Icons.Feather name="chevron-down" size={18} color="#64748B" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Account Number (10 digits)</Text>
+                    <View style={styles.accountInputWrapper}>
+                      <C_TxtInput
+                          placeholder="0123456789"
+                          placeholderTextColor={color.litGry}
+                          value={field.accountNumber}
+                          keyboardType="numeric"
+                          maxLength={10}
+                          onChangeText={text =>
+                              handleInputChange(text, index, 'accountNumber')
+                          }
+                      />
+                      {field.verifying && (
+                          <View style={styles.inputEndLoader}>
+                            <ActivityIndicator size="small" color={color.defalt} />
+                          </View>
+                      )}
+                    </View>
+
+                    {field.isVerified && field.accountName.length > 0 && (
+                        <Animatable.View animation="fadeIn" duration={400} style={styles.verifiedBanner}>
+                          <Icons.Feather name="check-circle" size={16} color="#16A34A" />
+                          <Text style={styles.verifiedNameText}>{field.accountName}</Text>
+                        </Animatable.View>
+                    )}
+
+                    {field.error.length > 0 && (
+                        <Animatable.View animation="fadeIn" duration={400} style={styles.errorBanner}>
+                          <Icons.Feather name="alert-circle" size={16} color="#EF4444" />
+                          <Text style={styles.errorText}>{field.error}</Text>
+                        </Animatable.View>
+                    )}
+                  </View>
+                </View>
+            ))}
+
+            <TouchableOpacity
+                activeOpacity={0.8}
+                style={styles.addMoreBtn}
+                onPress={addInputField}>
+              <Icons.Feather name="plus-circle" color={color.defalt} size={18} />
+              <Text style={styles.addMoreText}>Add Another Account</Text>
+            </TouchableOpacity>
+
+            <BotonComp
+                BtnStyle={styles.submitBtn}
+                btnText={
+                  load ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                      'Save & Continue'
+                  )
+                }
+                onPressFunc={addBankDetails}
+            />
+          </Animatable.View>
+        </ScrollView>
+
+        <Modal
+            visible={bankModalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setBankModalVisible(false)}>
+          <View style={styles.bottomSheetOverlay}>
+            <View style={styles.sheetContainer}>
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitle}>Select Bank</Text>
+                <TouchableOpacity onPress={() => setBankModalVisible(false)}>
+                  <Icons.Ionicons name="close-circle" size={24} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.searchBar}>
+                <Icons.Feather name="search" size={18} color="#94A3B8" />
+                <TextInput
+                    placeholder="Search bank..."
+                    placeholderTextColor="#94A3B8"
+                    style={styles.searchInput}
+                    value={searchBankQuery}
+                    onChangeText={setSearchBankQuery}
+                />
+              </View>
+
+              <FlatList
+                  data={filteredBanks}
+                  keyExtractor={(item, index) => `bank_${item.code}_${item.id}_${index}`}
+                  keyboardShouldPersistTaps="handled"
+                  renderItem={({ item }) => (
+                      <TouchableOpacity
+                          style={styles.optionRow}
+                          onPress={() => onBankSelect(item)}>
+                        <View style={styles.dialOptionLeft}>
+                          <Text style={styles.optionText}>{item.name}</Text>
+                        </View>
+                        {inputFields[activeCardIndex]?.bank === item.name && (
+                            <Icons.Feather name="check" size={18} color={color.defalt} />
+                        )}
+                      </TouchableOpacity>
+                  )}
               />
             </View>
-
-            <FlatList
-              data={filteredBanks}
-              keyExtractor={item => item.id}
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.optionRow}
-                  onPress={() => onBankSelect(item)}>
-                  <View style={styles.dialOptionLeft}>
-                    <Text style={styles.optionText}>{item.name}</Text>
-                  </View>
-                  {inputFields[activeCardIndex]?.bank === item.name && (
-                    <Icons.Feather name="check" size={18} color={color.defalt} />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
   );
 };
 
@@ -481,8 +482,8 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 4,
+    paddingTop: Platform.OS === 'android' ? 16 : 8,
+    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
@@ -513,9 +514,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   badgeCircle: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -536,10 +537,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
     marginTop: 4,
-    lineHeight: 20,
-    paddingHorizontal: 12,
   },
   cardWrapper: {
     backgroundColor: '#FFFFFF',
@@ -569,7 +568,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2',
   },
   fieldGroup: {
-    marginBottom: 12,
+    marginBottom: 14,
     width: '100%',
   },
   fieldLabel: {
@@ -582,20 +581,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    height: 52,
-    paddingHorizontal: 16,
+    height: 50,
+    paddingHorizontal: 14,
   },
   selectTileText: {
-    fontSize: 14.5,
+    fontSize: 14,
     color: '#0F172A',
     fontWeight: '500',
   },
   selectTilePlaceholder: {
-    fontSize: 14.5,
+    fontSize: 14,
     color: '#94A3B8',
   },
   accountInputWrapper: {
@@ -652,7 +651,7 @@ const styles = StyleSheet.create({
     borderColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 14,
-    marginVertical: 6,
+    marginBottom: 10,
   },
   addMoreText: {
     color: color.defalt,
@@ -665,7 +664,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 14,
-    marginTop: 14,
+    marginTop: 10,
     elevation: 3,
     shadowColor: color.defalt,
     shadowOffset: { width: 0, height: 3 },
@@ -686,14 +685,14 @@ const styles = StyleSheet.create({
     maxHeight: '75%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 24,
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.15)' }
-      : {
-        elevation: 10,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-      }),
+        ? { boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.15)' }
+        : {
+          elevation: 10,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 16,
+        }),
   },
   sheetHeader: {
     flexDirection: 'row',
