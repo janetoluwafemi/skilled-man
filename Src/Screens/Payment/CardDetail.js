@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
   StyleSheet,
+  Text,
+  View,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   Platform,
   Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { WebView } from 'react-native-webview';
 import * as Animatable from 'react-native-animatable';
@@ -116,8 +116,8 @@ const CrdDetails = () => {
       };
 
       const response = await fetch(
-          `${BASIC_URL}user/book_service.php`,
-          requestOptions
+        `${BASIC_URL}user/book_service.php`,
+        requestOptions
       );
 
       if (!response.ok) {
@@ -130,12 +130,12 @@ const CrdDetails = () => {
         global.bookid = result.booking_id;
         initiatePaystack();
       } else if (
-          result?.error ===
-          'Your Request is in Progress. So, Before Completing Previous you can Not Send Again'
+        result?.error ===
+        'Your Request is in Progress. So, Before Completing Previous you can Not Send Again'
       ) {
         Alert.alert(
-            'Booking Failed',
-            'Transaction incomplete. Kindly message the booked provider to reject your booking, then initiate a new transaction'
+          'Booking Failed',
+          'Transaction incomplete. Kindly message the booked provider to reject your booking, then initiate a new transaction'
         );
       } else {
         Alert.alert('Booking Failed', result?.error || 'Unknown error');
@@ -153,8 +153,8 @@ const CrdDetails = () => {
       setInitializingPayment(true);
       const formdata = new FormData();
       formdata.append(
-          'amount',
-          (billingDetail.billingAmount * 100).toString()
+        'amount',
+        (billingDetail.billingAmount * 100).toString()
       );
       formdata.append('email', billingDetail.billingEmail);
       formdata.append('transaction_type', 'deposit');
@@ -217,132 +217,129 @@ const CrdDetails = () => {
 
   if (loading) {
     return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={color.defalt} />
-          <Text style={styles.loadingText}>Initializing Payment...</Text>
-        </View>
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color={color.defalt} />
+        <Text style={styles.loadingText}>Initializing Payment...</Text>
+      </View>
     );
   }
 
   return (
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-        <View style={styles.headerBar}>
-          <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => navigation.goBack()}
-              style={styles.backArrowBtn}>
-            <Icons.Feather name="arrow-left" size={20} color="#0F172A" />
-          </TouchableOpacity>
-          <View style={{ width: 40 }} />
-        </View>
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+          style={styles.backArrowBtn}>
+          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+        </TouchableOpacity>
+      </View>
 
-        <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}>
-          <Animatable.View
-              animation="fadeInUp"
-              duration={600}
-              style={styles.formContainer}>
-            <View style={styles.badgeRow}>
-              <View style={styles.badgeCircle}>
-                <Icons.Feather name="credit-card" size={28} color={color.defalt} />
-              </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        <Animatable.View
+          animation="fadeInUp"
+          duration={600}
+          style={styles.formContainer}>
+          <View style={styles.badgeRow}>
+            <View style={styles.badgeCircle}>
+              <Icons.Feather name="credit-card" size={28} color={color.defalt} />
             </View>
+          </View>
 
-            <Text style={styles.welcomeTitle}>Checkout Info</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Review your checkout information and proceed to payment
-            </Text>
+          <Text style={styles.welcomeTitle}>Checkout Info</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Review your checkout information and proceed to payment
+          </Text>
 
-            <View style={styles.cardWrapper}>
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Billing Name</Text>
-                <C_TxtInput
-                    placeholder="Billing Name"
-                    placeholderTextColor={color.litGry}
-                    value={billingDetail.billingName}
-                    editable={false}
-                />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Billing Email</Text>
-                <C_TxtInput
-                    placeholder="Billing Email"
-                    placeholderTextColor={color.litGry}
-                    value={billingDetail.billingEmail}
-                    editable={false}
-                />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Mobile Number</Text>
-                <C_TxtInput
-                    placeholder="Mobile Number"
-                    placeholderTextColor={color.litGry}
-                    value={billingDetail.billingMobile}
-                    editable={false}
-                />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Amount (₦)</Text>
-                <C_TxtInput
-                    placeholder="Amount"
-                    placeholderTextColor={color.litGry}
-                    value={safeToString(billingDetail.billingAmount)}
-                    editable={false}
-                />
-              </View>
-
-              <BotonComp
-                  BtnStyle={styles.submitBtn}
-                  btnText={
-                    initializingPayment ? (
-                        <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                        'Proceed to Pay'
-                    )
-                  }
-                  onPressFunc={handleProceedToPay}
+          <View style={styles.cardWrapper}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Billing Name</Text>
+              <C_TxtInput
+                placeholder="Billing Name"
+                placeholderTextColor={color.litGry}
+                value={billingDetail.billingName}
+                editable={false}
               />
             </View>
-          </Animatable.View>
-        </ScrollView>
 
-        <Modal
-            visible={modalVisible && !!paymentUrl}
-            animationType="slide"
-            onRequestClose={handleCloseModal}>
-          <SafeAreaView style={styles.safeArea}>
-            <View style={styles.headerBar}>
-              <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={handleCloseModal}
-                  style={styles.backArrowBtn}>
-                <Icons.Feather name="arrow-left" size={20} color="#0F172A" />
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Secure Checkout</Text>
-              <View style={{ width: 40 }} />
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Billing Email</Text>
+              <C_TxtInput
+                placeholder="Billing Email"
+                placeholderTextColor={color.litGry}
+                value={billingDetail.billingEmail}
+                editable={false}
+              />
             </View>
-            <WebView
-                source={{ uri: paymentUrl }}
-                style={styles.webView}
-                onNavigationStateChange={handlePaymentNavigationChange}
-                startInLoadingState={true}
-                renderLoading={() => (
-                    <ActivityIndicator
-                        size="large"
-                        color={color.defalt}
-                        style={styles.loaderMargin}
-                    />
-                )}
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Mobile Number</Text>
+              <C_TxtInput
+                placeholder="Mobile Number"
+                placeholderTextColor={color.litGry}
+                value={billingDetail.billingMobile}
+                editable={false}
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Amount (₦)</Text>
+              <C_TxtInput
+                placeholder="Amount"
+                placeholderTextColor={color.litGry}
+                value={safeToString(billingDetail.billingAmount)}
+                editable={false}
+              />
+            </View>
+
+            <BotonComp
+              BtnStyle={styles.submitBtn}
+              btnText={
+                initializingPayment ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  'Proceed to Pay'
+                )
+              }
+              onPressFunc={handleProceedToPay}
             />
-          </SafeAreaView>
-        </Modal>
-      </SafeAreaView>
+          </View>
+        </Animatable.View>
+      </ScrollView>
+
+      <Modal
+        visible={modalVisible && !!paymentUrl}
+        animationType="slide"
+        onRequestClose={handleCloseModal}>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+          <View style={styles.headerBar}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleCloseModal}
+              style={styles.backArrowBtn}>
+              <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+            </TouchableOpacity>
+          </View>
+          <WebView
+            source={{ uri: paymentUrl }}
+            style={styles.webView}
+            onNavigationStateChange={handlePaymentNavigationChange}
+            startInLoadingState={true}
+            renderLoading={() => (
+              <ActivityIndicator
+                size="large"
+                color={color.defalt}
+                style={styles.loaderMargin}
+              />
+            )}
+          />
+        </SafeAreaView>
+      </Modal>
+    </SafeAreaView>
   );
 };
 
@@ -355,17 +352,11 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 10,
+    paddingTop: Platform.OS === 'android' ? 16 : 8,
+    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: '#F8FAFC',
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0F172A',
   },
   backArrowBtn: {
     width: 40,
@@ -374,16 +365,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: { elevation: 2 },
-      web: { boxShadow: '0 2px 6px rgba(15, 23, 42, 0.05)' },
-    }),
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   scrollContent: {
     flexGrow: 1,
@@ -391,11 +377,11 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 4,
   },
   badgeRow: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   badgeCircle: {
     width: 68,
@@ -404,16 +390,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.08,
-        shadowRadius: 6,
-      },
-      android: { elevation: 3 },
-      web: { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.06)' },
-    }),
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
   },
   welcomeTitle: {
     fontSize: 22,
@@ -435,16 +416,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 18,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
-        shadowRadius: 10,
-      },
-      android: { elevation: 2 },
-      web: { boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)' },
-    }),
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
     marginBottom: 16,
   },
   fieldGroup: {
@@ -463,22 +439,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     marginTop: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: color.defalt,
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 3,
-      },
-      web: {
-        boxShadow: '0 4px 12px rgba(186, 104, 56, 0.25)',
-      },
-    }),
+    elevation: 3,
+    shadowColor: color.defalt,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
   webView: {
     flex: 1,
