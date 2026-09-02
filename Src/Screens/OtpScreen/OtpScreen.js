@@ -1,17 +1,17 @@
 import React, { useState, useRef } from 'react';
 import {
-  StyleSheet,
-  Text,
   View,
+  Text,
   TouchableOpacity,
+  StyleSheet,
   ScrollView,
-  TextInput,
-  SafeAreaView,
-  StatusBar,
   Platform,
-  Alert,
+  StatusBar,
+  TextInput,
   ActivityIndicator,
+  Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';

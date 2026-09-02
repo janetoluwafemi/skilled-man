@@ -10,8 +10,7 @@ import {
   Platform,
   Modal,
   TextInput,
-  FlatList,
-} from 'react-native';
+  FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -747,3 +746,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+

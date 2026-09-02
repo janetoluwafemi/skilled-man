@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import {StyleSheet, View, Dimensions ,
+  Platform} from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
 import ComplteTab from './CompleteTab';

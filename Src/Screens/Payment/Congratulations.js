@@ -1,13 +1,12 @@
 import React from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  StyleSheet,
-  Text,
   View,
-  Image,
-  Dimensions,
-  SafeAreaView,
-  StatusBar,
+  Text,
   TouchableOpacity,
+  StyleSheet,
+  StatusBar,
+  Dimensions
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';

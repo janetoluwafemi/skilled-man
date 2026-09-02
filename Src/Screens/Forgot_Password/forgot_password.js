@@ -8,8 +8,7 @@ import {
   ActivityIndicator,
   Platform,
   TouchableOpacity,
-  Image,
-} from 'react-native';
+  Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
 
@@ -278,3 +277,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+

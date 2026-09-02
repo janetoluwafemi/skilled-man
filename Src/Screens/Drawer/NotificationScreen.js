@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  StyleSheet,
-  Text,
   View,
-  Modal,
-  Pressable,
-  Image,
-  FlatList,
-  Platform,
-  SafeAreaView,
-  StatusBar,
+  Text,
+  StyleSheet,
   TouchableOpacity,
+  FlatList,
+  Modal,
+  Image,
+  Dimensions,
+  StatusBar,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
 

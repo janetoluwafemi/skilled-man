@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Dimensions, StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
+import {Dimensions, StyleSheet, TextInput, View, TouchableOpacity ,
+  Platform} from 'react-native';
 import Icon, { Icons } from './Icons';
 import color from '../Assets/colors/colors';
 const InputWIcon = props => {

@@ -3,20 +3,21 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
-  TextInput,
-  Dimensions,
-  Platform,
-  SafeAreaView,
-  StatusBar,
   TouchableOpacity,
+  TextInput,
+  FlatList,
   ActivityIndicator,
   RefreshControl,
+  Platform,
+  Dimensions,
+  StatusBar
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import color from '../../Assets/colors/colors';
 import ProflHader from '../../Components/ProfileHeader';
 import ProflCrd from '../../Components/ProfileCard';
@@ -56,6 +57,17 @@ const ChatScreen = props => {
     if (isRefresh) setRefreshing(true);
     try {
       const formdata = new FormData();
+      const ownId = String(global?.id || '');
+      if (!ownId) {
+        const rawUser = await AsyncStorage.getItem('user');
+        if (rawUser) {
+          const parsed = JSON.parse(rawUser);
+          const possibleId = parsed?.id ?? parsed?.userId ?? parsed?.user_id ?? parsed?.data?.id ?? parsed?.data?.user_id;
+          if (possibleId) {
+            global.id = possibleId;
+          }
+        }
+      }
       formdata.append('own_id', String(global?.id || '256'));
 
       const response = await fetch(`${BASIC_URL}get_all_chats.php`, {
@@ -63,7 +75,14 @@ const ChatScreen = props => {
         body: formdata,
       });
 
-      const result = await response.json();
+      const text = await response.text();
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (e) {
+        console.log('Failed to parse JSON:', text);
+        return;
+      }
       if (result?.chat) {
         setALlChat(Array.isArray(result.chat) ? result.chat : []);
       }

@@ -12,8 +12,7 @@ import {
   StatusBar,
   TextInput,
   Image,
-  FlatList,
-} from 'react-native';
+  FlatList } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -1156,3 +1155,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+

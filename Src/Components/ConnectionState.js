@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import {Text, StyleSheet ,
+  Platform} from 'react-native';
 
 export function ConnectionStates({ isConnected = false }) {
   return (

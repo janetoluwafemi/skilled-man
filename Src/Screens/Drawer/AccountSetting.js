@@ -7,8 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   ScrollView,
-  StatusBar,
-} from 'react-native';
+  StatusBar } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Switch } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -272,3 +271,4 @@ const styles = StyleSheet.create({
     marginLeft: 50,
   },
 });
+

@@ -1,5 +1,6 @@
 import React from 'react';
-import { FlatList, Text, View, StyleSheet } from 'react-native';
+import {FlatList, Text, View, StyleSheet ,
+  Platform} from 'react-native';
 
 export function Evnt({ events = [] }) {
   return (

@@ -3,12 +3,11 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
-  Dimensions,
-  SafeAreaView,
-  StatusBar,
   TouchableOpacity,
-} from 'react-native';
+  StatusBar,
+  Dimensions,
+  FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import color from '../../Assets/colors/colors';

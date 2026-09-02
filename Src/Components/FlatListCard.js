@@ -1,11 +1,11 @@
 import React from 'react';
-import {
-  View,
+import {View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Linking,
-} from 'react-native';
+
+  Platform} from 'react-native';
 import colors from '../Assets/colors/colors';
 import { Icons } from './Icons';
 import { BASIC_URL } from '../Screens/Signin/Signin';

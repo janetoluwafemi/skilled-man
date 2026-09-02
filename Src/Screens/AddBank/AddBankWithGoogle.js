@@ -5,14 +5,13 @@ import {
   View,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   Platform,
   Modal,
   TextInput,
-  FlatList,
-} from 'react-native';
+  FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import { showToast } from '../../utilis/showToast';

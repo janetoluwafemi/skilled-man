@@ -8,8 +8,7 @@ import {
   StatusBar,
   ScrollView,
   ActivityIndicator,
-  Platform,
-} from 'react-native';
+  Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -404,3 +403,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+

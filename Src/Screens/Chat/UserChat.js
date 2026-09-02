@@ -10,8 +10,7 @@ import {
   StatusBar,
   TouchableOpacity,
   ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+  RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -238,3 +237,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+

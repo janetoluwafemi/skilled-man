@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity ,
+  Platform} from 'react-native';
 import colors from '../Assets/colors/colors';
 import { Icons } from './Icons';
 import { BASIC_URL } from '../Screens/Signin/Signin';

@@ -9,8 +9,7 @@ import {
   Alert,
   Modal,
   StatusBar,
-  ActivityIndicator,
-} from 'react-native';
+  ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -423,3 +422,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+

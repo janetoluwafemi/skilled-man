@@ -1,5 +1,6 @@
 import React, {useState, useRef} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, Text, StyleSheet,
+  Platform} from 'react-native';
 import color from '../Assets/colors/colors';
 import {Picker} from '@react-native-picker/picker';
 

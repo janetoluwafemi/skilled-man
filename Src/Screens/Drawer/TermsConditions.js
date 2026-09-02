@@ -6,8 +6,7 @@ import {
   ScrollView,
   Platform,
   TouchableOpacity,
-  StatusBar,
-} from 'react-native';
+  StatusBar } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
 
@@ -219,3 +218,4 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 });
+

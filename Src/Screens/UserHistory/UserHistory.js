@@ -7,8 +7,7 @@ import {
   FlatList,
   Platform,
   StatusBar,
-  TouchableOpacity,
-} from 'react-native';
+  TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -207,3 +206,4 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
 });
+

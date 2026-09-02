@@ -7,8 +7,7 @@ import {
   ActivityIndicator,
   StatusBar,
   Platform,
-  TouchableOpacity,
-} from 'react-native';
+  TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -267,3 +266,4 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
 });
+

@@ -1,5 +1,6 @@
 import React, { useState, forwardRef } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import {StyleSheet, TextInput, View ,
+  Platform} from 'react-native';
 import color from '../Assets/colors/colors';
 import { Icons } from './Icons';
 

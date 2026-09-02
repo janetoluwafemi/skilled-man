@@ -10,8 +10,7 @@ import {
   Modal,
   Alert,
   StatusBar,
-  Platform,
-} from 'react-native';
+  Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -302,7 +301,7 @@ const FindExpert = props => {
           />
         </View>
 
-        <FlatList
+        -<FlatList
           data={sortedData}
           keyExtractor={(item, index) => item.id?.toString() || index.toString()}
           renderItem={renderExpertItem}
@@ -668,3 +667,4 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
+

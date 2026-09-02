@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
+import {StyleSheet, TouchableOpacity, Text, View ,
+  Platform} from 'react-native';
 import { socket } from '../Socket_io';
 
 export function ConnectionManager() {

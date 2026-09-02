@@ -1,13 +1,13 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
-  TouchableOpacity,
+import {View,
   Text,
-} from 'react-native';
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  StatusBar,
+
+  Platform} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';

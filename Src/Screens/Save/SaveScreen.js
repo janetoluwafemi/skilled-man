@@ -6,8 +6,7 @@ import {
   FlatList,
   Platform,
   Dimensions,
-  StatusBar,
-} from 'react-native';
+  StatusBar } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { showToast } from '../../utilis/showToast';
@@ -172,3 +171,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
 });
+

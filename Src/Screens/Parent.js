@@ -1,4 +1,5 @@
-import { View, StyleSheet } from 'react-native';
+import {View, StyleSheet ,
+  Platform} from 'react-native';
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import DrawerNavigator from '../Drawer/DrawerNavigator';

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Image, StatusBar } from 'react-native';
+import {StyleSheet, View, Image, StatusBar ,
+  Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';

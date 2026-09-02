@@ -11,8 +11,7 @@ import {
   Pressable,
   Dimensions,
   Platform,
-  StatusBar,
-} from 'react-native';
+  StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Bubble,
@@ -94,7 +93,8 @@ const NewMessage = ({ userId, providerId, peerData }) => {
             createdAt: parseTimestamp(data.createdAt),
             user: {
               _id: String(data.senderId || data.user?._id || cleanUserId),
-              name: data.user?.name || '',
+              name: data.user?.name || (String(data.senderId) === cleanUserId ? 'Me' : peerData?.name || 'User'),
+              avatar: String(data.senderId) === cleanUserId ? null : (peerData?.image ? `${BASIC_URL}uploads/${peerData.image.replace(/^\/+/, '')}` : null),
             },
             image: data.image || '',
           };
@@ -125,7 +125,16 @@ const NewMessage = ({ userId, providerId, peerData }) => {
       Promise.allSettled([
         fetch(`${BASIC_URL}firebase/chat.php`, { method: 'POST', body: chatForm }),
         fetch(`${BASIC_URL}firebase/send_notification.php`, { method: 'POST', body: notifyForm }),
-      ]).catch(err => {
+      ]).then(async (results) => {
+        results.forEach(async (res, idx) => {
+          if (res.status === 'fulfilled') {
+            const text = await res.value.text();
+            console.log(`API ${idx} response:`, text);
+          } else {
+            console.log(`API ${idx} failed:`, res.reason);
+          }
+        });
+      }).catch(err => {
         console.log('Push sync error:', err);
       });
     } catch (error) {
@@ -146,11 +155,17 @@ const NewMessage = ({ userId, providerId, peerData }) => {
         createdAt: new Date(),
         senderId: cleanUserId,
         receiverId: peerId,
-        user: { _id: cleanUserId },
+        user: {
+          _id: cleanUserId,
+          name: 'Me',
+        },
         image: msg.image || '',
       };
 
       setMessages(prev => GiftedChat.append(prev, [formattedMsg]));
+
+      // Clear unread count locally for this chat
+      global.unreadmessage = Math.max(0, (global.unreadmessage || 0) - 1);
 
       const chatRef = doc(db, 'chats', chatId);
 
@@ -207,7 +222,10 @@ const NewMessage = ({ userId, providerId, peerData }) => {
           createdAt: new Date(),
           senderId: cleanUserId,
           receiverId: peerId,
-          user: { _id: cleanUserId },
+          user: {
+            _id: cleanUserId,
+            name: 'Me',
+          },
           image: url,
         };
 
@@ -256,7 +274,10 @@ const NewMessage = ({ userId, providerId, peerData }) => {
       <GiftedChat
         messages={messages}
         onSend={messagesList => onSend(messagesList)}
-        user={{ _id: cleanUserId }}
+        user={{
+          _id: cleanUserId,
+          name: 'Me',
+        }}
         alwaysShowSend
         renderMessageImage={props => {
           const { currentMessage } = props;
@@ -324,16 +345,38 @@ const NewMessage = ({ userId, providerId, peerData }) => {
                 backgroundColor: '#FFFFFF',
                 borderRadius: 18,
                 padding: 4,
+                ...Platform.select({
+                  ios: {
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 2,
+                  },
+                  android: { elevation: 1 },
+                }),
               },
               right: {
                 backgroundColor: color.defalt,
                 borderRadius: 18,
                 padding: 4,
+                ...Platform.select({
+                  ios: {
+                    shadowColor: color.defalt,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                  },
+                  android: { elevation: 2 },
+                }),
               },
             }}
             textStyle={{
-              left: { color: '#0F172A', fontSize: 14 },
-              right: { color: '#FFFFFF', fontSize: 14 },
+              left: { color: '#0F172A', fontSize: 15, lineHeight: 20 },
+              right: { color: '#FFFFFF', fontSize: 15, lineHeight: 20 },
+            }}
+            timeTextStyle={{
+              left: { color: '#64748B', fontSize: 10 },
+              right: { color: 'rgba(255, 255, 255, 0.7)', fontSize: 10 },
             }}
           />
         )}
@@ -347,7 +390,6 @@ const IndividualChat = () => {
   const route = useRoute();
   const currentprovider = route.params?.currentuser;
 
-  // Resolve peer ID across all naming conventions: id, provider_id, or user_id
   const peerId = String(
     route.params?.receiver_id ||
     currentprovider?.id ||
@@ -371,15 +413,14 @@ const IndividualChat = () => {
         if (rawUser) {
           const parsed = JSON.parse(rawUser);
           const possibleId =
-            parsed?.id ?? parsed?.userId ?? parsed?.user_id;
+            parsed?.id ?? parsed?.userId ?? parsed?.user_id ?? parsed?.data?.id ?? parsed?.data?.user_id;
           if (possibleId) {
             setResolvedUserId(String(possibleId).trim());
             return;
           }
         }
-        setResolvedUserId('256');
       } catch (e) {
-        setResolvedUserId('256');
+        console.log('Error resolving user:', e);
       }
     };
 
@@ -390,14 +431,9 @@ const IndividualChat = () => {
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <ChatUsrHeader
-        recieverdata={currentprovider}
-        onPress={() => navigation.goBack()}
-        titleText={currentprovider?.name || 'Chat'}
-        backIcon="arrow-left"
-        dollarIcon="file-invoice-dollar"
-        phoneIcon="phone"
-        searchIcon="ellipsis-v"
-        navigation={navigation}
+        userName={currentprovider?.name || 'Chat'}
+        userImage={currentprovider?.image ? `${BASIC_URL}uploads/${currentprovider.image.replace(/^\/+/, '')}` : null}
+        onlineStatus={false}
       />
       <View style={styles.chatViewContainer}>
         {resolvedUserId && peerId ? (
@@ -532,3 +568,4 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 });
+

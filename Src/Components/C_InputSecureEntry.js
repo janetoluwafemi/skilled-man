@@ -1,10 +1,10 @@
 import React, { useState, forwardRef } from 'react';
-import {
-  StyleSheet,
+import {StyleSheet,
   TextInput,
   View,
   TouchableOpacity,
-} from 'react-native';
+
+  Platform} from 'react-native';
 import color from '../Assets/colors/colors';
 import { Icons } from './Icons';
 

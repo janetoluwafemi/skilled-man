@@ -1,5 +1,6 @@
 import React from 'react';
-import {View, Text, StyleSheet, Image, Pressable} from 'react-native';
+import {View, Text, StyleSheet, Image, Pressable,
+  Platform} from 'react-native';
 
 import colors from '../Assets/colors/colors';
 

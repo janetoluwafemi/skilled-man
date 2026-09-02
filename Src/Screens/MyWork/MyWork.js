@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, StatusBar } from 'react-native';
+import {View, StyleSheet, StatusBar ,
+  Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
@@ -39,3 +40,4 @@ const styles = StyleSheet.create({
     paddingTop: 6,
   },
 });
+

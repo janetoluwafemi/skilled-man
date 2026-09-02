@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
+import {View,
   Text,
   StyleSheet,
   TouchableOpacity,
@@ -8,8 +7,8 @@ import {
   FlatList,
   Modal,
   StatusBar,
-  Share,
-} from 'react-native';
+  Share ,
+  Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { showToast } from '../../utilis/showToast';
@@ -382,3 +381,4 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
 });
+

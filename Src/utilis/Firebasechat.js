@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
+import {View,
   Text,
   TextInput,
   ScrollView,
   Image,
   TouchableOpacity,
   StyleSheet,
-} from 'react-native';
+
+  Platform} from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';

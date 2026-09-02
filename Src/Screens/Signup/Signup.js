@@ -12,8 +12,7 @@ import {
   FlatList,
   TextInput,
   Image,
-  Alert,
-} from 'react-native';
+  Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { Formik } from 'formik';
@@ -1061,3 +1060,4 @@ const styles = StyleSheet.create({
     color: color.defalt,
   },
 });
+

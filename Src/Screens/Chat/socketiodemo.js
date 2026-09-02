@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  TextInput,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
+  TextInput,
   TouchableOpacity,
+  StyleSheet,
+  StatusBar,
+  Platform
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 

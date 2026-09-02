@@ -1,18 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  StyleSheet,
-  Text,
   View,
+  Text,
+  TextInput,
   TouchableOpacity,
-  Platform,
-  ToastAndroid,
-  ActivityIndicator,
-  SafeAreaView,
+  StyleSheet,
   StatusBar,
-  ScrollView,
-  Modal,
-  FlatList,
+  Platform
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';

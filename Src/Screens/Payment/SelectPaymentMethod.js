@@ -6,8 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
-  Platform,
-} from 'react-native';
+  Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { RadioButton } from 'react-native-paper';
@@ -288,3 +287,4 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
 });
+

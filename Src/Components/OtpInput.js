@@ -1,5 +1,6 @@
 import React, {useState, useRef} from 'react';
-import {Dimensions, StyleSheet, TextInput, View} from 'react-native';
+import {Dimensions, StyleSheet, TextInput, View,
+  Platform} from 'react-native';
 
 import color from '../Assets/colors/colors';
 const OtpInpt = props => {

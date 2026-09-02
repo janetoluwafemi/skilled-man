@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import {Text, StyleSheet, Image, TouchableOpacity ,
+  Platform} from 'react-native';
 import colors from '../Assets/colors/colors';
 
 const ServiceCard = props => {

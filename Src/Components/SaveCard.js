@@ -1,11 +1,11 @@
 import React from 'react';
-import {
-  StyleSheet,
+import {StyleSheet,
   Text,
   View,
   Image,
   TouchableOpacity,
-} from 'react-native';
+
+  Platform} from 'react-native';
 import colors from '../Assets/colors/colors';
 import { Icons } from './Icons';
 

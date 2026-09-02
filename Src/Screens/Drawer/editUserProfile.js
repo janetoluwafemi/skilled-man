@@ -8,8 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
-  Platform,
-} from 'react-native';
+  Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -459,3 +458,4 @@ const styles = StyleSheet.create({
     }),
   },
 });
+

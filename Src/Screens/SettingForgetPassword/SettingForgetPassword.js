@@ -3,15 +3,13 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
+  TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
+  ScrollView,
   StatusBar,
   Platform,
-  Alert,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+  FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Formik } from 'formik';
 import * as yup from 'yup';

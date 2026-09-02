@@ -1,10 +1,10 @@
 import React from 'react';
-import {
-  StyleSheet,
+import {StyleSheet,
   TouchableOpacity,
   Text,
   Dimensions,
-} from 'react-native';
+
+  Platform} from 'react-native';
 import color from '../Assets/colors/colors';
 import { Icons } from './Icons';
 

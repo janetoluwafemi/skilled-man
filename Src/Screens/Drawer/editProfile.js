@@ -2,15 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  Image,
-  ScrollView,
-  StyleSheet,
+  TextInput,
   TouchableOpacity,
-  ActivityIndicator,
-  Modal,
-  SafeAreaView,
+  StyleSheet,
   StatusBar,
+  Platform
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';

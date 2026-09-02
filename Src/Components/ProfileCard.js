@@ -1,11 +1,11 @@
 import React from 'react';
-import {
-  View,
+import {View,
   Text,
   StyleSheet,
   Image,
   TouchableOpacity,
-} from 'react-native';
+
+  Platform} from 'react-native';
 import { Badge } from 'react-native-paper';
 
 import colors from '../Assets/colors/colors';

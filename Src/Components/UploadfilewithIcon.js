@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import {StyleSheet, View, Text ,
+  Platform} from 'react-native';
 import color from '../Assets/colors/colors';
 import { Icons } from './Icons';
 

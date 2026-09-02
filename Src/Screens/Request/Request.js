@@ -13,8 +13,7 @@ import {
   Modal,
   StatusBar,
   RefreshControl,
-  ActivityIndicator,
-} from 'react-native';
+  ActivityIndicator } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -617,3 +616,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+

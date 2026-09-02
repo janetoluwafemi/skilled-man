@@ -1,11 +1,11 @@
-import {
-  View,
+import {View,
   Text,
   StyleSheet,
   Pressable,
   TouchableOpacity,
   ImageBackground,
-} from 'react-native';
+
+  Platform} from 'react-native';
 import React, { useState, useEffect } from 'react';
 import colors from '../Assets/colors/colors';
 import { Icons } from './Icons';

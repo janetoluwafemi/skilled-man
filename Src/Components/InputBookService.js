@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Dimensions, StyleSheet, TextInput, View } from 'react-native';
+import {Dimensions, StyleSheet, TextInput, View ,
+  Platform} from 'react-native';
 import Icon, { Icons } from './Icons';
 import color from '../Assets/colors/colors';
 const InputBokServices = props => {

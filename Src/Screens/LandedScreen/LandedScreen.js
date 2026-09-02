@@ -1,12 +1,12 @@
 import React from 'react';
-import {
-  StyleSheet,
+import {View,
   Text,
-  View,
-  SafeAreaView,
-  StatusBar,
+  StyleSheet,
   Image,
-} from 'react-native';
+  StatusBar
+,
+  Platform} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
 import color from '../../Assets/colors/colors';

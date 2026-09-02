@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Text,
+import {Text,
   StyleSheet,
   TouchableOpacity,
   Image,
   Dimensions,
-} from 'react-native';
+
+  Platform} from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 
 import color from '../Assets/colors/colors';
