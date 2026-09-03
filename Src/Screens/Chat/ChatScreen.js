@@ -57,18 +57,28 @@ const ChatScreen = props => {
     if (isRefresh) setRefreshing(true);
     try {
       const formdata = new FormData();
-      const ownId = String(global?.id || '');
-      if (!ownId) {
+      let ownId = String(global?.id || '');
+      
+      if (!ownId || ['251', '255', '256'].includes(ownId)) {
         const rawUser = await AsyncStorage.getItem('user');
         if (rawUser) {
           const parsed = JSON.parse(rawUser);
-          const possibleId = parsed?.id ?? parsed?.userId ?? parsed?.user_id ?? parsed?.data?.id ?? parsed?.data?.user_id;
-          if (possibleId) {
-            global.id = possibleId;
+          const possibleId = parsed?.id ?? parsed?.user_id ?? parsed?.userId ?? parsed?.data?.id ?? parsed?.data?.user_id;
+          if (possibleId && String(possibleId).trim() !== '' && !['251', '255', '256'].includes(String(possibleId))) {
+            ownId = String(possibleId).trim();
+            global.id = ownId;
           }
         }
       }
-      formdata.append('own_id', String(global?.id || '256'));
+
+      if (!ownId || ['251', '255', '256'].includes(ownId)) {
+        console.log('ChatScreen: No valid ownId found for fetch');
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+
+      formdata.append('own_id', ownId);
 
       const response = await fetch(`${BASIC_URL}get_all_chats.php`, {
         method: 'POST',

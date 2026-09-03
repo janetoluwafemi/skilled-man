@@ -62,7 +62,6 @@
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
 import SplashScreen from '../Screens/SplashScreen/SplashScreen';
 import Frgtpasword1 from '../Screens/Forgot_Password/emailforget';
 import FrgtpaswrdOtpScren from '../Screens/Forgot_Password/forget_password_otp';

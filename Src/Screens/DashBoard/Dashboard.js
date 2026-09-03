@@ -105,7 +105,27 @@ const Dashboard = () => {
   }, []);
 
   const getProviderAnalytics = useCallback(async () => {
-    const providerId = String(global.id || '251');
+    let providerId = String(global.id || '').trim();
+    if (!providerId || ['251', '255', '256'].includes(providerId)) {
+      try {
+        const rawUser = await AsyncStorage.getItem('user');
+        if (rawUser) {
+          const parsed = JSON.parse(rawUser);
+          const possibleId = parsed?.id ?? parsed?.userId ?? parsed?.user_id ?? parsed?.data?.id ?? parsed?.data?.user_id;
+          if (possibleId && !['251', '255', '256'].includes(String(possibleId))) {
+            providerId = String(possibleId).trim();
+            global.id = providerId;
+          }
+        }
+      } catch (e) {
+        console.log('Error fetching user for analytics:', e);
+      }
+    }
+
+    if (!providerId || ['251', '255', '256'].includes(providerId)) {
+      providerId = '251'; // Fallback for API if still not found
+    }
+
     const token = encodeURIComponent('xees&skilledman');
 
     try {
@@ -160,8 +180,9 @@ const Dashboard = () => {
   }, [isFocused]);
 
   useEffect(() => {
-    if (state?.isAuth === true) {
+    if (state?.isAuth === true && !global.providerModalShown) {
       setModalVisible(true);
+      global.providerModalShown = true;
     }
   }, [state?.isAuth]);
 
@@ -234,7 +255,21 @@ const Dashboard = () => {
     try {
       setLoad(true);
       const formdata = new FormData();
-      formdata.append('provider_id', String(global.id || '251'));
+      
+      let currentProviderId = String(global.id || '').trim();
+      if (!currentProviderId || ['251', '255', '256'].includes(currentProviderId)) {
+        const rawUser = await AsyncStorage.getItem('user');
+        if (rawUser) {
+          const parsed = JSON.parse(rawUser);
+          const possibleId = parsed?.id ?? parsed?.user_id ?? parsed?.userId ?? parsed?.data?.id ?? parsed?.data?.user_id;
+          if (possibleId && !['251', '255', '256'].includes(String(possibleId))) {
+            currentProviderId = String(possibleId).trim();
+            global.id = currentProviderId;
+          }
+        }
+      }
+
+      formdata.append('provider_id', currentProviderId || '251');
       formdata.append('select_business', selectedBusiness);
       formdata.append('working_experience', selectedExperience);
 

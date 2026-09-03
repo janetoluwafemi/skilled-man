@@ -11,7 +11,7 @@ import {
   StatusBar,
   ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
@@ -38,7 +38,21 @@ const UserDashboard = () => {
     try {
       const formdata = new FormData();
       formdata.append('job', value);
-      formdata.append('user_id', global.id || '255');
+      
+      let currentUserId = String(global.id || '').trim();
+      if (!currentUserId || ['251', '255', '256'].includes(currentUserId)) {
+        const rawUser = await AsyncStorage.getItem('user');
+        if (rawUser) {
+          const parsed = JSON.parse(rawUser);
+          const possibleId = parsed?.id ?? parsed?.user_id ?? parsed?.userId ?? parsed?.data?.id ?? parsed?.data?.user_id;
+          if (possibleId && !['251', '255', '256'].includes(String(possibleId))) {
+            currentUserId = String(possibleId).trim();
+            global.id = currentUserId;
+          }
+        }
+      }
+
+      formdata.append('user_id', currentUserId || '255');
 
       const response = await fetch(`${BASIC_URL}user/providers_job.php`, {
         method: 'POST',
@@ -84,9 +98,16 @@ const UserDashboard = () => {
     }
   }, []);
 
+  useFocusEffect(
+      useCallback(() => {
+        getOverallServices();
+      }, [getOverallServices])
+  );
+
   useEffect(() => {
-    if (state?.isAuth) {
+    if (state?.isAuth && !global.disclaimerShown) {
       setModalVisible(true);
+      global.disclaimerShown = true;
     }
     getOverallServices();
   }, [state?.isAuth, getOverallServices]);
@@ -105,8 +126,15 @@ const UserDashboard = () => {
         <StatusBar barStyle="light-content" backgroundColor={color.defalt} />
 
         <HeaderWSarchFiltr
-            onPress={() => navigation.openDrawer()}
-            onPressNotifiction={() => navigation.navigate('notification_screen')}
+            onPress={() => {
+              const drawerNav = navigation.getParent();
+              if (drawerNav?.openDrawer) {
+                drawerNav.openDrawer();
+              } else {
+                navigation.openDrawer?.();
+              }
+            }}
+            onPressnotification={() => navigation.navigate('edit_profile')}
             onPressProfile={() => navigation.navigate('editUserProfile')}
             titleText="What service are you searching for?"
             bellIcon="bell"
@@ -422,4 +450,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

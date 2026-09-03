@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
     View,
     Text,
@@ -21,24 +21,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
-import * as Animatable from 'react-native-animatable';
-import StarRating from 'react-native-star-rating';
 import { showToast } from '../../utilis/showToast';
-
+import DatePicker from '@react-native-community/datetimepicker';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 import BotonComp from '../../Components/BtnComp';
 import C_TxtInput from '../../Components/C_TextInput';
 import { BASIC_URL } from '../Signin/Signin';
-
-let DatePicker = () => null;
-if (Platform.OS !== 'web') {
-    try {
-        DatePicker = require('react-native-date-picker').default;
-    } catch (error) {
-        console.log('Native date picker is unavailable in this runtime.');
-    }
-}
 
 const ExpertDetails = () => {
     const navigation = useNavigation();
@@ -72,6 +61,8 @@ const ExpertDetails = () => {
 
     const [chatMessage, setChatMessage] = useState('');
     const [sendingChat, setSendingChat] = useState(false);
+
+    const isSendingRef = useRef(false);
 
     const GetSkills = useCallback(async () => {
         if (!item?.id) return;
@@ -250,10 +241,12 @@ const ExpertDetails = () => {
             return;
         }
 
+        if (isSendingRef.current) return;
+        isSendingRef.current = true;
+
         try {
             setSendingChat(true);
 
-            // Resolve IDs with robust fallbacks
             const senderId = String(global?.id || '256');
             const receiverId = String(
                 item?.id ||
@@ -273,9 +266,10 @@ const ExpertDetails = () => {
             });
 
             const result = await response.json();
+
+            isSendingRef.current = false;
             setSendingChat(false);
 
-            // Treat as success if chat_id is returned or explicit success flags are set
             if (result?.chat_id || result?.success === 'Message sent' || result?.status === 'success') {
                 showToast('Message sent!');
                 setChatMessage('');
@@ -288,15 +282,16 @@ const ExpertDetails = () => {
                     });
                 }, 150);
             } else {
-                // Backend can include nested FCM error; still treat outer success only
                 showToast(result?.error || 'Failed to send message');
             }
         } catch (error) {
+            isSendingRef.current = false;
             setSendingChat(false);
             console.log('Error sending chat message:', error);
             showToast('Error sending message. Check connection.');
         }
     };
+
     const handleFilePick = async () => {
         try {
             const result = await DocumentPicker.getDocumentAsync({
@@ -346,7 +341,7 @@ const ExpertDetails = () => {
             activeOpacity={0.8}
             onPress={() => openSingleReview(reviewItem)}
             style={styles.reviewCard}
-            key={`review_card_${reviewItem?.id || index}_${index}`}>
+            key={`review_card_${reviewItem?.id || 'idx'}_${index}`}>
             <View style={styles.reviewCardHeader}>
                 <Image
                     style={styles.reviewAvatar}
@@ -380,7 +375,13 @@ const ExpertDetails = () => {
             <View style={styles.headerBar}>
                 <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => navigation.goBack()}
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            showToast('No previous screen');
+                        }
+                    }}
                     style={styles.backArrowBtn}>
                     <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
                 </TouchableOpacity>
@@ -396,7 +397,7 @@ const ExpertDetails = () => {
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}>
-                <Animatable.View animation="fadeInUp" duration={600} style={styles.formContainer}>
+                <View style={styles.formContainer}>
                     <Text style={styles.welcomeTitle}>Expert Profile</Text>
                     <Text style={styles.welcomeSubtitle}>
                         View artisan qualifications, reviews, and book services.
@@ -483,7 +484,7 @@ const ExpertDetails = () => {
                         <View style={styles.skillsWrapper}>
                             {skills.map((skillItem, idx) => (
                                 <TouchableOpacity
-                                    key={`skill_chip_${skillItem?.id || idx}_${idx}`}
+                                    key={`skill_chip_${skillItem?.id || 'idx'}_${idx}`}
                                     activeOpacity={0.8}
                                     onPress={() => {
                                         setSelectedSkill(skillItem);
@@ -521,7 +522,7 @@ const ExpertDetails = () => {
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         data={(item?.people_review || []).filter(r => r?.rating)}
-                        keyExtractor={(r, idx) => `review_horiz_${r?.id || idx}_${idx}`}
+                        keyExtractor={(r, idx) => `review_horiz_${r?.id || 'idx'}_${idx}`}
                         contentContainerStyle={styles.reviewsListScroll}
                         renderItem={renderReviewItem}
                         ListEmptyComponent={
@@ -547,10 +548,9 @@ const ExpertDetails = () => {
                             <Text style={styles.bookButtonText}>Book Service</Text>
                         </TouchableOpacity>
                     </View>
-                </Animatable.View>
+                </View>
             </ScrollView>
 
-            {/* Direct Quick Chat Modal */}
             <Modal
                 animationType="fade"
                 transparent={true}
@@ -578,6 +578,7 @@ const ExpertDetails = () => {
                             <BotonComp
                                 onPressFunc={handleSendMessage}
                                 BtnStyle={styles.sendChatBtn}
+                                disabled={sendingChat}
                                 btnText={
                                     sendingChat ? (
                                         <ActivityIndicator size="small" color="#FFFFFF" />
@@ -600,7 +601,6 @@ const ExpertDetails = () => {
                 </View>
             </Modal>
 
-            {/* Request Appointment Modal */}
             <Modal
                 animationType="slide"
                 visible={modalVisible}
@@ -624,7 +624,7 @@ const ExpertDetails = () => {
                             contentContainerStyle={styles.scrollContent}
                             showsVerticalScrollIndicator={false}
                             keyboardShouldPersistTaps="handled">
-                            <Animatable.View animation="fadeInUp" duration={500} style={styles.formContainer}>
+                            <View style={styles.formContainer}>
                                 <Text style={styles.welcomeTitle}>Request Appointment</Text>
                                 <Text style={styles.welcomeSubtitle}>
                                     Provide booking details and budget for this service
@@ -661,7 +661,6 @@ const ExpertDetails = () => {
                                             />
                                         </View>
                                     </View>
-
                                     <View style={styles.fieldGroup}>
                                         <Text style={styles.fieldLabel}>Service Date</Text>
                                         <TouchableOpacity
@@ -673,29 +672,28 @@ const ExpertDetails = () => {
                                                 }
                                             }}>
                                             <Icons.Feather name="calendar" size={18} color="#94A3B8" style={styles.inputIconLeft} />
-                                            <TextInput
-                                                style={styles.inputStyle}
-                                                placeholder="YYYY-MM-DD"
-                                                placeholderTextColor="#94A3B8"
-                                                value={date.toISOString().split('T')[0]}
-                                                editable={Platform.OS === 'web'}
-                                                onChangeText={val => {
-                                                    const parsed = new Date(val);
-                                                    if (!isNaN(parsed.getTime())) setDate(parsed);
-                                                }}
-                                            />
+                                            <View pointerEvents="none" style={{ flex: 1 }}>
+                                                <TextInput
+                                                    style={styles.inputStyle}
+                                                    placeholder="YYYY-MM-DD"
+                                                    placeholderTextColor="#94A3B8"
+                                                    value={date.toISOString().split('T')[0]}
+                                                    editable={false}
+                                                />
+                                            </View>
                                         </TouchableOpacity>
 
-                                        {Platform.OS !== 'web' && (
+                                        {open && Platform.OS !== 'web' && (
                                             <DatePicker
-                                                modal
-                                                open={open}
-                                                date={date}
-                                                onConfirm={selectedDate => {
+                                                value={date}
+                                                mode="date"
+                                                display="default"
+                                                onChange={(event, selectedDate) => {
                                                     setOpen(false);
-                                                    setDate(selectedDate);
+                                                    if (event.type === 'set' && selectedDate) {
+                                                        setDate(selectedDate);
+                                                    }
                                                 }}
-                                                onCancel={() => setOpen(false)}
                                             />
                                         )}
                                     </View>
@@ -770,13 +768,12 @@ const ExpertDetails = () => {
                                         <Text style={styles.submitBtnText}>Confirm & Proceed to Pay</Text>
                                     </TouchableOpacity>
                                 </View>
-                            </Animatable.View>
+                            </View>
                         </ScrollView>
                     </KeyboardAvoidingView>
                 </SafeAreaView>
             </Modal>
 
-            {/* Feedback Modal */}
             <Modal
                 animationType="fade"
                 transparent={true}
@@ -791,16 +788,19 @@ const ExpertDetails = () => {
                             </TouchableOpacity>
                         </View>
                         <View style={styles.starRatingContainer}>
-                            <StarRating
-                                disabled={false}
-                                maxStars={5}
-                                rating={rating}
-                                selectedStar={val => setRating(val)}
-                                starSize={34}
-                                emptyStarColor="#CBD5E1"
-                                fullStarColor="#F59E0B"
-                                halfStarColor="#F59E0B"
-                            />
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <TouchableOpacity
+                                    key={`star_${star}`}
+                                    activeOpacity={0.7}
+                                    onPress={() => setRating(star)}
+                                    style={{ marginHorizontal: 4 }}>
+                                    <Icons.FontAwesome
+                                        name={star <= rating ? "star" : "star-o"}
+                                        size={32}
+                                        color="#F59E0B"
+                                    />
+                                </TouchableOpacity>
+                            ))}
                         </View>
                         <C_TxtInput
                             numberOfLines={4}
@@ -818,7 +818,6 @@ const ExpertDetails = () => {
                 </View>
             </Modal>
 
-            {/* Action Sheet Modal */}
             <Modal
                 animationType="fade"
                 transparent={true}
@@ -857,7 +856,6 @@ const ExpertDetails = () => {
                 </View>
             </Modal>
 
-            {/* Single Review Modal */}
             <Modal
                 visible={singleReviewModal}
                 transparent={true}
@@ -894,7 +892,6 @@ const ExpertDetails = () => {
                 </View>
             </Modal>
 
-            {/* All Reviews Modal */}
             <Modal
                 visible={allReviewsModal}
                 animationType="slide"
@@ -911,7 +908,7 @@ const ExpertDetails = () => {
                         </TouchableOpacity>
                     </View>
 
-                    <Animatable.View animation="fadeInUp" duration={500} style={styles.formContainer}>
+                    <View style={styles.formContainer}>
                         <Text style={styles.welcomeTitle}>Client Reviews</Text>
                         <Text style={styles.welcomeSubtitle}>
                             Read feedback and ratings from customers who worked with this expert.
@@ -919,7 +916,7 @@ const ExpertDetails = () => {
 
                         <FlatList
                             data={(item?.people_review || []).filter(r => r?.rating)}
-                            keyExtractor={(r, index) => `review_full_${r?.id || index}_${index}`}
+                            keyExtractor={(r, index) => `review_full_${r?.id || 'idx'}_${index}`}
                             contentContainerStyle={{ paddingBottom: 30 }}
                             showsVerticalScrollIndicator={false}
                             renderItem={({ item: reviewItem }) => (
@@ -952,11 +949,10 @@ const ExpertDetails = () => {
                                 </TouchableOpacity>
                             )}
                         />
-                    </Animatable.View>
+                    </View>
                 </SafeAreaView>
             </Modal>
 
-            {/* Skill Modal */}
             <Modal
                 visible={skillModal}
                 transparent
@@ -1493,8 +1489,10 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     starRatingContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
         alignItems: 'center',
-        marginVertical: 12,
+        marginVertical: 14,
     },
     submitFeedbackBtn: {
         marginTop: 16,
@@ -1598,4 +1596,3 @@ const styles = StyleSheet.create({
         width: '100%',
     },
 });
-

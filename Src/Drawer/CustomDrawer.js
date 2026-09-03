@@ -76,9 +76,12 @@ const CustomDrawer = () => {
           <DrarUsr />
           <View style={styles.menuContainer}>
             <DrarCstmBtn
-                DrawerBtnPress={() =>
-                    navigation.navigate(isUserRole ? 'UserDashboard' : 'Dashboard')
-                }
+                DrawerBtnPress={() => {
+                  if (navigation.closeDrawer) {
+                    navigation.closeDrawer();
+                  }
+                  navigation.navigate('Main');
+                }}
                 title="Dashboard"
                 drawerIcon="th-large"
             />
