@@ -11,7 +11,8 @@ import {View,
   Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { showToast } from '../../utilis/showToast';
+import CustomAlert from '../../Components/CustomAlert';
+import { normalize } from '../../utilis/responsive';
 
 import color from '../../Assets/colors/colors';
 import BookingCrd from '../../Components/BookingCard';
@@ -33,6 +34,25 @@ const BookingScreen = () => {
   const [details, setDetails] = useState('');
   const [bookId, setBookId] = useState('');
   const [providerId, setProviderId] = useState('');
+
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    onOk: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+  });
+
+  const showAlert = (title, message, onOk) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      onOk: () => {
+        setAlertConfig(prev => ({ ...prev, visible: false }));
+        if (onOk) onOk();
+      },
+    });
+  };
 
   useEffect(() => {
     if (focus) {
@@ -73,7 +93,7 @@ const BookingScreen = () => {
         console.log(result.error);
       }
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to fetch booking data');
+      showAlert('Error', error.message || 'Failed to fetch booking data');
     }
   };
 
@@ -101,11 +121,11 @@ const BookingScreen = () => {
       const result = await response.json();
 
       if (result.success) {
-        Alert.alert('Thank you!', result.success);
+        showAlert('Thank you!', result.success);
       } else if (result.error) {
-        Alert.alert('Error occurred', result.error);
+        showAlert('Error occurred', result.error);
       } else {
-        Alert.alert('Error', 'Something went wrong. Please try again.');
+        showAlert('Error', 'Something went wrong. Please try again.');
       }
     } catch (error) {
       console.log('Error in review submission:', error);
@@ -280,6 +300,12 @@ const BookingScreen = () => {
                     }}
                 />
             )}
+        />
+        <CustomAlert
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          onOk={alertConfig.onOk}
         />
       </SafeAreaView>
   );

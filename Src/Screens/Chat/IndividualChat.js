@@ -4,7 +4,6 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    Alert,
     Image,
     ActivityIndicator,
     Modal,
@@ -12,7 +11,7 @@ import {
     Dimensions,
     Platform,
     StatusBar,
-    Clipboard // Fallback for copy if expo-clipboard isn't installed
+    Clipboard
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -21,14 +20,16 @@ import {
     GiftedChat,
     InputToolbar,
     Send,
+    Avatar
 } from 'react-native-gifted-chat';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import color from '../../Assets/colors/colors';
-import { Icons } from '../../Components/Icons';
+import CustomAlert from '../../Components/CustomAlert';
 import ChatUsrHeader from '../../Components/ChatUserHeader';
+import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
 
 const getSynchronizedUserId = async () => {
@@ -50,11 +51,10 @@ const getSynchronizedUserId = async () => {
     if (global.id && String(global.id).trim() !== '' && !['251', '255', '256'].includes(String(global.id))) {
         return String(global.id).trim();
     }
-
     return null;
 };
 
-const NewMessage = ({ userId, providerId, peerData }) => {
+const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     const [messages, setMessages] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [imageModalVisible, setImageModalVisible] = useState(false);
@@ -72,6 +72,10 @@ const NewMessage = ({ userId, providerId, peerData }) => {
 
     const myAvatar = global.profile
         ? `${BASIC_URL}uploads/${global.profile.replace(/^\/+/, '')}`
+        : `${BASIC_URL}uploads/dumy.png`;
+
+    const peerAvatar = peerData?.image
+        ? `${BASIC_URL}uploads/${peerData.image.replace(/^\/+/, '')}`
         : `${BASIC_URL}uploads/dumy.png`;
 
     useEffect(() => {
@@ -130,6 +134,8 @@ const NewMessage = ({ userId, providerId, peerData }) => {
                     }
 
                     const rawSenderId = String(specificChat.sender_id || '');
+
+                    // IF YOUR MESSAGES SHOW ON THE WRONG SIDE, YOUR BACKEND IS LIKELY RETURNING THE WRONG SENDER ID HERE.
                     const isActuallyMe = rawSenderId === cleanUserId;
 
                     const newIncomingMessage = {
@@ -139,7 +145,7 @@ const NewMessage = ({ userId, providerId, peerData }) => {
                         user: {
                             _id: isActuallyMe ? cleanUserId : peerId,
                             name: isActuallyMe ? 'Me' : specificChat.name || peerData?.name || 'User',
-                            avatar: isActuallyMe ? myAvatar : (specificChat.image ? `${BASIC_URL}uploads/${specificChat.image}` : `${BASIC_URL}uploads/dumy.png`),
+                            avatar: isActuallyMe ? myAvatar : peerAvatar,
                         },
                     };
 
@@ -156,7 +162,7 @@ const NewMessage = ({ userId, providerId, peerData }) => {
         } catch (error) {
             console.log('Error fetching chat messages:', error);
         }
-    }, [cleanUserId, peerId, peerData, chatStorageKey, myAvatar]);
+    }, [cleanUserId, peerId, peerData, chatStorageKey, myAvatar, peerAvatar]);
 
     useEffect(() => {
         fetchApiMessages();
@@ -166,14 +172,9 @@ const NewMessage = ({ userId, providerId, peerData }) => {
         return () => clearInterval(interval);
     }, [fetchApiMessages]);
 
-
-    /* ==========================================
-       CONTEXTUAL ACTION BAR LOGIC (LONG PRESS)
-       ========================================== */
-
     const handleLongPress = (context, message) => {
         setSelectedMessage(message);
-        setKebabVisible(false); // Reset menu if open
+        setKebabVisible(false);
     };
 
     const deleteMessageLocally = async (messageId) => {
@@ -185,26 +186,10 @@ const NewMessage = ({ userId, providerId, peerData }) => {
         setSelectedMessage(null);
     };
 
-    const deleteMessageForEveryone = async (messageId) => {
-        deleteMessageLocally(messageId);
-        showToast('Message deleted for everyone');
-    };
-
     const handleDeleteAction = () => {
-        const isMyMessage = String(selectedMessage.user._id) === String(cleanUserId);
-
-        const options = isMyMessage
-            ? [
-                { text: 'Delete for me', onPress: () => deleteMessageLocally(selectedMessage._id) },
-                { text: 'Delete for everyone', onPress: () => deleteMessageForEveryone(selectedMessage._id), style: 'destructive' },
-                { text: 'Cancel', style: 'cancel' }
-            ]
-            : [
-                { text: 'Delete for me', onPress: () => deleteMessageLocally(selectedMessage._id) },
-                { text: 'Cancel', style: 'cancel' }
-            ];
-
-        Alert.alert('Delete Message', 'Are you sure you want to delete this message?', options);
+        showAlert('Delete Message', 'Are you sure you want to delete this message?', () => {
+            deleteMessageLocally(selectedMessage._id);
+        });
     };
 
     const handleCopyAction = () => {
@@ -212,24 +197,10 @@ const NewMessage = ({ userId, providerId, peerData }) => {
             try {
                 Clipboard.setString(selectedMessage.text);
             } catch (e) {}
-            showToast('Message copied');
         }
         setKebabVisible(false);
         setSelectedMessage(null);
     };
-
-    const handlePinAction = () => {
-        showToast('Message Pinned');
-        setKebabVisible(false);
-        setSelectedMessage(null);
-    };
-
-    const handleForwardAction = () => {
-        showToast('Forwarding coming soon!');
-        setSelectedMessage(null);
-    };
-
-    /* ========================================== */
 
     const onSend = async (messagesList = []) => {
         try {
@@ -274,7 +245,7 @@ const NewMessage = ({ userId, providerId, peerData }) => {
 
         } catch (error) {
             console.error('Send error:', error);
-            Alert.alert('Send failed', 'Could not send message. Please check your connection.');
+            showAlert('Send failed', 'Could not send message. Please check your connection.');
         }
     };
 
@@ -282,7 +253,7 @@ const NewMessage = ({ userId, providerId, peerData }) => {
         try {
             const { status } = await ImagePicker.requestCameraPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission Required', 'Camera access is needed.');
+                showAlert('Permission Required', 'Camera access is needed.');
                 return;
             }
 
@@ -320,20 +291,14 @@ const NewMessage = ({ userId, providerId, peerData }) => {
                 chatForm.append('chat_user_id', peerId);
                 chatForm.append('message', '📷 Sent an image');
 
-                const notifyForm = new FormData();
-                notifyForm.append('sender_id', currentSyncId);
-                notifyForm.append('receiver_id', peerId);
-                notifyForm.append('message', '📷 Sent an image');
-
                 await Promise.allSettled([
                     fetch(`${BASIC_URL}firebase/chat.php`, { method: 'POST', body: chatForm }),
-                    fetch(`${BASIC_URL}firebase/send_notification.php`, { method: 'POST', body: notifyForm }),
                 ]);
             }
         } catch (err) {
             console.error('Camera upload error:', err);
             setUploading(false);
-            Alert.alert('Upload failed', 'Could not upload image.');
+            showAlert('Upload failed', 'Could not upload image.');
         }
     };
 
@@ -348,20 +313,16 @@ const NewMessage = ({ userId, providerId, peerData }) => {
 
     return (
         <View style={styles.chatWrapper}>
-            {/* DYNAMIC HEADER: Replaces normal header when a message is selected */}
             {selectedMessage ? (
                 <View style={styles.contextualHeader}>
                     <View style={styles.contextHeaderLeft}>
                         <TouchableOpacity onPress={() => { setSelectedMessage(null); setKebabVisible(false); }}>
                             <Icons.Feather name="arrow-left" size={24} color="#FFF" />
                         </TouchableOpacity>
-                        <Text style={styles.contextHeaderText}>1</Text>
+                        <Text style={styles.contextHeaderText}>1 Selected</Text>
                     </View>
 
                     <View style={styles.contextHeaderRight}>
-                        <TouchableOpacity onPress={handleForwardAction} style={styles.iconBtn}>
-                            <Icons.Ionicons name="arrow-redo" size={24} color="#FFF" />
-                        </TouchableOpacity>
                         <TouchableOpacity onPress={handleDeleteAction} style={styles.iconBtn}>
                             <Icons.Ionicons name="trash" size={24} color="#FFF" />
                         </TouchableOpacity>
@@ -370,14 +331,10 @@ const NewMessage = ({ userId, providerId, peerData }) => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Kebab Dropdown Menu */}
                     {kebabVisible && (
                         <View style={styles.kebabMenu}>
                             <TouchableOpacity onPress={handleCopyAction} style={styles.kebabMenuItem}>
                                 <Text style={styles.kebabMenuText}>Copy Text</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={handlePinAction} style={styles.kebabMenuItem}>
-                                <Text style={styles.kebabMenuText}>Pin Message</Text>
                             </TouchableOpacity>
                         </View>
                     )}
@@ -385,8 +342,8 @@ const NewMessage = ({ userId, providerId, peerData }) => {
             ) : (
                 <ChatUsrHeader
                     userName={peerData?.name || 'Chat'}
-                    userImage={peerData?.image ? `${BASIC_URL}uploads/${peerData.image.replace(/^\/+/, '')}` : null}
-                    onlineStatus={false}
+                    userImage={peerAvatar}
+                    onlineStatus={true}
                 />
             )}
 
@@ -411,16 +368,15 @@ const NewMessage = ({ userId, providerId, peerData }) => {
                 onSend={messagesList => onSend(messagesList)}
                 user={{
                     _id: String(cleanUserId),
-                    name: 'Me',
-                    avatar: myAvatar,
                 }}
-                showUserAvatar={false} // REMOVED the clutter avatar from the right side!
+                showUserAvatar={true}
+                renderAvatarOnTop={true}
                 onLongPress={handleLongPress}
                 inverted={true}
                 scrollToBottom
                 alwaysShowSend
+                messagesContainerStyle={{ backgroundColor: '#F0F2F5', paddingBottom: 10 }}
                 listViewProps={{
-                    contentContainerStyle: { flexGrow: 1, justifyContent: 'flex-end' },
                     style: { flex: 1 }
                 }}
                 renderMessageImage={props => {
@@ -441,32 +397,6 @@ const NewMessage = ({ userId, providerId, peerData }) => {
                         </TouchableOpacity>
                     );
                 }}
-                renderSend={props => (
-                    <View style={styles.sendContainer}>
-                        {!uploading && (
-                            <TouchableOpacity
-                                style={styles.cameraIconBtn}
-                                onPress={openCamera}
-                                activeOpacity={0.7}>
-                                <Icons.Feather name="camera" size={20} color={color.defalt} />
-                            </TouchableOpacity>
-                        )}
-
-                        {uploading ? (
-                            <ActivityIndicator
-                                size="small"
-                                color={color.defalt}
-                                style={{ marginRight: 8 }}
-                            />
-                        ) : (
-                            <Send {...props} containerStyle={styles.sendComponentWrapper}>
-                                <View style={styles.sendButton}>
-                                    <Icons.Feather name="send" size={16} color="#FFFFFF" />
-                                </View>
-                            </Send>
-                        )}
-                    </View>
-                )}
                 renderInputToolbar={props => (
                     <InputToolbar
                         {...props}
@@ -475,59 +405,71 @@ const NewMessage = ({ userId, providerId, peerData }) => {
                     />
                 )}
                 renderComposer={props => (
-                    <Composer
-                        {...props}
-                        placeholder="Type a message..."
-                        placeholderTextColor="#94A3B8"
-                        textInputStyle={styles.composerInput}
-                    />
+                    <View style={styles.composerWrapper}>
+                        <Composer
+                            {...props}
+                            placeholder="Message..."
+                            placeholderTextColor="#94A3B8"
+                            textInputStyle={styles.composerInput}
+                        />
+                        {!uploading && (
+                            <TouchableOpacity
+                                style={styles.cameraIconBtn}
+                                onPress={openCamera}
+                                activeOpacity={0.7}>
+                                <Icons.Feather name="camera" size={22} color="#64748B" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
+                renderSend={props => (
+                    <Send {...props} containerStyle={styles.sendComponentWrapper}>
+                        <View style={styles.sendButton}>
+                            {uploading ? (
+                                <ActivityIndicator size="small" color="#FFFFFF" />
+                            ) : (
+                                <Icons.Feather name="send" size={16} color="#FFFFFF" style={{ marginLeft: -2 }} />
+                            )}
+                        </View>
+                    </Send>
                 )}
                 renderBubble={props => {
                     const isSelected = selectedMessage && selectedMessage._id === props.currentMessage._id;
-
                     return (
-                        <View style={{ backgroundColor: isSelected ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: '100%' }}>
+                        <View style={{ backgroundColor: isSelected ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: '100%', borderRadius: 8 }}>
                             <Bubble
                                 {...props}
                                 wrapperStyle={{
                                     left: {
                                         backgroundColor: '#FFFFFF',
-                                        borderRadius: 18,
-                                        borderBottomLeftRadius: 4, // Native chat tail effect
+                                        borderRadius: 16,
+                                        borderBottomLeftRadius: 4, // Sharp tail for incoming
+                                        padding: 4,
                                         marginBottom: 4,
                                         ...Platform.select({
-                                            ios: {
-                                                shadowColor: '#000',
-                                                shadowOffset: { width: 0, height: 1 },
-                                                shadowOpacity: 0.1,
-                                                shadowRadius: 2,
-                                            },
+                                            ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 2 },
                                             android: { elevation: 1 },
                                         }),
                                     },
                                     right: {
                                         backgroundColor: color.defalt,
-                                        borderRadius: 18,
-                                        borderBottomRightRadius: 4, // Native chat tail effect
+                                        borderRadius: 16,
+                                        borderBottomRightRadius: 4, // Sharp tail for outgoing
+                                        padding: 4,
                                         marginBottom: 4,
                                         ...Platform.select({
-                                            ios: {
-                                                shadowColor: color.defalt,
-                                                shadowOffset: { width: 0, height: 2 },
-                                                shadowOpacity: 0.2,
-                                                shadowRadius: 4,
-                                            },
+                                            ios: { shadowColor: color.defalt, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
                                             android: { elevation: 2 },
                                         }),
                                     },
                                 }}
                                 textStyle={{
-                                    left: { color: '#0F172A', fontSize: 15, lineHeight: 20 },
-                                    right: { color: '#FFFFFF', fontSize: 15, lineHeight: 20 },
+                                    left: { color: '#0F172A', fontSize: 15.5, lineHeight: 22 },
+                                    right: { color: '#FFFFFF', fontSize: 15.5, lineHeight: 22 },
                                 }}
                                 timeTextStyle={{
-                                    left: { color: '#64748B', fontSize: 10 },
-                                    right: { color: 'rgba(255, 255, 255, 0.7)', fontSize: 10 },
+                                    left: { color: '#94A3B8', fontSize: 11 },
+                                    right: { color: 'rgba(255, 255, 255, 0.75)', fontSize: 11 },
                                 }}
                             />
                         </View>
@@ -551,6 +493,25 @@ const IndividualChat = () => {
     ).trim();
 
     const [resolvedUserId, setResolvedUserId] = useState(null);
+
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: '',
+        message: '',
+        onOk: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+    });
+
+    const showAlert = (title, message, onOk) => {
+        setAlertConfig({
+            visible: true,
+            title,
+            message,
+            onOk: () => {
+                setAlertConfig(prev => ({ ...prev, visible: false }));
+                if (onOk) onOk();
+            },
+        });
+    };
 
     useEffect(() => {
         const syncUser = async () => {
@@ -576,6 +537,7 @@ const IndividualChat = () => {
                         userId={resolvedUserId}
                         providerId={peerId}
                         peerData={currentprovider}
+                        showAlert={showAlert}
                     />
                 ) : (
                     <View style={styles.missingUserBox}>
@@ -586,6 +548,12 @@ const IndividualChat = () => {
                     </View>
                 )}
             </View>
+            <CustomAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onOk={alertConfig.onOk}
+            />
         </SafeAreaView>
     );
 };
@@ -595,15 +563,15 @@ export default IndividualChat;
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: '#F0F2F5', // Soft WhatsApp-like background
     },
     chatWrapper: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: '#F0F2F5',
     },
     chatViewContainer: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: '#F0F2F5',
     },
     contextualHeader: {
         height: 60,
@@ -656,77 +624,63 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     chatMsgImage: {
-        width: 220,
-        height: 160,
-        borderRadius: 14, // Fits beautifully inside the native bubble
-        margin: 3,
+        width: 240,
+        height: 180,
+        borderRadius: 12,
+        margin: 4,
     },
-    sendContainer: {
+    inputToolbar: {
+        backgroundColor: '#F0F2F5', // Matches screen background
+        borderTopWidth: 0,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    },
+    inputToolbarPrimary: {
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+    },
+    composerWrapper: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        height: 44,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        paddingLeft: 16,
+        paddingRight: 6,
+        marginRight: 10,
+        minHeight: 46,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    composerInput: {
+        color: '#0F172A',
+        fontSize: 15,
+        lineHeight: 20,
+        paddingTop: Platform.OS === 'ios' ? 12 : 10,
+        paddingBottom: Platform.OS === 'ios' ? 12 : 10,
+        flex: 1,
+        ...(Platform.OS === 'web' && { outlineWidth: 0 }),
     },
     cameraIconBtn: {
         padding: 8,
-        borderRadius: 20,
-        backgroundColor: '#F8FAFC',
-        marginRight: 6,
     },
     sendComponentWrapper: {
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 4,
+        marginBottom: 2,
     },
     sendButton: {
         backgroundColor: color.defalt,
-        borderRadius: 20,
-        width: 36,
-        height: 36,
+        borderRadius: 22,
+        width: 44,
+        height: 44,
         justifyContent: 'center',
         alignItems: 'center',
         ...Platform.select({
-            ios: {
-                shadowColor: color.defalt,
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.25,
-                shadowRadius: 4,
-            },
+            ios: { shadowColor: color.defalt, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
             android: { elevation: 2 },
             web: { boxShadow: '0 2px 6px rgba(186, 104, 56, 0.25)' },
-        }),
-    },
-    inputToolbar: {
-        marginHorizontal: 16,
-        marginBottom: 10,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 24,
-        borderTopWidth: 0,
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        ...Platform.select({
-            ios: {
-                shadowColor: '#0F172A',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 6,
-            },
-            android: { elevation: 2 },
-            web: { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.05)' },
-        }),
-    },
-    inputToolbarPrimary: {
-        alignItems: 'center',
-    },
-    composerInput: {
-        color: '#0F172A',
-        fontSize: 14,
-        lineHeight: 20,
-        paddingTop: 8,
-        ...(Platform.OS === 'web' && {
-            outlineWidth: 0,
-            outlineColor: 'transparent',
-            outlineStyle: 'none',
-            borderWidth: 0,
         }),
     },
     modalContainer: {

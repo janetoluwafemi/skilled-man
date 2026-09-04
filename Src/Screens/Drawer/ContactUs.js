@@ -18,7 +18,8 @@ import * as Animatable from 'react-native-animatable';
 import color from '../../Assets/colors/colors';
 import C_TxtInput from '../../Components/C_TextInput';
 import BotonComp from '../../Components/BtnComp';
-import { Icons } from '../../Components/Icons';
+import CustomAlert from '../../Components/CustomAlert';
+import { normalize } from '../../utilis/responsive';
 import { BASIC_URL } from '../Signin/Signin';
 
 const ContactUs = () => {
@@ -31,25 +32,44 @@ const ContactUs = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    onOk: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+  });
+
+  const showAlert = (title, message, onOk) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      onOk: () => {
+        setAlertConfig(prev => ({ ...prev, visible: false }));
+        if (onOk) onOk();
+      },
+    });
+  };
+
   const handleSubmit = async () => {
     if (!name.trim()) {
-      Alert.alert('Validation Error', 'Full Name is required');
+      showAlert('Validation Error', 'Full Name is required');
       return;
     }
     if (!email.trim() || !email.includes('@')) {
-      Alert.alert('Validation Error', 'Enter a valid email address');
+      showAlert('Validation Error', 'Enter a valid email address');
       return;
     }
     if (!phoneNumber.trim()) {
-      Alert.alert('Validation Error', 'Phone number is required');
+      showAlert('Validation Error', 'Phone number is required');
       return;
     }
     if (!subject.trim()) {
-      Alert.alert('Validation Error', 'Subject is required');
+      showAlert('Validation Error', 'Subject is required');
       return;
     }
     if (!message.trim()) {
-      Alert.alert('Validation Error', 'Message is required');
+      showAlert('Validation Error', 'Message is required');
       return;
     }
 
@@ -75,29 +95,24 @@ const ContactUs = () => {
       setLoading(false);
       navigation.goBack();
       if (result && (result.status === 'success' || result.success)) {
-        Alert.alert(
+        showAlert(
           'Success',
           result.success || 'Your message has been received. We will get back to you shortly.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                setName('');
-                setEmail('');
-                setPhoneNumber('');
-                setSubject('');
-                setMessage('');
-                navigation.goBack();
-              },
-            },
-          ]
+          () => {
+            setName('');
+            setEmail('');
+            setPhoneNumber('');
+            setSubject('');
+            setMessage('');
+            navigation.goBack();
+          }
         );
       } else {
-        Alert.alert('Submission Failed', result?.error || result?.message || 'Something went wrong. Please try again.');
+        showAlert('Submission Failed', result?.error || result?.message || 'Something went wrong. Please try again.');
       }
     } catch (error) {
       setLoading(false);
-      Alert.alert('Network Error', error?.message || 'Unable to connect to server');
+      showAlert('Network Error', error?.message || 'Unable to connect to server');
     }
   };
 
@@ -206,6 +221,12 @@ const ContactUs = () => {
           </Animatable.View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onOk={alertConfig.onOk}
+      />
     </SafeAreaView>
   );
 };

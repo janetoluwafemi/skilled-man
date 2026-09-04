@@ -5,22 +5,24 @@ import {
   View,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   ScrollView,
   StatusBar,
   Platform,
-  Modal } from 'react-native';
+  Modal,
+  Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { WebView } from 'react-native-webview';
 import * as Animatable from 'react-native-animatable';
-import { showToast } from '../../utilis/showToast';
+import CustomAlert from '../../Components/CustomAlert';
 
 import color from '../../Assets/colors/colors';
 import C_TxtInput from '../../Components/C_TextInput';
 import BotonComp from '../../Components/BtnComp';
 import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
+
+import { normalize } from '../../utilis/responsive';
 
 const CrdDetails = () => {
   const navigation = useNavigation();
@@ -40,6 +42,13 @@ const CrdDetails = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initializingPayment, setInitializingPayment] = useState(false);
+
+  const [customAlert, setCustomAlert] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    onPress: null,
+  });
 
   const [billingDetail] = useState({
     billingName: global.name || '',
@@ -67,17 +76,26 @@ const CrdDetails = () => {
     return `${hours}:${minutes}:${seconds}`;
   };
 
+  const showAlert = (title, message, onPress = null) => {
+    setCustomAlert({
+      visible: true,
+      title,
+      message,
+      onPress,
+    });
+  };
+
   const createBooking = async () => {
     try {
       setLoading(true);
 
       if (!price || price <= 0) {
-        Alert.alert('Error', 'Invalid price amount');
+        showAlert('Error', 'Invalid price amount');
         return;
       }
 
       if (!global.id) {
-        Alert.alert('Error', 'User not logged in');
+        showAlert('Error', 'User not logged in');
         return;
       }
 
@@ -132,16 +150,16 @@ const CrdDetails = () => {
         result?.error ===
         'Your Request is in Progress. So, Before Completing Previous you can Not Send Again'
       ) {
-        Alert.alert(
+        showAlert(
           'Booking Failed',
           'Transaction incomplete. Kindly message the booked provider to reject your booking, then initiate a new transaction'
         );
       } else {
-        Alert.alert('Booking Failed', result?.error || 'Unknown error');
+        showAlert('Booking Failed', result?.error || 'Unknown error');
       }
     } catch (error) {
       console.log('Booking creation error:', error);
-      Alert.alert('Error', 'Booking failed. Try again.');
+      showAlert('Error', 'Booking failed. Try again.');
     } finally {
       setLoading(false);
     }
@@ -176,10 +194,10 @@ const CrdDetails = () => {
         global.refnum = result?.data?.reference;
         setPaymentUrl(result?.data?.authorization_url);
       } else {
-        Alert.alert('Payment Error', 'Failed to initialize payment');
+        showAlert('Payment Error', 'Failed to initialize payment');
       }
     } catch (error) {
-      Alert.alert('Payment Error', 'Failed to process payment');
+      showAlert('Payment Error', 'Failed to process payment');
     } finally {
       setInitializingPayment(false);
     }
@@ -189,7 +207,7 @@ const CrdDetails = () => {
     if (paymentUrl) {
       setModalVisible(true);
     } else if (loading || initializingPayment) {
-      Alert.alert('Please Wait', 'Payment gateway is still initializing...');
+      showAlert('Please Wait', 'Payment gateway is still initializing...');
     } else {
       createBooking();
     }
@@ -205,8 +223,9 @@ const CrdDetails = () => {
 
   const handlePaymentSuccess = () => {
     setModalVisible(false);
-    showToast('Payment Successful!');
-    navigation.navigate('PaymentCongratulations');
+    showAlert('Success', 'Payment Successful!', () => {
+      navigation.navigate('PaymentCongratulations');
+    });
   };
 
   const handleCloseModal = () => {
@@ -310,6 +329,17 @@ const CrdDetails = () => {
         </Animatable.View>
       </ScrollView>
 
+      <CustomAlert
+        visible={customAlert.visible}
+        title={customAlert.title}
+        message={customAlert.message}
+        onOk={() => {
+          const action = customAlert.onPress;
+          setCustomAlert({ visible: false, title: '', message: '', onPress: null });
+          if (action) action();
+        }}
+      />
+
       <Modal
         visible={modalVisible && !!paymentUrl}
         animationType="slide"
@@ -350,17 +380,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   headerBar: {
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 16 : 8,
-    paddingBottom: 12,
+    paddingHorizontal: normalize(20),
+    paddingTop: Platform.OS === 'android' ? normalize(16) : normalize(8),
+    paddingBottom: normalize(12),
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
   },
   backArrowBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: normalize(40),
+    height: normalize(40),
+    borderRadius: normalize(20),
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
@@ -372,20 +402,20 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    paddingBottom: normalize(40),
   },
   formContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 4,
+    paddingHorizontal: normalize(20),
+    paddingTop: normalize(4),
   },
   badgeRow: {
     alignItems: 'center',
     marginBottom: 12,
   },
   badgeCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: normalize(68),
+    height: normalize(68),
+    borderRadius: normalize(34),
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -396,48 +426,48 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   welcomeTitle: {
-    fontSize: 22,
+    fontSize: normalize(22),
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
     letterSpacing: -0.3,
   },
   welcomeSubtitle: {
-    fontSize: 13,
+    fontSize: normalize(13),
     color: '#64748B',
     textAlign: 'center',
-    marginBottom: 18,
-    marginTop: 4,
-    lineHeight: 18,
-    paddingHorizontal: 16,
+    marginBottom: normalize(18),
+    marginTop: normalize(4),
+    lineHeight: normalize(18),
+    paddingHorizontal: normalize(16),
   },
   cardWrapper: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
+    borderRadius: normalize(20),
+    padding: normalize(18),
     elevation: 2,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
-    marginBottom: 16,
+    marginBottom: normalize(16),
   },
   fieldGroup: {
-    marginBottom: 14,
+    marginBottom: normalize(14),
     width: '100%',
   },
   fieldLabel: {
-    fontSize: 13,
+    fontSize: normalize(13),
     fontWeight: '600',
     color: '#334155',
-    marginBottom: 6,
+    marginBottom: normalize(6),
   },
   submitBtn: {
     width: '100%',
     backgroundColor: color.defalt,
-    borderRadius: 14,
-    paddingVertical: 14,
-    marginTop: 10,
+    borderRadius: normalize(14),
+    paddingVertical: normalize(14),
+    marginTop: normalize(10),
     elevation: 3,
     shadowColor: color.defalt,
     shadowOffset: { width: 0, height: 3 },
@@ -463,4 +493,3 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
-

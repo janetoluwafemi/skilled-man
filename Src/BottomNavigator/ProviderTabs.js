@@ -10,7 +10,6 @@ import {
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
-import { LinearGradient } from 'expo-linear-gradient';
 import Icon, { Icons } from '../Components/Icons';
 import color from '../Assets/colors/colors';
 import Dshbord from '../Screens/DashBoard/Dashboard';
@@ -142,18 +141,14 @@ export default function ProviderTabs() {
           height: totalTabHeight,
           position: 'absolute',
           bottom: 0,
+          left: 0,
+          right: 0,
           paddingBottom: bottomPadding,
           paddingTop: Platform.OS === 'android' ? 8 : 0,
-          backgroundColor: 'transparent',
+          backgroundColor: color.defalt,
           borderTopWidth: 0,
           elevation: 0,
         },
-        tabBarBackground: () => (
-          <LinearGradient
-            colors={[color.lnTpClr, color.lnMdClr]}
-            style={styles.gradientFlex}
-          />
-        ),
       }}>
       {TabArr.map(item => (
         <Tab.Screen
@@ -173,7 +168,7 @@ export default function ProviderTabs() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justify: 'center',
+    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: color.defalt,
   },
@@ -213,8 +208,5 @@ const styles = StyleSheet.create({
     color: color.wite,
     fontSize: 9,
     fontWeight: 'bold',
-  },
-  gradientFlex: {
-    flex: 1,
   },
 });

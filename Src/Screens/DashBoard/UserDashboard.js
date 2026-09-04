@@ -9,12 +9,16 @@ import {
   Alert,
   Modal,
   StatusBar,
-  ActivityIndicator } from 'react-native';
+  ActivityIndicator,
+  AsyncStorage
+} from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 
 import color from '../../Assets/colors/colors';
+import CustomAlert from '../../Components/CustomAlert';
+import { normalize } from '../../utilis/responsive';
 import HeaderWSarchFiltr from '../../Components/HeaderWithSearchFilter';
 import SrvicCrd from '../../Components/ServiceCard';
 import BotonComp from '../../Components/BtnComp';
@@ -22,7 +26,7 @@ import { Icons } from '../../Components/Icons';
 import { useAuth } from '../../context/AuthProvider';
 import { BASIC_URL } from '../Signin/Signin';
 
-const { height } = Dimensions.get('window');
+const { height, width } = Dimensions.get('window');
 
 const UserDashboard = () => {
   const navigation = useNavigation();
@@ -34,11 +38,25 @@ const UserDashboard = () => {
   const [skill, setSkill] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+  });
+
+  const showAlert = (title, message) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+    });
+  };
+
   const fetchSpecificData = async value => {
     try {
       const formdata = new FormData();
       formdata.append('job', value);
-      
+
       let currentUserId = String(global.id || '').trim();
       if (!currentUserId || ['251', '255', '256'].includes(currentUserId)) {
         const rawUser = await AsyncStorage.getItem('user');
@@ -63,12 +81,11 @@ const UserDashboard = () => {
       if (result && result.add_skills) {
         navigation.navigate('FindExpert', { data: result.add_skills });
       } else if (result?.error) {
-        Alert.alert(
-            'Error',
-            typeof result.error === 'string'
-                ? result.error
-                : String(result.error)
-        );
+        const errStr = typeof result.error === 'string' ? result.error : String(result.error);
+        const displayMessage = errStr.toLowerCase().includes('record')
+            ? `No ${value} found\nPlease check later`
+            : errStr;
+        showAlert('Notice', displayMessage);
       }
     } catch (error) {
       console.log('Error fetching specific services:', error);
@@ -118,11 +135,10 @@ const UserDashboard = () => {
       )
       : [];
 
-  const bottomPadding =
-      height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 24;
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 16 : 0) + 40;
 
   return (
-      <SafeAreaView style={styles.safeContainer} edges={['top']}>
+      <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
         <StatusBar barStyle="light-content" backgroundColor={color.defalt} />
 
         <HeaderWSarchFiltr
@@ -175,7 +191,6 @@ const UserDashboard = () => {
                               animation="zoomIn"
                               duration={450}
                               delay={Math.min(ind * 50, 700)}
-                              useNativeDriver
                               style={styles.gridItemWrapper}>
                             <View style={styles.centerCardWrap}>
                               <SrvicCrd
@@ -191,9 +206,11 @@ const UserDashboard = () => {
                         <View style={styles.emptyIconCircle}>
                           <Icons.Feather name="search" size={26} color="#94A3B8" />
                         </View>
-                        <Text style={styles.noDataText}>No services found</Text>
+                        <Text style={styles.noDataText}>
+                          {searchTerm ? `No ${searchTerm} found` : 'No services found'}
+                        </Text>
                         <Text style={styles.noDataSubtext}>
-                          Try searching with another keyword
+                          Please check later
                         </Text>
                       </Animatable.View>
                   )}
@@ -252,6 +269,12 @@ const UserDashboard = () => {
             </Animatable.View>
           </View>
         </Modal>
+        <CustomAlert
+            visible={alertConfig.visible}
+            title={alertConfig.title}
+            message={alertConfig.message}
+            onOk={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+        />
       </SafeAreaView>
   );
 };
@@ -265,19 +288,20 @@ const styles = StyleSheet.create({
   },
   scrollStyle: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: color.defalt,
   },
   scrollContent: {
     flexGrow: 1,
+    backgroundColor: '#F8FAFC',
   },
   cardContainer: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     paddingHorizontal: 16,
-    paddingTop: 12,
-    flex: 1,
-    minHeight: '100%',
+    paddingTop: 16,
+    flexGrow: 1,
+    minHeight: height * 0.75,
     alignItems: 'center',
   },
   topIndicatorPill: {
@@ -313,15 +337,14 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     width: '100%',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     flexWrap: 'wrap',
-    gap: 12,
   },
   gridItemWrapper: {
-    width: '46%',
+    width: width > 500 ? '31%' : '48%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: 12,
   },
   centerCardWrap: {
     width: '100%',
@@ -334,7 +357,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 40,
   },
   loadingText: {
     marginTop: 12,

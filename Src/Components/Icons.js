@@ -1,6 +1,5 @@
 import React from 'react';
-import {StyleSheet ,
-  Platform} from 'react-native';
+import {StyleSheet} from 'react-native';
 import {
   AntDesign,
   FontAwesome,
@@ -16,6 +15,7 @@ import {
   Foundation,
   EvilIcons,
 } from '@expo/vector-icons';
+import { normalize } from '../utilis/responsive';
 
 export const Icons = {
   MaterialCommunityIcons,
@@ -40,7 +40,7 @@ const Icon = ({ type, name, color, size = 24, style }) => {
   return (
     <Tag
       name={name}
-      size={size}
+      size={normalize(size)}
       color={color}
       style={style ? StyleSheet.flatten(style) : undefined}
     />
