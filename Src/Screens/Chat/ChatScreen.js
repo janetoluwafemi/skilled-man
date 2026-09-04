@@ -53,12 +53,15 @@ const ChatScreen = props => {
   const [isToggled, setIsToggled] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Tracks chats that have been opened/read during this session so polling doesn't bring back the badge
+  const [clearedChatIds, setClearedChatIds] = useState(new Set());
+
   const getAllChats = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
       const formdata = new FormData();
       let ownId = String(global?.id || '');
-      
+
       if (!ownId || ['251', '255', '256'].includes(ownId)) {
         const rawUser = await AsyncStorage.getItem('user');
         if (rawUser) {
@@ -94,7 +97,23 @@ const ChatScreen = props => {
         return;
       }
       if (result?.chat) {
-        setALlChat(Array.isArray(result.chat) ? result.chat : []);
+        const chatData = Array.isArray(result.chat) ? result.chat : [];
+
+        // Provider: Show chats where they are participant (provider_id or id matches ownId)
+        const filtered = chatData
+          .filter(item =>
+            String(item.provider_id) === String(ownId) || String(item.id) === String(ownId)
+          )
+          .map(item => {
+            const chatId = String(item.id || item.provider_id);
+            // Force unread count to 0 if user already opened this chat session-wide
+            if (clearedChatIds.has(chatId)) {
+              return { ...item, unread_count: 0 };
+            }
+            return item;
+          });
+
+        setALlChat(filtered);
       }
     } catch (error) {
       console.log('Error fetching chat list:', error);
@@ -102,7 +121,7 @@ const ChatScreen = props => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [clearedChatIds]);
 
   useEffect(() => {
     let interval = null;
@@ -125,6 +144,9 @@ const ChatScreen = props => {
       );
       setCountUnread(unread);
       global.unreadmessage = unread;
+    } else {
+      setCountUnread(0);
+      global.unreadmessage = 0;
     }
   }, [getChat]);
 
@@ -189,14 +211,12 @@ const ChatScreen = props => {
         </Animatable.View>
       )}
 
-      {getChat.length > 0 && (
+      {getChat.length > 0 && countUnread > 0 && (
         <View style={styles.topInfoBar}>
           <Text style={styles.conversationsHeading}>Recent Conversations</Text>
-          {countUnread > 0 && (
-            <View style={styles.unreadPill}>
-              <Text style={styles.unreadPillText}>{countUnread} New</Text>
-            </View>
-          )}
+          <View style={styles.unreadPill}>
+            <Text style={styles.unreadPillText}>{countUnread} New</Text>
+          </View>
         </View>
       )}
 
@@ -235,12 +255,23 @@ const ChatScreen = props => {
           renderItem={({ item }) => (
             <View style={styles.chatCardWrap}>
               <ProflCrd
-                showProfile={() =>
+                showProfile={() => {
+                  const chatId = String(item.id || item.provider_id);
+                  // Remember this chat has been read for the session
+                  setClearedChatIds(prev => new Set(prev).add(chatId));
+
+                  setALlChat(prevChats =>
+                    prevChats.map(chat =>
+                      String(chat.id || chat.provider_id) === chatId
+                        ? { ...chat, unread_count: 0 }
+                        : chat
+                    )
+                  );
                   navigation.navigate('IndividualChat', {
                     currentuser: item,
                     receiver_id: item?.id || item?.provider_id || item?.user_id,
-                  })
-                }
+                  });
+                }}
                 profile={item.image}
                 cardTitle={item.name}
                 time={item.created_at}

@@ -35,7 +35,8 @@ const UserChat = () => {
     if (isRefresh) setRefreshing(true);
     try {
       const formdata = new FormData();
-      formdata.append('own_id', String(global.id || '256'));
+      const ownId = String(global.id || '256');
+      formdata.append('own_id', ownId);
 
       const response = await fetch(`${BASIC_URL}get_all_chats.php`, {
         method: 'POST',
@@ -44,7 +45,12 @@ const UserChat = () => {
 
       const result = await response.json();
       if (result?.chat) {
-        setAllChat(result.chat);
+        const chatData = Array.isArray(result.chat) ? result.chat : [];
+        // Customer: Show chats they initiated/sent (user_id or id matches ownId)
+        const filtered = chatData.filter(item => 
+          String(item.user_id) === String(ownId) || String(item.id) === String(ownId)
+        );
+        setAllChat(filtered);
       }
     } catch (error) {
       console.log('Error fetching chat list:', error);

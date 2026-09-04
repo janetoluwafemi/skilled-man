@@ -134,8 +134,6 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                     }
 
                     const rawSenderId = String(specificChat.sender_id || '');
-
-                    // IF YOUR MESSAGES SHOW ON THE WRONG SIDE, YOUR BACKEND IS LIKELY RETURNING THE WRONG SENDER ID HERE.
                     const isActuallyMe = rawSenderId === cleanUserId;
 
                     const newIncomingMessage = {
@@ -370,7 +368,14 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                     _id: String(cleanUserId),
                 }}
                 showUserAvatar={true}
+                alignTop={false}
+                scrollToBottom={true}
                 renderAvatarOnTop={true}
+                // Alignment rules:
+                // Customer/Incoming messages align to the left.
+                // Provider/Outgoing messages align to the right.
+                // In GiftedChat, messages from `user._id` align to the right by default.
+                // We ensure `cleanUserId` is the sender's ID.
                 onLongPress={handleLongPress}
                 inverted={true}
                 scrollToBottom
@@ -435,15 +440,23 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                 )}
                 renderBubble={props => {
                     const isSelected = selectedMessage && selectedMessage._id === props.currentMessage._id;
+
+                    // Check if current logged in user is a Provider (role '1')
+                    const isProvider = String(global.role) === '1';
+
                     return (
                         <View style={{ backgroundColor: isSelected ? 'rgba(0, 0, 0, 0.1)' : 'transparent', width: '100%', borderRadius: 8 }}>
                             <Bubble
                                 {...props}
                                 wrapperStyle={{
+                                    // If provider: incoming messages (left) look like outbound, and vice versa if needed
+                                    // But GiftedChat positions bubbles based on whether user._id matches current user.
+                                    // To swap sides for providers, we can configure position or override styles:
                                     left: {
-                                        backgroundColor: '#FFFFFF',
+                                        backgroundColor: isProvider ? color.defalt : '#FFFFFF',
                                         borderRadius: 16,
-                                        borderBottomLeftRadius: 4, // Sharp tail for incoming
+                                        borderBottomLeftRadius: isProvider ? 16 : 4,
+                                        borderBottomRightRadius: isProvider ? 4 : 16,
                                         padding: 4,
                                         marginBottom: 4,
                                         ...Platform.select({
@@ -452,24 +465,25 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                                         }),
                                     },
                                     right: {
-                                        backgroundColor: color.defalt,
+                                        backgroundColor: isProvider ? '#FFFFFF' : color.defalt,
                                         borderRadius: 16,
-                                        borderBottomRightRadius: 4, // Sharp tail for outgoing
+                                        borderBottomLeftRadius: isProvider ? 4 : 16,
+                                        borderBottomRightRadius: isProvider ? 16 : 4,
                                         padding: 4,
                                         marginBottom: 4,
                                         ...Platform.select({
-                                            ios: { shadowColor: color.defalt, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
+                                            ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
                                             android: { elevation: 2 },
                                         }),
                                     },
                                 }}
                                 textStyle={{
-                                    left: { color: '#0F172A', fontSize: 15.5, lineHeight: 22 },
-                                    right: { color: '#FFFFFF', fontSize: 15.5, lineHeight: 22 },
+                                    left: { color: isProvider ? '#FFFFFF' : '#0F172A', fontSize: 15.5, lineHeight: 22, textAlign: 'left' },
+                                    right: { color: isProvider ? '#0F172A' : '#FFFFFF', fontSize: 15.5, lineHeight: 22, textAlign: 'left' },
                                 }}
                                 timeTextStyle={{
-                                    left: { color: '#94A3B8', fontSize: 11 },
-                                    right: { color: 'rgba(255, 255, 255, 0.75)', fontSize: 11 },
+                                    left: { color: isProvider ? 'rgba(255, 255, 255, 0.75)' : '#94A3B8', fontSize: 11 },
+                                    right: { color: isProvider ? '#94A3B8' : 'rgba(255, 255, 255, 0.75)', fontSize: 11 },
                                 }}
                             />
                         </View>
@@ -563,7 +577,7 @@ export default IndividualChat;
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#F0F2F5', // Soft WhatsApp-like background
+        backgroundColor: '#F0F2F5',
     },
     chatWrapper: {
         flex: 1,
