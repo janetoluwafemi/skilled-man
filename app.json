@@ -5,10 +5,12 @@
     "scheme": "skilledman",
     "version": "1.0.0",
     "plugins": [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "@react-native-firebase/app"
     ],
     "android": {
-      "package": "com.intellitechltdng.skilledman"
+      "package": "com.intellitechltdng.skilledman",
+      "googleServicesFile": "./google-services.json"
     },
     "extra": {
       "eas": {
