@@ -62,13 +62,11 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [kebabVisible, setKebabVisible] = useState(false);
 
-  // 1. Context Logic: Check Dashboard Role
   const currentDashboardRole = String(global.role) === '1' ? 'provider' : 'customer';
 
   const cleanUserId = String(userId ?? '').trim();
   let peerId = String(providerId ?? '').trim();
 
-  // CRITICAL FIX: Prevent ID Collision
   if (peerId === cleanUserId) {
     const possibleIds = [peerData?.user_id, peerData?.provider_id, peerData?.id]
       .map(id => String(id || '').trim());
@@ -93,9 +91,8 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         if (storedHistory) {
           const parsedHistory = JSON.parse(storedHistory);
 
-          // 3. Rendering Logic: Force alignment based on role to override corrupted local data
           const alignedHistory = parsedHistory
-            .filter(msg => msg.senderRole) // Hides old broken messages that don't have roles
+            .filter(msg => msg.senderRole)
             .map(msg => {
               msg.user._id = msg.senderRole === currentDashboardRole ? cleanUserId : peerId;
               return msg;
@@ -129,7 +126,6 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
       }
 
       const allChats = result?.chat || [];
-      // Use the corrected peerId to find the right conversation
       const specificChat = allChats.find(
         (c) => String(c.chat_id) === peerId || String(c.user_id) === peerId || String(c.provider_id) === peerId || c.name === peerData?.name
       );
@@ -155,7 +151,6 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
           const rawSenderId = String(specificChat.sender_id || '');
           const isActuallyMe = rawSenderId === cleanUserId;
 
-          // Determine role of the incoming API message
           const oppositeRole = currentDashboardRole === 'provider' ? 'customer' : 'provider';
           const msgSenderRole = specificChat.senderRole || (isActuallyMe ? currentDashboardRole : oppositeRole);
 
@@ -163,9 +158,8 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
             _id: stableId,
             text: specificChat.message || '',
             createdAt: parsedDate,
-            senderRole: msgSenderRole, // 3. Data Saving Logic
+            senderRole: msgSenderRole,
             user: {
-              // 3. Rendering Logic: Dynamically assign ID so GiftedChat aligns it correctly
               _id: msgSenderRole === currentDashboardRole ? cleanUserId : peerId,
               name: isActuallyMe ? 'Me' : specificChat.name || peerData?.name || 'User',
               avatar: isActuallyMe ? myAvatar : peerAvatar,
@@ -237,9 +231,9 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         _id: String(Date.now()),
         text: textContent,
         createdAt: new Date(),
-        senderRole: currentDashboardRole, // 3. Data Saving Logic
+        senderRole: currentDashboardRole,
         user: {
-          _id: cleanUserId, // Always renders on the right
+          _id: cleanUserId,
           name: 'Me',
           avatar: myAvatar,
         },
@@ -256,7 +250,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
       chatForm.append('own_id', currentSyncId);
       chatForm.append('chat_user_id', peerId);
       chatForm.append('message', textContent);
-      chatForm.append('senderRole', currentDashboardRole); // Send flag to backend if supported
+      chatForm.append('senderRole', currentDashboardRole);
 
       const notifyForm = new FormData();
       notifyForm.append('sender_id', currentSyncId);
@@ -297,7 +291,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
           _id: String(Date.now()),
           text: '',
           createdAt: new Date(),
-          senderRole: currentDashboardRole, // 3. Data Saving Logic
+          senderRole: currentDashboardRole,
           user: {
             _id: cleanUserId,
             name: 'Me',
@@ -329,7 +323,6 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     }
   };
 
-  // THIS IS THE LINE THAT CAUSED THE CRASH. I fixed `cleanProviderId` to `peerId`
   if (!cleanUserId || !peerId || cleanUserId === 'undefined' || peerId === 'undefined') {
     return (
       <View style={styles.missingUserBox}>
@@ -468,7 +461,6 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
               <Bubble
                 {...props}
                 wrapperStyle={{
-                  // 2. Styling Rules: Incoming Messages (Left)
                   left: {
                     backgroundColor: '#FFFFFF',
                     borderRadius: 16,
@@ -481,9 +473,8 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                       android: { elevation: 1 },
                     }),
                   },
-                  // 2. Styling Rules: Outgoing Messages (Right)
                   right: {
-                    backgroundColor: color.defalt, // Exact Brown/Tan color
+                    backgroundColor: color.defalt,
                     borderRadius: 16,
                     borderBottomLeftRadius: 16,
                     borderBottomRightRadius: 4,
@@ -496,9 +487,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                   },
                 }}
                 textStyle={{
-                  // Incoming Messages (Left): Brown/Tan text
                   left: { color: color.defalt, fontSize: 15.5, lineHeight: 22, textAlign: 'left' },
-                  // Outgoing Messages (Right): White text
                   right: { color: '#FFFFFF', fontSize: 15.5, lineHeight: 22, textAlign: 'left' },
                 }}
                 timeTextStyle={{

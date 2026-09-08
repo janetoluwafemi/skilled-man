@@ -6,7 +6,9 @@
     "version": "1.0.0",
     "plugins": [
       "@react-native-community/datetimepicker",
-      "@react-native-firebase/app"
+      "@react-native-firebase/app",
+      "expo-sharing",
+      "expo-web-browser"
     ],
     "android": {
       "package": "com.intellitechltdng.skilledman",
