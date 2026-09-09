@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
-
+import { Icons } from '../../Components/Icons';
 import color from '../../Assets/colors/colors';
 import C_TxtInput from '../../Components/C_TextInput';
 import BotonComp from '../../Components/BtnComp';

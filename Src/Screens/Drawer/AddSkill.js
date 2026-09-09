@@ -12,8 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Animatable from 'react-native-animatable';
-import { showToast } from '../../utilis/showToast';
-
+import {showToast} from '../../utilis/showToast';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 import BotonComp from '../../Components/BtnComp';

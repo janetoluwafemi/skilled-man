@@ -8,7 +8,6 @@ import {
   Dimensions,
   FlatList,
   Modal,
-  Alert,
   Linking,
   ScrollView,
   StatusBar,
@@ -16,7 +15,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Share,
-  ActivityIndicator } from 'react-native';
+  ActivityIndicator
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
@@ -98,7 +98,7 @@ const ExpertDetails = () => {
       if (result?.business) {
         const skillsArray = Object.values(result.business);
         const filteredSkills = skillsArray.filter(
-          s => s?.select_bussiness && s.select_bussiness !== 'Select Business'
+            s => s?.select_bussiness && s.select_bussiness !== 'Select Business'
         );
         setSkills(filteredSkills);
       }
@@ -120,7 +120,7 @@ const ExpertDetails = () => {
     const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
 
     Linking.openURL(googleMapsUrl).catch(() =>
-      showAlert('Error', 'Unable to open Google Maps')
+        showAlert('Error', 'Unable to open Google Maps')
     );
   };
 
@@ -148,7 +148,8 @@ const ExpertDetails = () => {
     setReviewVisible(false);
   };
 
-  const handleBookingConfirm = () => {
+  // --- NEW WORKFLOW LOGIC HERE ---
+  const handleBookingConfirm = async () => {
     if (!price || Number(price) <= 0) {
       showAlert('Missing Field', 'Please enter a valid price budget.');
       return;
@@ -159,20 +160,55 @@ const ExpertDetails = () => {
       return;
     }
 
-    setModalVisible(false);
+    setLoad(true);
 
-    setTimeout(() => {
-      navigation.navigate('SelectPaymentMethod', {
-        price: String(price).trim(),
-        fullName: String(fullName || global.name || '').trim(),
-        phoneNumber: String(phoneNumber || global.phone_number || '').trim(),
-        address: String(address || global.address || '').trim(),
-        date: date.toISOString().split('T')[0],
-        provider_id,
-        selectedfile,
+    try {
+      const formdata = new FormData();
+      formdata.append('user_id', global.id);
+      formdata.append('provider_id', provider_id); // The specific provider receiving the request
+      formdata.append('service_category', item?.service_name || 'Service');
+      formdata.append('service_date', date.toISOString().split('T')[0]);
+      formdata.append('address', address);
+      formdata.append('price', price);
+      formdata.append('phone', phoneNumber);
+      formdata.append('name', fullName);
+
+      if (selectedfile) {
+        formdata.append('file', {
+          uri: selectedfile.uri,
+          name: selectedfile.name || `IMG_${Date.now()}.jpg`,
+          type: selectedfile.type || 'image/jpeg',
+        });
+      }
+
+      // NOTE: Ensure this PHP endpoint exists on your backend to save the pending request
+      const response = await fetch(`${BASIC_URL}user/submit_pending_booking.php`, {
+        method: 'POST',
+        body: formdata,
       });
-    }, 150);
+
+      const result = await response.json();
+      setLoad(false);
+
+      if (result?.success || result?.status === 'success') {
+        setModalVisible(false);
+        showAlert(
+            'Request Sent!',
+            `Your booking request has been sent. You will be able to pay once the provider accepts it.`,
+            () => {
+              navigation.navigate('BookingScreen');
+            }
+        );
+      } else {
+        showAlert('Error', result?.error || 'Failed to send booking request.');
+      }
+    } catch (error) {
+      setLoad(false);
+      console.log('Booking error:', error);
+      showAlert('Error', 'Network error. Please check your connection.');
+    }
   };
+  // ---------------------------------
 
   const handleShareProfile = async () => {
     try {
@@ -195,24 +231,24 @@ const ExpertDetails = () => {
   const handleReportExpert = () => {
     setReviewVisible(false);
     showAlert(
-      'Report Expert',
-      `Are you sure you want to report ${item?.name || 'this provider'} for inappropriate behavior or policy violation?`,
-      () => {
-        const subject = encodeURIComponent(`Report Provider: ${item?.name || ''} (ID: ${item?.id || ''})`);
-        const body = encodeURIComponent(
-          `Hello SkilledMan Support,\n\nI want to report the following expert:\n- Name: ${item?.name || ''}\n- Provider ID: ${item?.id || ''}\n- Service: ${item?.service_name || ''}\n\nReason for report:\n`
-        );
+        'Report Expert',
+        `Are you sure you want to report ${item?.name || 'this provider'} for inappropriate behavior or policy violation?`,
+        () => {
+          const subject = encodeURIComponent(`Report Provider: ${item?.name || ''} (ID: ${item?.id || ''})`);
+          const body = encodeURIComponent(
+              `Hello SkilledMan Support,\n\nI want to report the following expert:\n- Name: ${item?.name || ''}\n- Provider ID: ${item?.id || ''}\n- Service: ${item?.service_name || ''}\n\nReason for report:\n`
+          );
 
-        if (Platform.OS === 'web') {
-          const webGmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=support@skilledman.com&su=${subject}&body=${body}`;
-          window.open(webGmailUrl, '_blank');
-        } else {
-          const mailUrl = `mailto:support@skilledman.com?subject=${subject}&body=${body}`;
-          Linking.openURL(mailUrl).catch(() => {
-            showToast('Unable to open mail client');
-          });
+          if (Platform.OS === 'web') {
+            const webGmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=support@skilledman.com&su=${subject}&body=${body}`;
+            window.open(webGmailUrl, '_blank');
+          } else {
+            const mailUrl = `mailto:support@skilledman.com?subject=${subject}&body=${body}`;
+            Linking.openURL(mailUrl).catch(() => {
+              showToast('Unable to open mail client');
+            });
+          }
         }
-      }
     );
   };
 
@@ -266,10 +302,10 @@ const ExpertDetails = () => {
 
       const senderId = String(global?.id || '256');
       const receiverId = String(
-        item?.id ||
-        item?.provider_id ||
-        provider_id ||
-        '251'
+          item?.id ||
+          item?.provider_id ||
+          provider_id ||
+          '251'
       );
 
       const formdata = new FormData();
@@ -354,680 +390,684 @@ const ExpertDetails = () => {
   };
 
   const renderReviewItem = ({ item: reviewItem, index }) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => openSingleReview(reviewItem)}
-      style={styles.reviewCard}
-      key={`review_card_${reviewItem?.id || 'idx'}_${index}`}>
-      <View style={styles.reviewCardHeader}>
-        <Image
-          style={styles.reviewAvatar}
-          resizeMode="cover"
-          source={{
-            uri: reviewItem?.profile
-              ? `${BASIC_URL}uploads/${reviewItem.profile}`
-              : `${BASIC_URL}uploads/dumy.png`,
-          }}
-        />
-        <View style={styles.reviewInfoCol}>
-          <Text style={styles.reviewNameText} numberOfLines={1}>
-            {reviewItem.name}
-          </Text>
-          <View style={styles.starRow}>
-            <Icons.FontAwesome name="star" color="#F59E0B" size={13} />
-            <Text style={styles.starValueText}>{reviewItem.rating}</Text>
+      <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => openSingleReview(reviewItem)}
+          style={styles.reviewCard}
+          key={`review_card_${reviewItem?.id || 'idx'}_${index}`}>
+        <View style={styles.reviewCardHeader}>
+          <Image
+              style={styles.reviewAvatar}
+              resizeMode="cover"
+              source={{
+                uri: reviewItem?.profile
+                    ? `${BASIC_URL}uploads/${reviewItem.profile}`
+                    : `${BASIC_URL}uploads/dumy.png`,
+              }}
+          />
+          <View style={styles.reviewInfoCol}>
+            <Text style={styles.reviewNameText} numberOfLines={1}>
+              {reviewItem.name}
+            </Text>
+            <View style={styles.starRow}>
+              <Icons.FontAwesome name="star" color="#F59E0B" size={13} />
+              <Text style={styles.starValueText}>{reviewItem.rating}</Text>
+            </View>
           </View>
         </View>
-      </View>
-      <Text numberOfLines={2} style={styles.reviewSnippet}>
-        {reviewItem.feedback}
-      </Text>
-    </TouchableOpacity>
+        <Text numberOfLines={2} style={styles.reviewSnippet}>
+          {reviewItem.feedback}
+        </Text>
+      </TouchableOpacity>
   );
 
   const isFormValid = Boolean(price && Number(price) > 0 && selectedfile && selectedfile.uri);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <View style={styles.headerBar}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => {
-            if (navigation.canGoBack()) {
-              navigation.goBack();
-            } else {
-              showToast('No previous screen');
-            }
-          }}
-          style={styles.backArrowBtn}>
-          <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={toggleReview}
-          style={styles.backArrowBtn}>
-          <Icons.Feather name="more-vertical" size={20} color="#0F172A" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.formContainer}>
-          <Text style={styles.welcomeTitle}>Expert Profile</Text>
-          <Text style={styles.welcomeSubtitle}>
-            View artisan qualifications, reviews, and book services.
-          </Text>
-
-          <View style={styles.heroCard}>
-            <Image
-              style={styles.heroImg}
-              resizeMode="cover"
-              source={{ uri: `${BASIC_URL}uploads/${item?.image}` }}
-            />
-            <View style={styles.heroOverlay} />
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>{item?.service_name || 'Professional'}</Text>
-            </View>
-          </View>
-
-          <View style={styles.profileSummaryCard}>
-            <View style={styles.profileHeaderRow}>
-              <View style={styles.nameBlock}>
-                <View style={styles.nameVerifiedRow}>
-                  <Text style={styles.providerName}>{item?.name}</Text>
-                  {item?.verified === 'Verified' && (
-                    <Icons.MaterialIcons
-                      name="verified"
-                      color={color.defalt}
-                      size={18}
-                      style={{ marginLeft: 6 }}
-                    />
-                  )}
-                </View>
-                <Text style={styles.serviceSubtitle}>{item?.service_name}</Text>
-              </View>
-              <TouchableOpacity activeOpacity={0.7} style={styles.bookmarkBtn}>
-                <Icons.Feather name="bookmark" size={18} color={color.defalt} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.metaRow}>
-              <View style={styles.metaLeft}>
-                <Icons.Feather name="map-pin" color="#64748B" size={15} />
-                <Text style={styles.metaAddressText} numberOfLines={1}>
-                  {item?.Address || 'Address not provided'}
-                </Text>
-              </View>
-              <TouchableOpacity activeOpacity={0.7} onPress={openInGoogleMaps}>
-                <Text style={styles.mapLinkText}>Map</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.metaRow}>
-              <View style={styles.metaLeft}>
-                <Icons.Feather name="phone" color="#64748B" size={15} />
-                <Text style={styles.metaText}>{item?.phone_number || 'N/A'}</Text>
-              </View>
-              <Text style={styles.expBadgeText}>{item?.experience || 0} Yrs Experience</Text>
-            </View>
-          </View>
-
-          <View style={styles.statsCard}>
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Rating</Text>
-              <View style={styles.statValueRow}>
-                <Icons.FontAwesome name="star" color="#F59E0B" size={15} />
-                <Text style={styles.statPrimaryText}>
-                  {item?.averageRating ? item.averageRating.toFixed(2) : '0.00'}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Completed Jobs</Text>
-              <Text style={styles.statPrimaryText}>{item?.totaljob || 0}</Text>
-            </View>
-          </View>
-
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>Services & Skills</Text>
-          </View>
-
-          {skills.length > 0 ? (
-            <View style={styles.skillsWrapper}>
-              {skills.map((skillItem, idx) => (
-                <TouchableOpacity
-                  key={`skill_chip_${skillItem?.id || 'idx'}_${idx}`}
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    setSelectedSkill(skillItem);
-                    setSkillModal(true);
-                  }}
-                  style={styles.skillChip}>
-                  <Icons.Feather
-                    name="award"
-                    size={14}
-                    color={color.defalt}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text style={styles.skillChipText}>
-                    {skillItem.select_bussiness}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyCardSmall}>
-              <Text style={styles.emptyCardText}>No specific skills listed.</Text>
-            </View>
-          )}
-
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>
-              Reviews ({(item?.people_review || []).filter(r => r?.name && r?.rating).length})
-            </Text>
-            <TouchableOpacity activeOpacity={0.7} onPress={openAllReviews}>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
-
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={(item?.people_review || []).filter(r => r?.rating)}
-            keyExtractor={(r, idx) => `review_horiz_${r?.id || 'idx'}_${idx}`}
-            contentContainerStyle={styles.reviewsListScroll}
-            renderItem={renderReviewItem}
-            ListEmptyComponent={
-              <View style={styles.emptyCardSmall}>
-                <Text style={styles.emptyCardText}>No reviews available yet.</Text>
-              </View>
-            }
-          />
-
-          <View style={styles.actionButtonGroup}>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={styles.inboxButton}
-              onPress={() => setChatModalVisible(true)}>
-              <Icons.Feather name="message-square" size={18} color={color.defalt} />
-              <Text style={styles.inboxButtonText}>Message</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={styles.bookButton}
-              onPress={toggleModal}>
-              <Text style={styles.bookButtonText}>Book Service</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-
-      <Modal
-        transparent={true}
-        visible={customAlert.visible}
-        animationType="fade"
-        onRequestClose={() => setCustomAlert({ ...customAlert, visible: false })}>
-        <View style={styles.alertOverlay}>
-          <Animatable.View animation="zoomIn" duration={300} style={styles.alertBox}>
-            <Text style={styles.alertTitle}>{customAlert.title}</Text>
-            <Text style={styles.alertMessage}>{customAlert.message}</Text>
-            <TouchableOpacity
-              style={styles.alertButton}
-              activeOpacity={0.8}
-              onPress={() => {
-                const action = customAlert.onPress;
-                setCustomAlert({ visible: false, title: '', message: '', onPress: null });
-                if (action) action();
-              }}>
-              <Text style={styles.alertButtonText}>OK</Text>
-            </TouchableOpacity>
-          </Animatable.View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={chatModalVisible}
-        onRequestClose={() => setChatModalVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.dialogCard}>
-            <View style={styles.dialogHeader}>
-              <Text style={styles.dialogTitle}>Message {item?.name || 'Expert'}</Text>
-              <TouchableOpacity onPress={() => setChatModalVisible(false)}>
-                <Icons.Ionicons name="close-circle" size={22} color="#94A3B8" />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.dialogSubtitle}>
-              Send a direct inquiry about your service requirements.
-            </Text>
-            <C_TxtInput
-              numberOfLines={4}
-              placeholder="Hi, I need assistance with..."
-              placeholderTextColor="#94A3B8"
-              value={chatMessage}
-              onChangeText={setChatMessage}
-            />
-            <View style={styles.chatActionRow}>
-              <BotonComp
-                onPressFunc={handleSendMessage}
-                BtnStyle={styles.sendChatBtn}
-                disabled={sendingChat}
-                btnText={
-                  sendingChat ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    'Send Message'
-                  )
-                }
-              />
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={styles.openFullChatBtn}
-                onPress={() => {
-                  setChatModalVisible(false);
-                  navigation.navigate('IndividualChat', { currentuser: item });
-                }}>
-                <Text style={styles.openFullChatText}>Open Full Chat</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        visible={modalVisible}
-        onRequestClose={toggleModal}>
-        <SafeAreaView style={styles.safeArea}>
-          <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-
-          <View style={styles.headerBar}>
-            <TouchableOpacity
+        <View style={styles.headerBar}>
+          <TouchableOpacity
               activeOpacity={0.7}
-              onPress={toggleModal}
+              onPress={() => {
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                } else {
+                  showToast('No previous screen');
+                }
+              }}
               style={styles.backArrowBtn}>
-              <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
-            </TouchableOpacity>
-          </View>
+            <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+          </TouchableOpacity>
 
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled">
-              <View style={styles.formContainer}>
-                <Text style={styles.welcomeTitle}>Request Appointment</Text>
-                <Text style={styles.welcomeSubtitle}>
-                  Provide booking details and budget for this service
-                </Text>
+          <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={toggleReview}
+              style={styles.backArrowBtn}>
+            <Icons.Feather name="more-vertical" size={20} color="#0F172A" />
+          </TouchableOpacity>
+        </View>
 
-                <View style={styles.cardWrapper}>
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>Your Full Name</Text>
-                    <View style={styles.inputContainer}>
-                      <Icons.Feather name="user" size={18} color="#94A3B8" style={styles.inputIconLeft} />
-                      <TextInput
-                        style={styles.inputStyle}
-                        placeholder="e.g. John Doe"
-                        placeholderTextColor="#94A3B8"
-                        value={fullName}
-                        onChangeText={setFullName}
-                        editable={!load}
-                      />
-                    </View>
-                  </View>
+        <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}>
+          <View style={styles.formContainer}>
+            <Text style={styles.welcomeTitle}>Expert Profile</Text>
+            <Text style={styles.welcomeSubtitle}>
+              View artisan qualifications, reviews, and book services.
+            </Text>
 
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>Phone Number</Text>
-                    <View style={styles.inputContainer}>
-                      <Icons.Feather name="phone" size={18} color="#94A3B8" style={styles.inputIconLeft} />
-                      <TextInput
-                        style={styles.inputStyle}
-                        placeholder="e.g. 08012345678"
-                        placeholderTextColor="#94A3B8"
-                        value={phoneNumber}
-                        onChangeText={setPhoneNumber}
-                        keyboardType="phone-pad"
-                        editable={!load}
-                      />
-                    </View>
-                  </View>
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>Service Date</Text>
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={styles.inputContainer}
-                      onPress={() => {
-                        if (Platform.OS !== 'web') {
-                          setOpen(true);
-                        }
-                      }}>
-                      <Icons.Feather name="calendar" size={18} color="#94A3B8" style={styles.inputIconLeft} />
-                      <View pointerEvents="none" style={{ flex: 1 }}>
-                        <TextInput
-                          style={styles.inputStyle}
-                          placeholder="YYYY-MM-DD"
-                          placeholderTextColor="#94A3B8"
-                          value={date.toISOString().split('T')[0]}
-                          editable={false}
+            <View style={styles.heroCard}>
+              <Image
+                  style={styles.heroImg}
+                  resizeMode="cover"
+                  source={{ uri: `${BASIC_URL}uploads/${item?.image}` }}
+              />
+              <View style={styles.heroOverlay} />
+              <View style={styles.heroBadge}>
+                <Text style={styles.heroBadgeText}>{item?.service_name || 'Professional'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.profileSummaryCard}>
+              <View style={styles.profileHeaderRow}>
+                <View style={styles.nameBlock}>
+                  <View style={styles.nameVerifiedRow}>
+                    <Text style={styles.providerName}>{item?.name}</Text>
+                    {item?.verified === 'Verified' && (
+                        <Icons.MaterialIcons
+                            name="verified"
+                            color={color.defalt}
+                            size={18}
+                            style={{ marginLeft: 6 }}
                         />
-                      </View>
-                    </TouchableOpacity>
-
-                    {open && Platform.OS !== 'web' && (
-                      <DatePicker
-                        value={date}
-                        mode="date"
-                        display="default"
-                        onChange={(event, selectedDate) => {
-                          setOpen(false);
-                          if (event.type === 'set' && selectedDate) {
-                            setDate(selectedDate);
-                          }
-                        }}
-                      />
                     )}
                   </View>
-
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>Service Location Address</Text>
-                    <View style={styles.inputContainer}>
-                      <Icons.Feather name="map-pin" size={18} color="#94A3B8" style={styles.inputIconLeft} />
-                      <TextInput
-                        style={styles.inputStyle}
-                        placeholder="e.g. 123 Main Street"
-                        placeholderTextColor="#94A3B8"
-                        value={address}
-                        onChangeText={setAddress}
-                        editable={!load}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>Price Budget (₦)</Text>
-                    <View style={styles.inputContainer}>
-                      <Text style={styles.nairaPrefix}>₦</Text>
-                      <TextInput
-                        style={styles.inputStyle}
-                        placeholder="e.g. 15000"
-                        placeholderTextColor="#94A3B8"
-                        value={price}
-                        onChangeText={setPrice}
-                        keyboardType="numeric"
-                        editable={!load}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.mediaUploadRow}>
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={styles.uploadOptionBtn}
-                      onPress={handleFilePick}>
-                      <Icons.Feather name="image" size={16} color={color.defalt} />
-                      <Text style={styles.uploadOptionText}>Select Photo</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={styles.uploadOptionBtn}
-                      onPress={handleCamera}>
-                      <Icons.Feather name="camera" size={16} color={color.defalt} />
-                      <Text style={styles.uploadOptionText}>Use Camera</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  {selectedfile && (
-                    <View style={styles.selectedMediaCard}>
-                      <Image source={{ uri: selectedfile.uri }} style={styles.previewImage} resizeMode="cover" />
-                      <View style={styles.previewInfoRow}>
-                        <Text numberOfLines={1} style={styles.previewNameText}>
-                          {selectedfile.name}
-                        </Text>
-                        <TouchableOpacity onPress={() => setSelectedFile(null)}>
-                          <Icons.Ionicons name="trash-outline" size={18} color="#EF4444" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  )}
-
-                  <TouchableOpacity
-                    activeOpacity={isFormValid ? 0.85 : 1}
-                    style={[styles.submitBtn, !isFormValid && styles.btnDisabled]}
-                    disabled={!isFormValid}
-                    onPress={handleBookingConfirm}>
-                    <Text style={styles.submitBtnText}>Confirm & Proceed to Pay</Text>
-                  </TouchableOpacity>
+                  <Text style={styles.serviceSubtitle}>{item?.service_name}</Text>
                 </View>
-              </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={submitReviewVisible}
-        onRequestClose={() => setSubmitReviewVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.dialogCard}>
-            <View style={styles.dialogHeader}>
-              <Text style={styles.dialogTitle}>Leave Feedback</Text>
-              <TouchableOpacity onPress={toggleSubmitReview}>
-                <Icons.Ionicons name="close-circle" size={22} color="#94A3B8" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.starRatingContainer}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity
-                  key={`star_${star}`}
-                  activeOpacity={0.7}
-                  onPress={() => setRating(star)}
-                  style={{ marginHorizontal: 4 }}>
-                  <Icons.FontAwesome
-                    name={star <= rating ? "star" : "star-o"}
-                    size={32}
-                    color="#F59E0B"
-                  />
+                <TouchableOpacity activeOpacity={0.7} style={styles.bookmarkBtn}>
+                  <Icons.Feather name="bookmark" size={18} color={color.defalt} />
                 </TouchableOpacity>
-              ))}
-            </View>
-            <C_TxtInput
-              numberOfLines={4}
-              placeholder="Share your experience working with this expert..."
-              placeholderTextColor="#94A3B8"
-              value={feedback}
-              onChangeText={setFeedback}
-            />
-            <BotonComp
-              onPressFunc={sendRating}
-              BtnStyle={styles.submitFeedbackBtn}
-              btnText="Submit Review"
-            />
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={reviewVisible}
-        onRequestClose={() => setReviewVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.dialogCard}>
-            <View style={styles.dialogHeader}>
-              <Text style={styles.dialogTitle}>Options</Text>
-              <TouchableOpacity onPress={toggleReview}>
-                <Icons.Ionicons name="close-circle" size={22} color="#94A3B8" />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity style={styles.actionSheetItem} onPress={toggleSubmitReview}>
-              <Icons.Feather name="edit-3" size={18} color={color.defalt} />
-              <Text style={styles.actionSheetText}>Write a Review</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionSheetItem}
-              activeOpacity={0.7}
-              onPress={handleShareProfile}>
-              <Icons.Feather name="share-2" size={18} color={color.defalt} />
-              <Text style={styles.actionSheetText}>Share Profile</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionSheetItem}
-              activeOpacity={0.7}
-              onPress={handleReportExpert}>
-              <Icons.Feather name="alert-triangle" size={18} color="#EF4444" />
-              <Text style={[styles.actionSheetText, { color: '#EF4444' }]}>Report Expert</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        visible={singleReviewModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setSingleReviewModal(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.dialogCard}>
-            <View style={styles.dialogHeader}>
-              <Text style={styles.dialogTitle}>Review Detail</Text>
-              <TouchableOpacity onPress={() => setSingleReviewModal(false)}>
-                <Icons.Ionicons name="close-circle" size={22} color="#94A3B8" />
-              </TouchableOpacity>
-            </View>
-            {selectedReview && (
-              <View style={styles.singleReviewBody}>
-                <Image
-                  style={styles.largeReviewAvatar}
-                  resizeMode="cover"
-                  source={{
-                    uri: selectedReview?.profile
-                      ? `${BASIC_URL}uploads/${selectedReview.profile}`
-                      : `${BASIC_URL}uploads/dumy.png`,
-                  }}
-                />
-                <Text style={styles.singleReviewName}>{selectedReview.name}</Text>
-                <View style={styles.singleStarRow}>
-                  <Icons.FontAwesome name="star" size={15} color="#F59E0B" />
-                  <Text style={styles.singleStarText}>{selectedReview.rating} / 5</Text>
-                </View>
-                <Text style={styles.singleReviewFeedback}>{selectedReview.feedback}</Text>
               </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.metaRow}>
+                <View style={styles.metaLeft}>
+                  <Icons.Feather name="map-pin" color="#64748B" size={15} />
+                  <Text style={styles.metaAddressText} numberOfLines={1}>
+                    {item?.Address || 'Address not provided'}
+                  </Text>
+                </View>
+                <TouchableOpacity activeOpacity={0.7} onPress={openInGoogleMaps}>
+                  <Text style={styles.mapLinkText}>Map</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.metaRow}>
+                <View style={styles.metaLeft}>
+                  <Icons.Feather name="phone" color="#64748B" size={15} />
+                  <Text style={styles.metaText}>{item?.phone_number || 'N/A'}</Text>
+                </View>
+                <Text style={styles.expBadgeText}>{item?.experience || 0} Yrs Experience</Text>
+              </View>
+            </View>
+
+            <View style={styles.statsCard}>
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Rating</Text>
+                <View style={styles.statValueRow}>
+                  <Icons.FontAwesome name="star" color="#F59E0B" size={15} />
+                  <Text style={styles.statPrimaryText}>
+                    {item?.averageRating ? item.averageRating.toFixed(2) : '0.00'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Completed Jobs</Text>
+                <Text style={styles.statPrimaryText}>{item?.totaljob || 0}</Text>
+              </View>
+            </View>
+
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeading}>Services & Skills</Text>
+            </View>
+
+            {skills.length > 0 ? (
+                <View style={styles.skillsWrapper}>
+                  {skills.map((skillItem, idx) => (
+                      <TouchableOpacity
+                          key={`skill_chip_${skillItem?.id || 'idx'}_${idx}`}
+                          activeOpacity={0.8}
+                          onPress={() => {
+                            setSelectedSkill(skillItem);
+                            setSkillModal(true);
+                          }}
+                          style={styles.skillChip}>
+                        <Icons.Feather
+                            name="award"
+                            size={14}
+                            color={color.defalt}
+                            style={{ marginRight: 6 }}
+                        />
+                        <Text style={styles.skillChipText}>
+                          {skillItem.select_bussiness}
+                        </Text>
+                      </TouchableOpacity>
+                  ))}
+                </View>
+            ) : (
+                <View style={styles.emptyCardSmall}>
+                  <Text style={styles.emptyCardText}>No specific skills listed.</Text>
+                </View>
             )}
-          </View>
-        </View>
-      </Modal>
 
-      <Modal
-        visible={allReviewsModal}
-        animationType="slide"
-        onRequestClose={() => setAllReviewsModal(false)}>
-        <SafeAreaView style={styles.safeArea}>
-          <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-
-          <View style={styles.headerBar}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => setAllReviewsModal(false)}
-              style={styles.backArrowBtn}>
-              <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.formContainer}>
-            <Text style={styles.welcomeTitle}>Client Reviews</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Read feedback and ratings from customers who worked with this expert.
-            </Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeading}>
+                Reviews ({(item?.people_review || []).filter(r => r?.name && r?.rating).length})
+              </Text>
+              <TouchableOpacity activeOpacity={0.7} onPress={openAllReviews}>
+                <Text style={styles.seeAllText}>See All</Text>
+              </TouchableOpacity>
+            </View>
 
             <FlatList
-              data={(item?.people_review || []).filter(r => r?.rating)}
-              keyExtractor={(r, index) => `review_full_${r?.id || 'idx'}_${index}`}
-              contentContainerStyle={{ paddingBottom: 30 }}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item: reviewItem }) => (
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={styles.allReviewCard}
-                  onPress={() => {
-                    setAllReviewsModal(false);
-                    openSingleReview(reviewItem);
-                  }}>
-                  <Image
-                    style={styles.reviewAvatarSmall}
-                    source={{
-                      uri: reviewItem?.profile
-                        ? `${BASIC_URL}uploads/${reviewItem.profile}`
-                        : `${BASIC_URL}uploads/dumy.png`,
-                    }}
-                  />
-                  <View style={styles.allReviewContent}>
-                    <Text style={styles.reviewNameText}>{reviewItem.name}</Text>
-                    <View style={styles.starRow}>
-                      <Icons.FontAwesome name="star" color="#F59E0B" size={12} />
-                      <Text style={styles.starValueText}>{reviewItem.rating}</Text>
-                    </View>
-                    <Text numberOfLines={2} style={styles.reviewSnippet}>
-                      {reviewItem.feedback}
-                    </Text>
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={(item?.people_review || []).filter(r => r?.rating)}
+                keyExtractor={(r, idx) => `review_horiz_${r?.id || 'idx'}_${idx}`}
+                contentContainerStyle={styles.reviewsListScroll}
+                renderItem={renderReviewItem}
+                ListEmptyComponent={
+                  <View style={styles.emptyCardSmall}>
+                    <Text style={styles.emptyCardText}>No reviews available yet.</Text>
                   </View>
-                  <Icons.Feather name="chevron-right" size={18} color="#94A3B8" />
-                </TouchableOpacity>
-              )}
+                }
             />
-          </View>
-        </SafeAreaView>
-      </Modal>
 
-      <Modal
-        visible={skillModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSkillModal(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.dialogCard}>
-            <View style={styles.dialogHeader}>
-              <Text style={styles.dialogTitle}>{selectedSkill?.select_bussiness}</Text>
-              <TouchableOpacity onPress={() => setSkillModal(false)}>
-                <Icons.Ionicons name="close-circle" size={22} color="#94A3B8" />
+            <View style={styles.actionButtonGroup}>
+              <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.inboxButton}
+                  onPress={() => setChatModalVisible(true)}>
+                <Icons.Feather name="message-square" size={18} color={color.defalt} />
+                <Text style={styles.inboxButtonText}>Message</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.bookButton}
+                  onPress={toggleModal}>
+                <Text style={styles.bookButtonText}>Book Service</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.dialogSubtitle}>
-              Experience: {selectedSkill?.working_experience} Years
-            </Text>
-            {selectedSkill?.certificates ? (
-              <Image
-                source={{ uri: `${BASIC_URL}uploads/${selectedSkill.certificates}` }}
-                style={styles.certModalImg}
-                resizeMode="cover"
-              />
-            ) : null}
-            <BotonComp
-              onPressFunc={() => setSkillModal(false)}
-              BtnStyle={styles.closeModalBtn}
-              btnText="Close"
-            />
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        </ScrollView>
+
+        <Modal
+            transparent={true}
+            visible={customAlert.visible}
+            animationType="fade"
+            onRequestClose={() => setCustomAlert({ ...customAlert, visible: false })}>
+          <View style={styles.alertOverlay}>
+            <Animatable.View animation="zoomIn" duration={300} style={styles.alertBox}>
+              <Text style={styles.alertTitle}>{customAlert.title}</Text>
+              <Text style={styles.alertMessage}>{customAlert.message}</Text>
+              <TouchableOpacity
+                  style={styles.alertButton}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    const action = customAlert.onPress;
+                    setCustomAlert({ visible: false, title: '', message: '', onPress: null });
+                    if (action) action();
+                  }}>
+                <Text style={styles.alertButtonText}>OK</Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          </View>
+        </Modal>
+
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={chatModalVisible}
+            onRequestClose={() => setChatModalVisible(false)}>
+          <View style={styles.modalBackdrop}>
+            <View style={styles.dialogCard}>
+              <View style={styles.dialogHeader}>
+                <Text style={styles.dialogTitle}>Message {item?.name || 'Expert'}</Text>
+                <TouchableOpacity onPress={() => setChatModalVisible(false)}>
+                  <Icons.Ionicons name="close-circle" size={22} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.dialogSubtitle}>
+                Send a direct inquiry about your service requirements.
+              </Text>
+              <C_TxtInput
+                  numberOfLines={4}
+                  placeholder="Hi, I need assistance with..."
+                  placeholderTextColor="#94A3B8"
+                  value={chatMessage}
+                  onChangeText={setChatMessage}
+              />
+              <View style={styles.chatActionRow}>
+                <BotonComp
+                    onPressFunc={handleSendMessage}
+                    BtnStyle={styles.sendChatBtn}
+                    disabled={sendingChat}
+                    btnText={
+                      sendingChat ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                          'Send Message'
+                      )
+                    }
+                />
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.openFullChatBtn}
+                    onPress={() => {
+                      setChatModalVisible(false);
+                      navigation.navigate('IndividualChat', { currentuser: item });
+                    }}>
+                  <Text style={styles.openFullChatText}>Open Full Chat</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+            animationType="slide"
+            visible={modalVisible}
+            onRequestClose={toggleModal}>
+          <SafeAreaView style={styles.safeArea}>
+            <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+            <View style={styles.headerBar}>
+              <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={toggleModal}
+                  style={styles.backArrowBtn}>
+                <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+              <ScrollView
+                  contentContainerStyle={styles.scrollContent}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled">
+                <View style={styles.formContainer}>
+                  <Text style={styles.welcomeTitle}>Request Appointment</Text>
+                  <Text style={styles.welcomeSubtitle}>
+                    Provide booking details and budget for this service
+                  </Text>
+
+                  <View style={styles.cardWrapper}>
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>Your Full Name</Text>
+                      <View style={styles.inputContainer}>
+                        <Icons.Feather name="user" size={18} color="#94A3B8" style={styles.inputIconLeft} />
+                        <TextInput
+                            style={styles.inputStyle}
+                            placeholder="e.g. John Doe"
+                            placeholderTextColor="#94A3B8"
+                            value={fullName}
+                            onChangeText={setFullName}
+                            editable={!load}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>Phone Number</Text>
+                      <View style={styles.inputContainer}>
+                        <Icons.Feather name="phone" size={18} color="#94A3B8" style={styles.inputIconLeft} />
+                        <TextInput
+                            style={styles.inputStyle}
+                            placeholder="e.g. 08012345678"
+                            placeholderTextColor="#94A3B8"
+                            value={phoneNumber}
+                            onChangeText={setPhoneNumber}
+                            keyboardType="phone-pad"
+                            editable={!load}
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>Service Date</Text>
+                      <TouchableOpacity
+                          activeOpacity={0.8}
+                          style={styles.inputContainer}
+                          onPress={() => {
+                            if (Platform.OS !== 'web') {
+                              setOpen(true);
+                            }
+                          }}>
+                        <Icons.Feather name="calendar" size={18} color="#94A3B8" style={styles.inputIconLeft} />
+                        <View pointerEvents="none" style={{ flex: 1 }}>
+                          <TextInput
+                              style={styles.inputStyle}
+                              placeholder="YYYY-MM-DD"
+                              placeholderTextColor="#94A3B8"
+                              value={date.toISOString().split('T')[0]}
+                              editable={false}
+                          />
+                        </View>
+                      </TouchableOpacity>
+
+                      {open && Platform.OS !== 'web' && (
+                          <DatePicker
+                              value={date}
+                              mode="date"
+                              display="default"
+                              onChange={(event, selectedDate) => {
+                                setOpen(false);
+                                if (event.type === 'set' && selectedDate) {
+                                  setDate(selectedDate);
+                                }
+                              }}
+                          />
+                      )}
+                    </View>
+
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>Service Location Address</Text>
+                      <View style={styles.inputContainer}>
+                        <Icons.Feather name="map-pin" size={18} color="#94A3B8" style={styles.inputIconLeft} />
+                        <TextInput
+                            style={styles.inputStyle}
+                            placeholder="e.g. 123 Main Street"
+                            placeholderTextColor="#94A3B8"
+                            value={address}
+                            onChangeText={setAddress}
+                            editable={!load}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>Price Budget (₦)</Text>
+                      <View style={styles.inputContainer}>
+                        <Text style={styles.nairaPrefix}>₦</Text>
+                        <TextInput
+                            style={styles.inputStyle}
+                            placeholder="e.g. 15000"
+                            placeholderTextColor="#94A3B8"
+                            value={price}
+                            onChangeText={setPrice}
+                            keyboardType="numeric"
+                            editable={!load}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.mediaUploadRow}>
+                      <TouchableOpacity
+                          activeOpacity={0.8}
+                          style={styles.uploadOptionBtn}
+                          onPress={handleFilePick}>
+                        <Icons.Feather name="image" size={16} color={color.defalt} />
+                        <Text style={styles.uploadOptionText}>Select Photo</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                          activeOpacity={0.8}
+                          style={styles.uploadOptionBtn}
+                          onPress={handleCamera}>
+                        <Icons.Feather name="camera" size={16} color={color.defalt} />
+                        <Text style={styles.uploadOptionText}>Use Camera</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {selectedfile && (
+                        <View style={styles.selectedMediaCard}>
+                          <Image source={{ uri: selectedfile.uri }} style={styles.previewImage} resizeMode="cover" />
+                          <View style={styles.previewInfoRow}>
+                            <Text numberOfLines={1} style={styles.previewNameText}>
+                              {selectedfile.name}
+                            </Text>
+                            <TouchableOpacity onPress={() => setSelectedFile(null)}>
+                              <Icons.Ionicons name="trash-outline" size={18} color="#EF4444" />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                    )}
+
+                    <TouchableOpacity
+                        activeOpacity={isFormValid ? 0.85 : 1}
+                        style={[styles.submitBtn, !isFormValid && styles.btnDisabled]}
+                        disabled={!isFormValid || load}
+                        onPress={handleBookingConfirm}>
+                      {load ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                          <Text style={styles.submitBtnText}>Send Booking Request</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </SafeAreaView>
+        </Modal>
+
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={submitReviewVisible}
+            onRequestClose={() => setSubmitReviewVisible(false)}>
+          <View style={styles.modalBackdrop}>
+            <View style={styles.dialogCard}>
+              <View style={styles.dialogHeader}>
+                <Text style={styles.dialogTitle}>Leave Feedback</Text>
+                <TouchableOpacity onPress={toggleSubmitReview}>
+                  <Icons.Ionicons name="close-circle" size={22} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.starRatingContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity
+                        key={`star_${star}`}
+                        activeOpacity={0.7}
+                        onPress={() => setRating(star)}
+                        style={{ marginHorizontal: 4 }}>
+                      <Icons.FontAwesome
+                          name={star <= rating ? "star" : "star-o"}
+                          size={32}
+                          color="#F59E0B"
+                      />
+                    </TouchableOpacity>
+                ))}
+              </View>
+              <C_TxtInput
+                  numberOfLines={4}
+                  placeholder="Share your experience working with this expert..."
+                  placeholderTextColor="#94A3B8"
+                  value={feedback}
+                  onChangeText={setFeedback}
+              />
+              <BotonComp
+                  onPressFunc={sendRating}
+                  BtnStyle={styles.submitFeedbackBtn}
+                  btnText="Submit Review"
+              />
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={reviewVisible}
+            onRequestClose={() => setReviewVisible(false)}>
+          <View style={styles.modalBackdrop}>
+            <View style={styles.dialogCard}>
+              <View style={styles.dialogHeader}>
+                <Text style={styles.dialogTitle}>Options</Text>
+                <TouchableOpacity onPress={toggleReview}>
+                  <Icons.Ionicons name="close-circle" size={22} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={styles.actionSheetItem} onPress={toggleSubmitReview}>
+                <Icons.Feather name="edit-3" size={18} color={color.defalt} />
+                <Text style={styles.actionSheetText}>Write a Review</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                  style={styles.actionSheetItem}
+                  activeOpacity={0.7}
+                  onPress={handleShareProfile}>
+                <Icons.Feather name="share-2" size={18} color={color.defalt} />
+                <Text style={styles.actionSheetText}>Share Profile</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                  style={styles.actionSheetItem}
+                  activeOpacity={0.7}
+                  onPress={handleReportExpert}>
+                <Icons.Feather name="alert-triangle" size={18} color="#EF4444" />
+                <Text style={[styles.actionSheetText, { color: '#EF4444' }]}>Report Expert</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+            visible={singleReviewModal}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setSingleReviewModal(false)}>
+          <View style={styles.modalBackdrop}>
+            <View style={styles.dialogCard}>
+              <View style={styles.dialogHeader}>
+                <Text style={styles.dialogTitle}>Review Detail</Text>
+                <TouchableOpacity onPress={() => setSingleReviewModal(false)}>
+                  <Icons.Ionicons name="close-circle" size={22} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+              {selectedReview && (
+                  <View style={styles.singleReviewBody}>
+                    <Image
+                        style={styles.largeReviewAvatar}
+                        resizeMode="cover"
+                        source={{
+                          uri: selectedReview?.profile
+                              ? `${BASIC_URL}uploads/${selectedReview.profile}`
+                              : `${BASIC_URL}uploads/dumy.png`,
+                        }}
+                    />
+                    <Text style={styles.singleReviewName}>{selectedReview.name}</Text>
+                    <View style={styles.singleStarRow}>
+                      <Icons.FontAwesome name="star" size={15} color="#F59E0B" />
+                      <Text style={styles.singleStarText}>{selectedReview.rating} / 5</Text>
+                    </View>
+                    <Text style={styles.singleReviewFeedback}>{selectedReview.feedback}</Text>
+                  </View>
+              )}
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+            visible={allReviewsModal}
+            animationType="slide"
+            onRequestClose={() => setAllReviewsModal(false)}>
+          <SafeAreaView style={styles.safeArea}>
+            <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+
+            <View style={styles.headerBar}>
+              <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setAllReviewsModal(false)}
+                  style={styles.backArrowBtn}>
+                <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.formContainer}>
+              <Text style={styles.welcomeTitle}>Client Reviews</Text>
+              <Text style={styles.welcomeSubtitle}>
+                Read feedback and ratings from customers who worked with this expert.
+              </Text>
+
+              <FlatList
+                  data={(item?.people_review || []).filter(r => r?.rating)}
+                  keyExtractor={(r, index) => `review_full_${r?.id || 'idx'}_${index}`}
+                  contentContainerStyle={{ paddingBottom: 30 }}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item: reviewItem }) => (
+                      <TouchableOpacity
+                          activeOpacity={0.8}
+                          style={styles.allReviewCard}
+                          onPress={() => {
+                            setAllReviewsModal(false);
+                            openSingleReview(reviewItem);
+                          }}>
+                        <Image
+                            style={styles.reviewAvatarSmall}
+                            source={{
+                              uri: reviewItem?.profile
+                                  ? `${BASIC_URL}uploads/${reviewItem.profile}`
+                                  : `${BASIC_URL}uploads/dumy.png`,
+                            }}
+                        />
+                        <View style={styles.allReviewContent}>
+                          <Text style={styles.reviewNameText}>{reviewItem.name}</Text>
+                          <View style={styles.starRow}>
+                            <Icons.FontAwesome name="star" color="#F59E0B" size={12} />
+                            <Text style={styles.starValueText}>{reviewItem.rating}</Text>
+                          </View>
+                          <Text numberOfLines={2} style={styles.reviewSnippet}>
+                            {reviewItem.feedback}
+                          </Text>
+                        </View>
+                        <Icons.Feather name="chevron-right" size={18} color="#94A3B8" />
+                      </TouchableOpacity>
+                  )}
+              />
+            </View>
+          </SafeAreaView>
+        </Modal>
+
+        <Modal
+            visible={skillModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setSkillModal(false)}>
+          <View style={styles.modalBackdrop}>
+            <View style={styles.dialogCard}>
+              <View style={styles.dialogHeader}>
+                <Text style={styles.dialogTitle}>{selectedSkill?.select_bussiness}</Text>
+                <TouchableOpacity onPress={() => setSkillModal(false)}>
+                  <Icons.Ionicons name="close-circle" size={22} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.dialogSubtitle}>
+                Experience: {selectedSkill?.working_experience} Years
+              </Text>
+              {selectedSkill?.certificates ? (
+                  <Image
+                      source={{ uri: `${BASIC_URL}uploads/${selectedSkill.certificates}` }}
+                      style={styles.certModalImg}
+                      resizeMode="cover"
+                  />
+              ) : null}
+              <BotonComp
+                  onPressFunc={() => setSkillModal(false)}
+                  BtnStyle={styles.closeModalBtn}
+                  btnText="Close"
+              />
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
   );
 };
 

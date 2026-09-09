@@ -44,12 +44,8 @@ const RequestScreen = () => {
     28;
 
   const toggleModal = item => {
-    if (item.status !== 'progress') {
-      setCurrentItem(item);
-      setModalVisible(true);
-    } else {
-      showToast('This request is already in progress and cannot be modified.');
-    }
+    setCurrentItem(item);
+    setModalVisible(true);
   };
 
   const getBookingRequests = useCallback(
@@ -58,19 +54,60 @@ const RequestScreen = () => {
       else setLoading(true);
 
       try {
+        // --- NEW LOGIC: 1. Check what service this provider offers (e.g., "Bricklayer") ---
+        let providerSkillCategory = '';
+        const skillForm = new FormData();
+        skillForm.append('user_id', global.id);
+
+        const skillResponse = await fetch(`${BASIC_URL}get_skills.php?user_id=${global.id}`, {
+          method: 'POST',
+          body: skillForm,
+        });
+
+        const skillResult = await skillResponse.json();
+        if (skillResult?.business) {
+          const skillsArray = Object.values(skillResult.business);
+          const validSkill = skillsArray.find(
+            s => s?.select_bussiness && s.select_bussiness !== 'Select Business'
+          );
+          if (validSkill) {
+            providerSkillCategory = validSkill.select_bussiness.trim().toLowerCase();
+          }
+        }
+        // ----------------------------------------------------------------------------------
+
+        // 2. Fetch all requests from the system
         const formdata = new FormData();
         formdata.append('provider_id', global.id);
 
         if (searchTerm.trim() !== '') {
           formdata.append('searchTerm', searchTerm.trim());
         }
+
         const response = await fetch(`${BASIC_URL}provider_status.php`, {
           method: 'POST',
           body: formdata,
         });
+
         const result = await response.json();
+
         if (result?.booking_request) {
-          setBooklist(result.booking_request);
+          // --- NEW LOGIC: 3. Filter requests so they only see their specific category ---
+          const filteredRequests = result.booking_request.filter(req => {
+            // Check what category the customer requested (checking multiple possible API field names)
+            const requestCategory = (req.service || req.service_category || req.service_name || '').trim().toLowerCase();
+
+            // If the provider has a skill listed, ensure it matches the customer's requested skill
+            if (providerSkillCategory && requestCategory && providerSkillCategory !== requestCategory) {
+              return false; // Hide this request, it's not meant for this provider
+            }
+
+            // If it matches, show it! (Even if someone else accepted it, so they can see the "Accepted" UI)
+            return true;
+          });
+
+          setBooklist(filteredRequests);
+          // -----------------------------------------------------------------------------
         } else if (result?.error) {
           console.log(result.error);
         }
@@ -222,6 +259,14 @@ const RequestScreen = () => {
             </View>
 
             <View style={styles.modalBody}>
+              {/* Text up top saying request is accepted */}
+              {currentItem?.status === 'progress' && (
+                <View style={styles.acceptedBanner}>
+                  <Icons.Feather name="info" size={14} color="#047857" style={{marginRight: 6}} />
+                  <Text style={styles.acceptedBannerText}>This request has been accepted.</Text>
+                </View>
+              )}
+
               <View style={styles.avatarContainer}>
                 <Image
                   style={styles.logoImg}
@@ -282,21 +327,30 @@ const RequestScreen = () => {
             </View>
 
             <View style={styles.btnActionRow}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={styles.rejectBtn}
-                onPress={() => changeStatus('reject')}>
-                <Icons.Feather name="x" size={16} color="#EF4444" style={{ marginRight: 6 }} />
-                <Text style={styles.rejectBtnText}>Decline</Text>
-              </TouchableOpacity>
+              {currentItem?.status === 'progress' ? (
+                <View style={[styles.acceptBtn, { backgroundColor: '#10B981', width: '100%', justifyContent: 'center' }]}>
+                  <Icons.Feather name="check-circle" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                  <Text style={styles.acceptBtnText}>Already Accepted</Text>
+                </View>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.rejectBtn}
+                    onPress={() => changeStatus('reject')}>
+                    <Icons.Feather name="x" size={16} color="#EF4444" style={{ marginRight: 6 }} />
+                    <Text style={styles.rejectBtnText}>Decline</Text>
+                  </TouchableOpacity>
 
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={styles.acceptBtn}
-                onPress={() => changeStatus('progress')}>
-                <Icons.Feather name="check" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                <Text style={styles.acceptBtnText}>Accept Request</Text>
-              </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.acceptBtn}
+                    onPress={() => changeStatus('progress')}>
+                    <Icons.Feather name="check" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                    <Text style={styles.acceptBtnText}>Accept Request</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </Animatable.View>
         </View>
@@ -615,5 +669,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
+  acceptedBanner: {
+    flexDirection: 'row',
+    backgroundColor: '#D1FAE5',
+    width: '100%',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  acceptedBannerText: {
+    color: '#047857',
+    fontWeight: '700',
+    fontSize: 13.5,
+  },
 });
-

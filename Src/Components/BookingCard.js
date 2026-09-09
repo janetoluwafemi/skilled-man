@@ -79,7 +79,9 @@ const BookingCrd = ({
           <Text style={styles.dateStyle}>{date} </Text>
           <Text style={styles.expertiseStyle}>{expertise}</Text>
         </View>
-        <Text style={styles.statusStyle}>{status}</Text>
+        <Text style={[styles.statusStyle, status === 'progress' && { color: '#10B981' }]}>
+          {status === 'progress' ? 'Accepted' : status}
+        </Text>
       </View>
     </View>
   );

@@ -13,8 +13,7 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Animatable from 'react-native-animatable';
-import { showToast } from '../../utilis/showToast';
-
+import {showToast} from '../../utilis/showToast';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 import BotonComp from '../../Components/BtnComp';

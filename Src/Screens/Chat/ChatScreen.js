@@ -99,14 +99,12 @@ const ChatScreen = props => {
       if (result?.chat) {
         const chatData = Array.isArray(result.chat) ? result.chat : [];
 
-        // Provider: Show chats where they are participant (provider_id or id matches ownId)
         const filtered = chatData
           .filter(item =>
             String(item.provider_id) === String(ownId) || String(item.id) === String(ownId)
           )
           .map(item => {
             const chatId = String(item.id || item.provider_id);
-            // Force unread count to 0 if user already opened this chat session-wide
             if (clearedChatIds.has(chatId)) {
               return { ...item, unread_count: 0 };
             }

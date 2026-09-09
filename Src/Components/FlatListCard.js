@@ -76,7 +76,9 @@ const FlatListCard = ({
         <View style={styles.dateTimeCont}>
           <Text style={styles.dateStyle}>{date}</Text>
         </View>
-        <Text style={styles.statusStyle}>{status}</Text>
+        <Text style={[styles.statusStyle, status === 'progress' && { color: '#10B981' }]}>
+          {status === 'progress' ? 'Accepted' : status}
+        </Text>
       </View>
     </View>
   );

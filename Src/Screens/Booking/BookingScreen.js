@@ -1,410 +1,649 @@
-import React, { useState, useEffect } from 'react';
-import {View,
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
   Text,
   StyleSheet,
+  Image,
   TouchableOpacity,
+  Dimensions,
   Alert,
   FlatList,
+  Linking,
+  Platform,
   Modal,
   StatusBar,
-  Share ,
-  Platform} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
-import CustomAlert from '../../Components/CustomAlert';
-import { normalize } from '../../utilis/responsive';
-
+  RefreshControl,
+  ActivityIndicator } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
+import { showToast } from '../../utilis/showToast';
 import color from '../../Assets/colors/colors';
-import BookingCrd from '../../Components/BookingCard';
-import DrarTitlProfilHeader from '../../Components/DrawerTitleProfileHeader';
+import HomeStakWSearch from '../../Components/HomeStackWithSearch';
 import { Icons } from '../../Components/Icons';
-import C_TxtInput from '../../Components/C_TextInput';
-import BotonComp from '../../Components/BtnComp';
+import FltLstCrd from '../../Components/FlatListCard';
 import { BASIC_URL } from '../Signin/Signin';
 
-const BookingScreen = () => {
-  const focus = useIsFocused();
+const { height } = Dimensions.get('window');
+
+const RequestScreen = () => {
   const navigation = useNavigation();
+  const focused = useIsFocused();
+  const insets = useSafeAreaInsets();
 
-  const [bookData, setBookData] = useState([]);
-  const [submitReviewVisible, setSubmitReviewVisible] = useState(false);
-  const [reviewVisible, setReviewVisible] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [feedback, setFeedback] = useState('');
-  const [details, setDetails] = useState('');
-  const [bookId, setBookId] = useState('');
-  const [providerId, setProviderId] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [booklist, setBooklist] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [currentItem, setCurrentItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const [alertConfig, setAlertConfig] = useState({
-    visible: false,
-    title: '',
-    message: '',
-    onOk: () => setAlertConfig(prev => ({ ...prev, visible: false })),
-  });
+  const bottomPadding =
+      height * 0.085 +
+      Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
+      28;
 
-  const showAlert = (title, message, onOk) => {
-    setAlertConfig({
-      visible: true,
-      title,
-      message,
-      onOk: () => {
-        setAlertConfig(prev => ({ ...prev, visible: false }));
-        if (onOk) onOk();
-      },
-    });
+  const toggleModal = item => {
+    setCurrentItem(item);
+    setModalVisible(true);
   };
+
+  const getBookingRequests = useCallback(
+      async (isRefresh = false) => {
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
+
+        try {
+          const formdata = new FormData();
+          formdata.append('provider_id', global.id);
+
+          if (searchTerm.trim() !== '') {
+            formdata.append('searchTerm', searchTerm.trim());
+          }
+          const response = await fetch(`${BASIC_URL}provider_status.php`, {
+            method: 'POST',
+            body: formdata,
+          });
+          const result = await response.json();
+          if (result?.booking_request) {
+            // Shows all requests to all providers
+            setBooklist(result.booking_request);
+          } else if (result?.error) {
+            console.log(result.error);
+          }
+        } catch (error) {
+          console.error('Error fetching bookings:', error);
+        } finally {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      },
+      [searchTerm]
+  );
 
   useEffect(() => {
-    if (focus) {
-      fetchBookingData();
+    if (focused) {
+      getBookingRequests();
     }
-  }, [focus]);
+  }, [focused, getBookingRequests]);
 
-  const fetchBookingData = async () => {
+  const changeStatus = async statusValue => {
     try {
-      const myHeaders = new Headers();
-      myHeaders.append('Cookie', 'PHPSESSID=2d0j4je2t3mdtg29p1ncvpab0b');
-
       const formdata = new FormData();
-      formdata.append('user_id', global.id);
+      formdata.append('id', currentItem.booking_id);
+      formdata.append('status', statusValue);
 
-      const requestOptions = {
+      const response = await fetch(`${BASIC_URL}status_update.php`, {
         method: 'POST',
-        headers: myHeaders,
         body: formdata,
-        redirect: 'follow',
-      };
-
-      const response = await fetch(
-          `${BASIC_URL}user/request_booking_service.php`,
-          requestOptions
-      );
-      const result = await response.json();
-
-      if (result.booking_request) {
-        const uniqueBookings = result.booking_request.filter(
-            (item, index, self) =>
-                index === self.findIndex((b) => b.booking_id === item.booking_id)
-        );
-        setBookData(uniqueBookings);
-      }
-
-      if (result.error) {
-        console.log(result.error);
-      }
-    } catch (error) {
-      showAlert('Error', error.message || 'Failed to fetch booking data');
-    }
-  };
-
-  const sendRating = async () => {
-    try {
-      const myHeaders = new Headers();
-      myHeaders.append('Cookie', 'PHPSESSID=fhc8n3gq283lr08p22d9n0nfaa');
-
-      const formdata = new FormData();
-      formdata.append('user_id', global.id);
-      formdata.append('rating', rating);
-      formdata.append('feedback', feedback);
-      formdata.append('provider_id', providerId);
-      formdata.append('bookingId', bookId);
-
-      const requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        body: formdata,
-        redirect: 'follow',
-      };
-
-      const apiurl = `${BASIC_URL}user/feedback.php`;
-      const response = await fetch(apiurl, requestOptions);
-      const result = await response.json();
-
-      if (result.success) {
-        showAlert('Thank you!', result.success);
-      } else if (result.error) {
-        showAlert('Error occurred', result.error);
-      } else {
-        showAlert('Error', 'Something went wrong. Please try again.');
-      }
-    } catch (error) {
-      console.log('Error in review submission:', error);
-    }
-  };
-
-  const openReviewOptions = (selectedBookingId, selectedProviderId) => {
-    setBookId(selectedBookingId);
-    setProviderId(selectedProviderId);
-    setReviewVisible(true);
-  };
-
-  const toggleSubmitReview = () => {
-    setSubmitReviewVisible(!submitReviewVisible);
-    setReviewVisible(false);
-  };
-
-  const handleShare = async () => {
-    try {
-      await Share.share({
-        title: 'Share Booking Details',
-        message: details || 'Booking Details from Skilledman App',
       });
+
+      const result = await response.json();
+
+      if (result?.success) {
+        showToast(result.success);
+        setModalVisible(false);
+        setCurrentItem(null);
+        getBookingRequests();
+      } else if (result?.error) {
+        showToast(result.error);
+      }
     } catch (error) {
-      console.log('Share error:', error.message);
+      Alert.alert('Error', error?.message || 'An error occurred');
     }
   };
 
-  const renderStarPicker = () => {
-    return (
-        <View style={styles.starRow}>
-          {[1, 2, 3, 4, 5].map((starIndex) => (
-              <TouchableOpacity
-                  key={starIndex}
-                  onPress={() => setRating(starIndex)}
-                  style={styles.starTouch}>
-                <Icons.FontAwesome
-                    name={starIndex <= rating ? 'star' : 'star-o'}
-                    size={32}
-                    color={starIndex <= rating ? '#F59E0B' : '#CBD5E1'}
-                />
-              </TouchableOpacity>
-          ))}
-        </View>
+  const openFile = () => {
+    if (!currentItem?.file) return;
+
+    const fileURL = `${BASIC_URL}uploads/${currentItem.file}`;
+
+    Linking.openURL(fileURL).catch(err =>
+        console.error(`Error opening file: ${err}`)
     );
   };
 
   return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
         <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={submitReviewVisible}
-            onRequestClose={() => setSubmitReviewVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalView}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Your Opinion Matters</Text>
-                <TouchableOpacity
-                    style={styles.cancelCont}
-                    onPress={toggleSubmitReview}>
-                  <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.modalBody}>
-                {renderStarPicker()}
-
-                <C_TxtInput
-                    styles={{ fontWeight: '400', width: '100%' }}
-                    numberOfLines={4}
-                    multiline={true}
-                    placeholder="Give your feedback"
-                    placeholderTextColor="#94A3B8"
-                    onChangeText={(val) => setFeedback(val)}
-                />
-
-                <BotonComp
-                    onPressFunc={() => {
-                      sendRating();
-                      setSubmitReviewVisible(false);
-                    }}
-                    BtnStyle={styles.submitBtn}
-                    btnText="Submit Review"
-                />
-              </View>
-            </View>
-          </View>
-        </Modal>
-
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={reviewVisible}
-            onRequestClose={() => setReviewVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalView}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Options</Text>
-                <TouchableOpacity
-                    style={styles.cancelCont}
-                    onPress={() => setReviewVisible(false)}>
-                  <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.modalBody}>
-                <TouchableOpacity style={styles.attachCont}>
-                  <Icons.Feather
-                      name="alert-circle"
-                      size={20}
-                      style={styles.attachIcon}
-                      color="#EF4444"
-                  />
-                  <Text style={[styles.labelStyle, { color: '#EF4444' }]}>Report</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    onPress={toggleSubmitReview}
-                    style={styles.attachCont}>
-                  <Icons.Feather
-                      name="edit-3"
-                      size={20}
-                      style={styles.attachIcon}
-                      color={color.defalt}
-                  />
-                  <Text style={styles.labelStyle}>Write Review</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={handleShare} style={styles.attachCont}>
-                  <Icons.Feather
-                      name="share-2"
-                      size={20}
-                      style={styles.attachIcon}
-                      color={color.defalt}
-                  />
-                  <Text style={styles.labelStyle}>Share Details</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-
-        <DrarTitlProfilHeader
-            screenTitle="Booked Services"
+        <HomeStakWSearch
             onPress={() => navigation.openDrawer()}
-            userProfile={() => navigation.navigate('editUserProfile')}
-            imgUrl={require('../../Assets/Images/user.jpg')}
+            onPressnotification={() => navigation.navigate('edit_profile')}
+            onChangeText={val => setSearchTerm(val)}
+            value={searchTerm}
+            headerTitle="Booking Requests"
         />
 
-        <FlatList
-            data={bookData}
-            contentContainerStyle={styles.listContainer}
-            showsVerticalScrollIndicator={false}
-            keyExtractor={(item, index) =>
-                `booking_${item?.booking_id || index}_${index}`
-            }
-            renderItem={({ item }) => (
-                <BookingCrd
-                    cardTitle={item.name}
-                    bookingId={`Booking ID - ${item.booking_id}`}
-                    expertise={`Expert ${item.service}`}
-                    status={item.status}
-                    paidTitle={item.service_date}
-                    dateCont={styles.dateCont}
-                    filepress={item.file}
-                    toggleReviewModal={() => {
-                      openReviewOptions(item.booking_id, item.provider_id);
-                      setDetails(`Booking ID: ${item.booking_id}\nService: ${item.service}\nProvider: ${item.name}`);
-                    }}
-                />
-            )}
-        />
-        <CustomAlert
-          visible={alertConfig.visible}
-          title={alertConfig.title}
-          message={alertConfig.message}
-          onOk={alertConfig.onOk}
-        />
+        {booklist.length > 0 && (
+            <View style={styles.summaryBar}>
+              <Text style={styles.summaryTitle}>Incoming Requests</Text>
+              <View style={styles.countBadge}>
+                <Text style={styles.countBadgeText}>{booklist.length} Total</Text>
+              </View>
+            </View>
+        )}
+
+        {loading && booklist.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={color.defalt} />
+              <Text style={styles.loadingText}>Fetching requests...</Text>
+            </View>
+        ) : (
+            <FlatList
+                data={booklist}
+                keyExtractor={(item, index) =>
+                    item.booking_id?.toString() || index.toString()
+                }
+                refreshControl={
+                  <RefreshControl
+                      refreshing={refreshing}
+                      onRefresh={() => getBookingRequests(true)}
+                      colors={[color.defalt]}
+                  />
+                }
+                renderItem={({ item, index }) => (
+                    <View style={styles.cardItemWrapper}>
+                      <FltLstCrd
+                          index={index}
+                          cardTitle={item.name}
+                          bookingId={`Booking ID - ${item.booking_id}`}
+                          date={item.service_date}
+                          time={item.service_time}
+                          status={item.status}
+                          onPressShowProfile={() => toggleModal(item)}
+                          iconName="ellipsis-v"
+                          filepress={item.file}
+                      />
+                    </View>
+                )}
+                contentContainerStyle={StyleSheet.flatten([
+                  styles.cardContainer,
+                  { paddingBottom: bottomPadding },
+                ])}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                  <View style={styles.emptyContainer}>
+                    <View style={styles.emptyIconCircle}>
+                      <Icons.Feather name="inbox" size={34} color="#94A3B8" />
+                    </View>
+                    <Text style={styles.emptyTitle}>No Booking Requests</Text>
+                    <Text style={styles.emptySubtitle}>
+                      New customer service requests will appear here in real time.
+                    </Text>
+                  </View>
+                }
+            />
+        )}
+
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <Animatable.View animation="zoomIn" duration={250} style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <View style={styles.headerLeft}>
+                  <View style={styles.modalHeaderIconWrap}>
+                    <Icons.Feather name="user-check" size={17} color={color.defalt} />
+                  </View>
+                  <Text style={styles.modalTitleText}>Request Details</Text>
+                </View>
+                <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={styles.closeCircleBtn}
+                    onPress={() => setModalVisible(false)}>
+                  <Icons.Ionicons name="close" color="#64748B" size={18} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.modalBody}>
+                {/* NEW: Text up top saying request is accepted */}
+                {currentItem?.status === 'progress' && (
+                    <View style={styles.acceptedBanner}>
+                      <Icons.Feather name="info" size={14} color="#047857" style={{marginRight: 6}} />
+                      <Text style={styles.acceptedBannerText}>This request has been accepted.</Text>
+                    </View>
+                )}
+
+                <View style={styles.avatarContainer}>
+                  <Image
+                      style={styles.logoImg}
+                      resizeMode="cover"
+                      source={
+                        currentItem?.profile
+                            ? { uri: `${BASIC_URL}uploads/${currentItem.profile}` }
+                            : require('../../Assets/Images/user.jpg')
+                      }
+                  />
+                </View>
+
+                <Text style={styles.customerName}>{currentItem?.name}</Text>
+                <Text style={styles.bookingIdPill}>
+                  Booking ID • #{currentItem?.booking_id}
+                </Text>
+
+                <View style={styles.infoTile}>
+                  <View style={styles.infoTileRow}>
+                    <View style={styles.tileIconWrap}>
+                      <Icons.Feather name="calendar" size={16} color={color.defalt} />
+                    </View>
+                    <View style={styles.tileTextCol}>
+                      <Text style={styles.tileLabel}>Scheduled Date & Time</Text>
+                      <Text style={styles.tileValue}>
+                        {currentItem?.service_date}{' '}
+                        {currentItem?.service_time ? `(${currentItem.service_time})` : ''}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {currentItem?.file && (
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={openFile}
+                        style={styles.attachmentTile}>
+                      <View style={styles.tileIconWrap}>
+                        <Icons.Feather name="paperclip" size={16} color={color.defalt} />
+                      </View>
+                      <View style={styles.tileTextCol}>
+                        <Text style={styles.attachmentTileTitle}>Service Attachment</Text>
+                        <Text style={styles.attachmentTileSub}>Tap to view uploaded file</Text>
+                      </View>
+                      <Icons.Feather name="external-link" size={16} color="#94A3B8" />
+                    </TouchableOpacity>
+                )}
+
+                <TouchableOpacity activeOpacity={0.8} style={styles.directionsBtn}>
+                  <Icons.Feather
+                      name="navigation"
+                      size={15}
+                      color={color.defalt}
+                      style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.directionsText}>Get Directions to Location</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.btnActionRow}>
+                {currentItem?.status === 'progress' ? (
+                    <View style={[styles.acceptBtn, { backgroundColor: '#10B981', width: '100%', justifyContent: 'center' }]}>
+                      <Icons.Feather name="check-circle" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Text style={styles.acceptBtnText}>Already Accepted</Text>
+                    </View>
+                ) : (
+                    <>
+                      <TouchableOpacity
+                          activeOpacity={0.8}
+                          style={styles.rejectBtn}
+                          onPress={() => changeStatus('reject')}>
+                        <Icons.Feather name="x" size={16} color="#EF4444" style={{ marginRight: 6 }} />
+                        <Text style={styles.rejectBtnText}>Decline</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                          activeOpacity={0.8}
+                          style={styles.acceptBtn}
+                          onPress={() => changeStatus('progress')}>
+                        <Icons.Feather name="check" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                        <Text style={styles.acceptBtnText}>Accept Request</Text>
+                      </TouchableOpacity>
+                    </>
+                )}
+              </View>
+            </Animatable.View>
+          </View>
+        </Modal>
       </SafeAreaView>
   );
 };
 
-export default BookingScreen;
+export default RequestScreen;
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-  listContainer: {
+  summaryBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 30,
+    paddingTop: 12,
+    paddingBottom: 4,
   },
-  dateCont: {
-    fontWeight: '500',
+  summaryTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
     color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: -0.2,
+  },
+  countBadge: {
+    backgroundColor: '#EEF2F6',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  countBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  cardContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    flexGrow: 1,
+  },
+  cardItemWrapper: {
+    marginBottom: 8,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    ...(Platform.OS === 'web'
+        ? { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)' }
+        : {
+          elevation: 1,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.03,
+          shadowRadius: 4,
+        }),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 60,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 30,
+  },
+  emptyIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#EEF2F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: 13.5,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
   },
-  modalView: {
-    borderRadius: 20,
+  modalCard: {
+    borderRadius: 24,
     width: '100%',
+    maxWidth: 400,
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    ...(Platform.OS === 'web'
+        ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.16)' }
+        : {
+          elevation: 10,
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.16,
+          shadowRadius: 18,
+        }),
   },
   modalHeader: {
     backgroundColor: '#FFFFFF',
-    alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 20,
-    flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
-  modalTitle: {
-    fontSize: 17,
-    color: '#0F172A',
-    fontWeight: '800',
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  cancelCont: {
-    padding: 2,
+  modalHeaderIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#F7ECE4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  modalTitleText: {
+    fontSize: 16.5,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  closeCircleBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalBody: {
     paddingVertical: 18,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  starRow: {
+  avatarContainer: {
+    marginBottom: 8,
+    position: 'relative',
+  },
+  logoImg: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 3,
+    borderColor: '#F8FAFC',
+    backgroundColor: '#E2E8F0',
+  },
+  customerName: {
+    fontWeight: '800',
+    fontSize: 18,
+    color: '#0F172A',
+    letterSpacing: -0.3,
+    marginTop: 4,
+  },
+  bookingIdPill: {
+    fontSize: 12.5,
+    color: '#64748B',
+    fontWeight: '600',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginTop: 4,
+    marginBottom: 14,
+  },
+  infoTile: {
+    width: '100%',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    marginBottom: 8,
+  },
+  infoTileRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tileIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 14,
+    marginRight: 12,
   },
-  starTouch: {
-    paddingHorizontal: 6,
+  tileTextCol: {
+    flex: 1,
   },
-  attachCont: {
+  tileLabel: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+  },
+  tileValue: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 2,
+  },
+  attachmentTile: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingVertical: 14,
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    marginBottom: 8,
   },
-  attachIcon: {
-    marginRight: 14,
-  },
-  labelStyle: {
-    fontSize: 15,
+  attachmentTileTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
     color: '#0F172A',
-    fontWeight: '600',
   },
-  submitBtn: {
+  attachmentTileSub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  directionsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     width: '100%',
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginTop: 4,
+  },
+  directionsText: {
+    color: color.defalt,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  btnActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 6,
+    gap: 12,
+  },
+  acceptBtn: {
+    flex: 1.2,
+    flexDirection: 'row',
     backgroundColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 14,
-    marginTop: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
     elevation: 3,
     shadowColor: color.defalt,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
   },
+  acceptBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14.5,
+  },
+  rejectBtn: {
+    flex: 0.9,
+    flexDirection: 'row',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rejectBtnText: {
+    color: '#EF4444',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  /* --- NEW STYLES BELOW FOR ACCEPTED BANNER --- */
+  acceptedBanner: {
+    flexDirection: 'row',
+    backgroundColor: '#D1FAE5',
+    width: '100%',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  acceptedBannerText: {
+    color: '#047857',
+    fontWeight: '700',
+    fontSize: 13.5,
+  },
 });
-

@@ -18,7 +18,7 @@ function SplashScreen({ navigation }) {
 
       if (user && role) {
         const data = JSON.parse(user);
-        dispatch({ type: 'LOGIN', payload: { user: data, role } });
+        dispatch({type: 'LOGIN', payload: {user: data, role}});
 
         global.email = data.email;
         global.id = data.id;
@@ -32,15 +32,27 @@ function SplashScreen({ navigation }) {
         global.profile = data.profile;
 
         if (role === '0' || role === '1') {
-          navigation.navigate('Parent');
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'Parent'}],
+          });
         } else {
-          navigation.navigate('Signin');
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'Signin'}],
+          });
         }
       } else {
-        navigation.navigate('Signin');
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'Signin'}],
+        });
       }
     } catch (error) {
-      navigation.navigate('Signin');
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'Signin'}],
+      });
     }
   };
 

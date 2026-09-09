@@ -54,23 +54,15 @@ import { Store } from './Src/Redux/Store/store';
 import { reqestUsrPermision, notifiListener } from './Src/utilis/notification';
 import { AthProvidr } from './Src/context/AuthProvider';
 
-// ============================================================================
-// WEB FIX: Aggressive Focus Manager
-// ============================================================================
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
   const forceDropFocus = () => {
     const active = document.activeElement;
     if (active && active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA') {
-      // 1. Force focus completely outside the React Navigation DOM tree
       document.body.focus();
-      // 2. Clear the active element
       active.blur();
     }
   };
 
-  // React Native Web relies on mousedown/touchstart, not click.
-  // The "true" argument forces this to run in the capture phase (first),
-  // before React Navigation updates the drawer state and triggers the warning.
   window.addEventListener('mousedown', forceDropFocus, true);
   window.addEventListener('touchstart', forceDropFocus, true);
 }
