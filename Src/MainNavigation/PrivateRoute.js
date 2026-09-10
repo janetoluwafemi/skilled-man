@@ -14,6 +14,7 @@ import EditUserProfile from '../Screens/Drawer/editUserProfile';
 import AdSkil from '../Screens/Drawer/AddSkill';
 import FndExprt from '../Screens/Expert/FindExpert';
 import ExprtDetails from '../Screens/Expert/ExpertDetail';
+import UserProfile from '../Screens/Chat/UserProfile';
 import Mapltln from '../Screens/Signup/Maps';
 import SlctPaymentMethd from '../Screens/Payment/SelectPaymentMethod';
 import PaymentCongrats from '../Screens/Payment/Congratulations';
@@ -40,7 +41,7 @@ const PrivateRoute = () => {
   return (
     <Stack.Navigator
       initialRouteName="Parent"
-      screenOptions={{ headerShown: false }}>
+      screenOptions={{headerShown: false}}>
       <Stack.Screen name="Parent" component={Prent} />
       <Stack.Screen name="Dashboard" component={Dashboard} />
       <Stack.Screen name="UserDashboard" component={UserDashboard} />
@@ -69,7 +70,7 @@ const PrivateRoute = () => {
       <Stack.Screen name="UserHistory" component={UsrHstry} />
       <Stack.Screen name="Balance" component={Balance} />
       <Stack.Screen name="Cash" component={Cash} />
-
+      <Stack.Screen name="UserProfile" component={UserProfile} />
       <Stack.Screen name="AddBank" component={AdBnk} />
       <Stack.Screen name="AddBankGoogle" component={AdBnkGogl} />
       <Stack.Screen name="Congratulations" component={Congratulation} />
