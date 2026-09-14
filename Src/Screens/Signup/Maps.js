@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Alert,
   Platform,
   ActivityIndicator,
   StyleSheet,
@@ -13,6 +12,7 @@ import {
 import { normalize } from '../../utilis/responsive';
 import * as Location from 'expo-location';
 import * as Animatable from 'react-native-animatable';
+import { useNavigation } from '@react-navigation/native';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 
@@ -40,7 +40,10 @@ const Mapltln = () => {
   });
 
   useEffect(() => {
+    // requestPermission is created during this render before the effect runs.
+    // It should run once when this screen is mounted, not after every location update.
     requestPermission();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const showAlert = (title, message, onPress = null) => {
     setCustomAlert({

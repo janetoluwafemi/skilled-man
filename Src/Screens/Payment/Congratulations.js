@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
-  Dimensions
+  Dimensions,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';

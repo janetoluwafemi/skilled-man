@@ -1,4 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import {
+  FlatList,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';

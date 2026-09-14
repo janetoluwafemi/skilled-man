@@ -4,7 +4,12 @@ import {
     Text,
     StyleSheet,
     Platform,
-    StatusBar
+    StatusBar,
+    TouchableOpacity,
+    Alert,
+    ScrollView,
+    Image,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';

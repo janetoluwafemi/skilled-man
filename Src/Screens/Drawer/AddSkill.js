@@ -6,7 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
-  Platform
+  Platform,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';

@@ -7,12 +7,36 @@
     "plugins": [
       "@react-native-community/datetimepicker",
       "@react-native-firebase/app",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow Skilledman to use your microphone to record voice messages."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow Skilledman to use your camera to add photos.",
+          "photosPermission": "Allow Skilledman to access your photos so you can add them to your profile and messages."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Skilledman to use your location while selecting a service address."
+        }
+      ],
       "expo-sharing",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-font"
     ],
     "android": {
       "package": "com.intellitechltdng.skilledman",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "ios": {
+      "bundleIdentifier": "com.intellitechltdng.skilledman"
     },
     "extra": {
       "eas": {

@@ -6,7 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
-  Platform
+  Platform,
+  ToastAndroid,
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
@@ -57,7 +63,7 @@ const AddExpense = props => {
       if (Platform.OS === 'android') {
         ToastAndroid.show('Please enter an amount', ToastAndroid.SHORT);
       } else {
-        alert('Please enter an amount');
+        Alert.alert('Please enter an amount');
       }
       return;
     }
@@ -83,7 +89,7 @@ const AddExpense = props => {
         if (Platform.OS === 'android') {
           ToastAndroid.show('Failed to save expense', ToastAndroid.SHORT);
         } else {
-          alert('Failed to save expense');
+          Alert.alert('Failed to save expense');
         }
       } else if (success) {
         props.navigation.goBack();
