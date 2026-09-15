@@ -41,7 +41,6 @@ import {
 } from 'react-native-gifted-chat';
 
 import * as ImagePicker from 'expo-image-picker';
-import EmojiPicker from 'rn-emoji-keyboard'; // <-- Custom Emoji Picker
 
 import {
     useNavigation,
@@ -162,6 +161,12 @@ const AudioMessage = ({
         }
 
         try {
+            // Fix: Ensure audio plays even if the iOS hardware switch is on silent
+            await Audio.setAudioModeAsync({
+                playsInSilentModeIOS: true,
+                allowsRecordingIOS: false,
+            });
+
             if (sound) {
                 if (isPlaying) {
                     await sound.pauseAsync();
@@ -308,33 +313,11 @@ const NewMessage = ({
     const [searchQuery, setSearchQuery] =
         useState('');
 
-    const [inputText, setInputText] =
-        useState('');
-
-    // --- NEW: Accurate cursor and emoji states ---
-    const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
-    const [cursorPosition, setCursorPosition] = useState(0);
-
     const composerRef = useRef(null);
 
-    // Completely simplified input handler for GiftedChat
-    const handleInputTextChanged = useCallback(text => {
-        setInputText(text);
-    }, []);
-
-    const handleEmojiButtonPress = useCallback(() => {
-        Keyboard.dismiss();
-        setIsEmojiPickerOpen(prev => !prev);
-    }, []);
-
-    // Accurately inserts emoji at the current cursor position
-    const handleEmojiSelected = useCallback((emojiObject) => {
-        const textBeforeCursor = inputText.substring(0, cursorPosition);
-        const textAfterCursor = inputText.substring(cursorPosition);
-
-        setInputText(textBeforeCursor + emojiObject.emoji + textAfterCursor);
-        setCursorPosition(cursorPosition + emojiObject.emoji.length);
-    }, [inputText, cursorPosition]);
+    // Refs added to prevent the quick-tap recording bug
+    const recordingRef = useRef(null);
+    const isStartingRef = useRef(false);
 
     // ----------------------------------------------------------
     // ROLE
@@ -727,7 +710,7 @@ const NewMessage = ({
     // ==========================================================
 
     const startRecording = async () => {
-        if (isBlocked || recording) return;
+        if (isBlocked || recordingRef.current || isStartingRef.current) return;
 
         const Audio = getAudioModule();
 
@@ -740,18 +723,15 @@ const NewMessage = ({
         }
 
         try {
-            const permission =
-                await Audio.requestPermissionsAsync();
+            isStartingRef.current = true;
+            const permission = await Audio.requestPermissionsAsync();
 
-            if (
-                permission.status !==
-                'granted'
-            ) {
+            if (permission.status !== 'granted') {
                 showAlert(
                     'Permission Required',
                     'Microphone access is needed.'
                 );
-
+                isStartingRef.current = false;
                 return;
             }
 
@@ -760,44 +740,41 @@ const NewMessage = ({
                 playsInSilentModeIOS: true,
             });
 
-            const {
-                recording,
-            } =
-                await Audio.Recording.createAsync(
-                    Audio.RecordingOptionsPresets
-                        .HIGH_QUALITY
-                );
-
-            setRecording(recording);
-        } catch (err) {
-            console.error(
-                'Failed to start recording',
-                err
+            const { recording: newRecording } = await Audio.Recording.createAsync(
+                Audio.RecordingOptionsPresets.HIGH_QUALITY
             );
+
+            // Prevent recording from being stuck open if user quickly released tap
+            if (!isStartingRef.current) {
+                await newRecording.stopAndUnloadAsync();
+                return;
+            }
+
+            recordingRef.current = newRecording;
+            setRecording(newRecording);
+        } catch (err) {
+            console.error('Failed to start recording', err);
+        } finally {
+            isStartingRef.current = false;
         }
     };
 
     const stopRecording = async () => {
-        if (!recording) return;
+        isStartingRef.current = false;
+        const activeRecording = recordingRef.current || recording;
 
-        const Audio = getAudioModule();
-        const activeRecording = recording;
+        if (!activeRecording) return;
 
+        recordingRef.current = null;
         setRecording(undefined);
 
         try {
             await activeRecording.stopAndUnloadAsync();
 
-            const uri =
-                activeRecording.getURI();
+            const uri = activeRecording.getURI();
 
             if (uri) {
-                onSend([
-                    {
-                        text: '',
-                        audio: uri,
-                    },
-                ]);
+                onSend([{ text: '', audio: uri }]);
             }
         } catch (error) {
             console.error('Failed to stop recording', error);
@@ -806,6 +783,7 @@ const NewMessage = ({
                 'The recording could not be saved. Please try again.'
             );
         } finally {
+            const Audio = getAudioModule();
             if (Audio) {
                 try {
                     await Audio.setAudioModeAsync({
@@ -938,9 +916,7 @@ const NewMessage = ({
     ) => {
         if (isBlocked) return;
 
-        // Reset Text and Cursor state after sending
-        setInputText('');
-        setCursorPosition(0);
+        // GiftedChat handles clearing the text input automatically upon sending.
 
         try {
             const msg =
@@ -1467,12 +1443,6 @@ const NewMessage = ({
                         displayedMessages
                     }
 
-                    text={inputText}
-
-                    onInputTextChanged={
-                        handleInputTextChanged
-                    }
-
                     textInputRef={composerRef}
 
                     extraData={{
@@ -1481,6 +1451,7 @@ const NewMessage = ({
                         openMenuMessageId,
                         searchQuery,
                         isBlocked,
+                        recording, // Added so UI updates when mic is held down
                     }}
 
                     bottomOffset={
@@ -1711,9 +1682,10 @@ const NewMessage = ({
                                         style={
                                             styles.inputActionBtn
                                         }
-                                        onPress={
-                                            handleEmojiButtonPress
-                                        }
+                                        onPress={() => {
+                                            // Simply focus the input so the native keyboard appears
+                                            composerRef.current?.focus();
+                                        }}
                                         activeOpacity={0.7}
                                     >
                                         <Icons.Feather
@@ -1738,17 +1710,6 @@ const NewMessage = ({
                                                     '#0F172A',
                                             },
                                         ]}
-
-                                        textInputProps={{
-                                            ...(props.textInputProps ||
-                                                {}),
-                                            // Ensure the emoji picker closes when typing normally
-                                            onFocus: () => setIsEmojiPickerOpen(false),
-                                            // Track precise cursor position for perfect text deletion
-                                            onSelectionChange: event => {
-                                                setCursorPosition(event.nativeEvent.selection.start);
-                                            },
-                                        }}
                                     />
 
                                     {/* ----------------------------------------
@@ -1963,16 +1924,6 @@ const NewMessage = ({
                     }
                 />
             </KeyboardAvoidingView>
-
-            {/* =====================================================
-          EMOJI PICKER OVERLAY
-      ====================================================== */}
-            <EmojiPicker
-                open={isEmojiPickerOpen}
-                onClose={() => setIsEmojiPickerOpen(false)}
-                onEmojiSelected={handleEmojiSelected}
-                enableSearchBar
-            />
 
             {/* =====================================================
           FULL SCREEN IMAGE MODAL
