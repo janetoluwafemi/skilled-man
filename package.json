@@ -2,7 +2,7 @@
   "name": "newskilledman",
   "version": "0.0.1",
   "private": true,
-  "main": "index.js",
+  "main": "indedex.js",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
