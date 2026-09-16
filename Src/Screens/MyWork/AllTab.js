@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -10,21 +10,22 @@ import {
   Platform,
   Modal,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useIsFocused } from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useIsFocused} from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
-import { showToast } from '../../utilis/showToast';
+import {showToast} from '../../utilis/showToast';
 
+import {dummyBookings} from '../../utilis/MockJobsData';
 import color from '../../Assets/colors/colors';
 import FltLstCrd from '../../Components/FlatListCard';
-import { Icons } from '../../Components/Icons';
+import {Icons} from '../../Components/Icons';
 import OngoingDrpdwn from '../../Components/OngoingDropdown';
 import BotonComp from '../../Components/BtnComp';
-import { BASIC_URL } from '../Signin/Signin';
+// import {BASIC_URL} from '../Signin/Signin';
 
-const { height } = Dimensions.get('window');
+const {height} = Dimensions.get('window');
 
-const AllTabs = props => {
+const AllTabs = () => {
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
 
@@ -34,16 +35,22 @@ const AllTabs = props => {
   const [selectedBookingId, setSelectedBookingId] = useState(null);
 
   const bottomPadding =
-    height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
+    height * 0.085 +
+    Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
+    20;
 
   const toggleModal = () => {
     setModalVisible(prev => !prev);
   };
 
-  const getData = useCallback(async () => {
+  const getData = useCallback(() => {
     try {
+      setData(dummyBookings);
+
+      /*
       const formdata = new FormData();
       formdata.append('provider_id', global.id);
+
       if (props?.value) {
         formdata.append('searchTerm', props.value);
       }
@@ -54,15 +61,17 @@ const AllTabs = props => {
       });
 
       const result = await response.json();
+
       if (result?.booking_request) {
         setData(result.booking_request);
       } else if (result?.error) {
         console.log(result.error);
       }
+      */
     } catch (error) {
       console.log('Error fetching provider status:', error);
     }
-  }, [props?.value]);
+  }, []);
 
   useEffect(() => {
     if (focus) {
@@ -70,8 +79,14 @@ const AllTabs = props => {
     }
   }, [focus, getData]);
 
-  const changeStatus = async bookingId => {
+  const changeStatus = bookingId => {
     try {
+      if (!selectedBusiness || selectedBusiness === '0') {
+        Alert.alert('Please select a booking status.');
+        return;
+      }
+
+      /*
       const formdata = new FormData();
       formdata.append('id', bookingId);
       formdata.append('status', selectedBusiness);
@@ -82,12 +97,27 @@ const AllTabs = props => {
       });
 
       const result = await response.json();
+
       if (result?.success) {
         showToast(result.success);
         getData();
       } else if (result?.error) {
         console.log(result.error);
       }
+      */
+
+      const updatedData = data.map(item =>
+        item.booking_id === bookingId
+          ? {...item, status: selectedBusiness}
+          : item,
+      );
+
+      setData(updatedData);
+      setSelectedBookingId(null);
+      setSelectedBusiness('0');
+      setModalVisible(false);
+
+      showToast('Booking status updated successfully');
     } catch (error) {
       Alert.alert('Error', error?.message || 'An error occurred');
     }
@@ -97,10 +127,15 @@ const AllTabs = props => {
     <View style={styles.flexContainer}>
       <FlatList
         data={data}
-        keyExtractor={(item, index) => item.booking_id?.toString() || index.toString()}
-        contentContainerStyle={[styles.container, { paddingBottom: bottomPadding }]}
+        keyExtractor={(item, index) =>
+          item.booking_id?.toString() || index.toString()
+        }
+        contentContainerStyle={[
+          styles.container,
+          {paddingBottom: bottomPadding},
+        ]}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
+        renderItem={({item}) => (
           <FltLstCrd
             cardTitle={item.name}
             bookingId={`Booking ID - ${item.booking_id}`}
@@ -110,6 +145,7 @@ const AllTabs = props => {
             iconName="ellipsis-v"
             onPressShowProfile={() => {
               setSelectedBookingId(item.booking_id);
+              setSelectedBusiness('0');
               toggleModal();
             }}
             filepress={item.file}
@@ -132,9 +168,13 @@ const AllTabs = props => {
         visible={modalVisible}
         onRequestClose={toggleModal}>
         <View style={styles.modalOverlay}>
-          <Animatable.View animation="zoomIn" duration={300} style={styles.modalView}>
+          <Animatable.View
+            animation="zoomIn"
+            duration={300}
+            style={styles.modalView}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitleText}>Update Booking Status</Text>
+
               <TouchableOpacity onPress={toggleModal}>
                 <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
               </TouchableOpacity>
@@ -155,12 +195,12 @@ const AllTabs = props => {
                 btnTextStyle={styles.btnTextStyle}
                 btnText="Update Status"
                 onPressFunc={() => {
-                  if (selectedBookingId) {
-                    changeStatus(selectedBookingId);
-                    toggleModal();
-                  } else {
+                  if (!selectedBookingId) {
                     Alert.alert('Please select a booking before submitting.');
+                    return;
                   }
+
+                  changeStatus(selectedBookingId);
                 }}
               />
             </View>
@@ -216,7 +256,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     elevation: 4,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: {width: 0, height: 6},
     shadowOpacity: 0.1,
     shadowRadius: 12,
   },
@@ -255,7 +295,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     elevation: 3,
     shadowColor: color.defalt,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.25,
     shadowRadius: 6,
   },

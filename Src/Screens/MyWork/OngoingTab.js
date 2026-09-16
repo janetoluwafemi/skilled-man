@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -8,19 +8,20 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useIsFocused } from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useIsFocused} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { showToast } from '../../utilis/showToast';
+import {showToast} from '../../utilis/showToast';
 
 import FltLstCrd from '../../Components/FlatListCard';
-import { Icons } from '../../Components/Icons';
+import {Icons} from '../../Components/Icons';
 import color from '../../Assets/colors/colors';
-import { BASIC_URL } from '../Signin/Signin';
+import {dummyBookings} from '../../utilis/MockJobsData';
+// import {BASIC_URL} from '../Signin/Signin';
 
-const { height } = Dimensions.get('window');
+const {height} = Dimensions.get('window');
 
-const OngoingTabs = ({ route }) => {
+const OngoingTabs = ({route}) => {
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
   const [data, setData] = useState([]);
@@ -29,11 +30,21 @@ const OngoingTabs = ({ route }) => {
   const value = route?.params?.value;
 
   const bottomPadding =
-      height * 0.085 + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
+    height * 0.085 +
+    Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
+    20;
 
   const getData = useCallback(async () => {
     try {
       setLoading(true);
+
+      const filteredBookings = dummyBookings.filter(
+        item => item.status === 'ongoing',
+      );
+
+      setData(filteredBookings);
+
+      /*
       const storedUser = await AsyncStorage.getItem('user');
       const userObj = storedUser ? JSON.parse(storedUser) : null;
       const providerId = global.id || userObj?.id || '255';
@@ -41,6 +52,7 @@ const OngoingTabs = ({ route }) => {
       const formdata = new FormData();
       formdata.append('provider_id', String(providerId));
       formdata.append('status', 'progress');
+
       if (value) {
         formdata.append('searchTerm', value);
       }
@@ -51,11 +63,16 @@ const OngoingTabs = ({ route }) => {
       });
 
       const result = await response.json();
-      if (result?.booking_request && Array.isArray(result.booking_request)) {
+
+      if (
+        result?.booking_request &&
+        Array.isArray(result.booking_request)
+      ) {
         setData(result.booking_request);
       } else {
         setData([]);
       }
+      */
     } catch (error) {
       console.log('Error fetching ongoing jobs:', error);
       setData([]);
@@ -72,41 +89,46 @@ const OngoingTabs = ({ route }) => {
 
   if (loading) {
     return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={color.defalt} />
-        </View>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="small" color={color.defalt} />
+      </View>
     );
   }
 
   return (
-      <View style={styles.flexContainer}>
-        <FlatList
-            data={data}
-            keyExtractor={(item, index) => item?.booking_id?.toString() || index.toString()}
-            contentContainerStyle={[styles.container, { paddingBottom: bottomPadding }]}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-                <FltLstCrd
-                    cardTitle={item?.name || 'Customer'}
-                    bookingId={`Booking ID - ${item?.booking_id || ''}`}
-                    date={item?.service_date || ''}
-                    time={item?.service_time || ''}
-                    paidTitle="Paid"
-                    status="In Progress"
-                    filepress={item?.file}
-                />
-            )}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Icons.Feather name="clock" size={48} color="#CBD5E1" />
-                <Text style={styles.emptyTitle}>No Ongoing Jobs</Text>
-                <Text style={styles.emptySubtitle}>
-                  Jobs currently marked as in progress will appear here.
-                </Text>
-              </View>
-            }
-        />
-      </View>
+    <View style={styles.flexContainer}>
+      <FlatList
+        data={data}
+        keyExtractor={(item, index) =>
+          item?.booking_id?.toString() || index.toString()
+        }
+        contentContainerStyle={[
+          styles.container,
+          {paddingBottom: bottomPadding},
+        ]}
+        showsVerticalScrollIndicator={false}
+        renderItem={({item}) => (
+          <FltLstCrd
+            cardTitle={item?.name || 'Customer'}
+            bookingId={`Booking ID - ${item?.booking_id || ''}`}
+            date={item?.service_date || ''}
+            time={item?.service_time || ''}
+            paidTitle="Paid"
+            status="In Progress"
+            filepress={item?.file}
+          />
+        )}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Icons.Feather name="clock" size={48} color="#CBD5E1" />
+            <Text style={styles.emptyTitle}>No Ongoing Jobs</Text>
+            <Text style={styles.emptySubtitle}>
+              Jobs currently marked as in progress will appear here.
+            </Text>
+          </View>
+        }
+      />
+    </View>
   );
 };
 
@@ -145,6 +167,5 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginTop: 4,
     textAlign: 'center',
-    paddingHorizontal: 20,
   },
 });
