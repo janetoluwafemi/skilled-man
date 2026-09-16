@@ -21,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showToast } from '../../utilis/showToast';
 import DatePicker from '@react-native-community/datetimepicker';
 import * as Animatable from 'react-native-animatable';
@@ -38,6 +39,8 @@ const ExpertDetails = () => {
   const item = route.params?.item;
 
   const provider_id = item?.id;
+  const pendingKey = `pending_booking_${global.id || 'user'}_${provider_id}`;
+
   const [modalVisible, setModalVisible] = useState(false);
   const [reviewVisible, setReviewVisible] = useState(false);
   const [submitReviewVisible, setSubmitReviewVisible] = useState(false);
@@ -60,14 +63,14 @@ const ExpertDetails = () => {
   const [fullName, setFullName] = useState(global.name || '');
   const [phoneNumber, setPhoneNumber] = useState(global.phone_number || '');
   const [address, setAddress] = useState(global.address || '');
-  const [price, setPrice] = useState('');
   const [skills, setSkills] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState(null);
 
   const [selectedfile, setSelectedFile] = useState(null);
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
-  const [load, setLoad] = useState(false);
+
+  const [isPending, setIsPending] = useState(false);
 
   const [chatMessage, setChatMessage] = useState('');
   const [sendingChat, setSendingChat] = useState(false);
@@ -82,6 +85,31 @@ const ExpertDetails = () => {
       onPress,
     });
   };
+
+  useEffect(() => {
+    const verifyBookingStatus = async () => {
+      try {
+        if (item?.booking_status === 'pending') {
+          setIsPending(true);
+          await AsyncStorage.setItem(pendingKey, 'true');
+        }
+        else if (item?.booking_status === 'accepted' || item?.booking_status === 'rejected' || item?.booking_status === 'completed') {
+          setIsPending(false);
+          await AsyncStorage.removeItem(pendingKey);
+        }
+        else {
+          const localState = await AsyncStorage.getItem(pendingKey);
+          if (localState === 'true') {
+            setIsPending(true);
+          }
+        }
+      } catch (error) {
+        console.log("Error checking persistent status:", error);
+      }
+    };
+
+    verifyBookingStatus();
+  }, [item?.booking_status, provider_id, pendingKey]);
 
   const GetSkills = useCallback(async () => {
     if (!item?.id) return;
@@ -148,28 +176,21 @@ const ExpertDetails = () => {
     setReviewVisible(false);
   };
 
-  // --- NEW WORKFLOW LOGIC HERE ---
   const handleBookingConfirm = async () => {
-    if (!price || Number(price) <= 0) {
-      showAlert('Missing Field', 'Please enter a valid price budget.');
-      return;
-    }
-
     if (!selectedfile || !selectedfile.uri) {
       showAlert('Photo Required', 'Please attach a photo before confirming your booking.');
       return;
     }
 
-    setLoad(true);
+    setIsPending(true);
 
     try {
       const formdata = new FormData();
       formdata.append('user_id', global.id);
-      formdata.append('provider_id', provider_id); // The specific provider receiving the request
+      formdata.append('provider_id', provider_id);
       formdata.append('service_category', item?.service_name || 'Service');
       formdata.append('service_date', date.toISOString().split('T')[0]);
       formdata.append('address', address);
-      formdata.append('price', price);
       formdata.append('phone', phoneNumber);
       formdata.append('name', fullName);
 
@@ -181,34 +202,29 @@ const ExpertDetails = () => {
         });
       }
 
-      // NOTE: Ensure this PHP endpoint exists on your backend to save the pending request
       const response = await fetch(`${BASIC_URL}user/submit_pending_booking.php`, {
         method: 'POST',
         body: formdata,
       });
 
       const result = await response.json();
-      setLoad(false);
 
       if (result?.success || result?.status === 'success') {
+        await AsyncStorage.setItem(pendingKey, 'true');
+
         setModalVisible(false);
-        showAlert(
-            'Request Sent!',
-            `Your booking request has been sent. You will be able to pay once the provider accepts it.`,
-            () => {
-              navigation.navigate('BookingScreen');
-            }
-        );
+        showToast('Booking request sent successfully!');
+        navigation.goBack();
       } else {
+        setIsPending(false);
         showAlert('Error', result?.error || 'Failed to send booking request.');
       }
     } catch (error) {
-      setLoad(false);
+      setIsPending(false);
       console.log('Booking error:', error);
       showAlert('Error', 'Network error. Please check your connection.');
     }
   };
-  // ---------------------------------
 
   const handleShareProfile = async () => {
     try {
@@ -421,7 +437,7 @@ const ExpertDetails = () => {
       </TouchableOpacity>
   );
 
-  const isFormValid = Boolean(price && Number(price) > 0 && selectedfile && selectedfile.uri);
+  const isFormValid = Boolean(selectedfile && selectedfile.uri);
 
   return (
       <SafeAreaView style={styles.safeArea}>
@@ -597,10 +613,13 @@ const ExpertDetails = () => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                  activeOpacity={0.85}
-                  style={styles.bookButton}
+                  activeOpacity={isPending ? 1 : 0.85}
+                  style={[styles.bookButton, isPending && styles.btnDisabled]}
+                  disabled={isPending}
                   onPress={toggleModal}>
-                <Text style={styles.bookButtonText}>Book Service</Text>
+                <Text style={styles.bookButtonText}>
+                  {isPending ? 'Pending Booking Request' : 'Book Service'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -705,7 +724,7 @@ const ExpertDetails = () => {
                 <View style={styles.formContainer}>
                   <Text style={styles.welcomeTitle}>Request Appointment</Text>
                   <Text style={styles.welcomeSubtitle}>
-                    Provide booking details and budget for this service
+                    Provide booking details for this service
                   </Text>
 
                   <View style={styles.cardWrapper}>
@@ -719,7 +738,7 @@ const ExpertDetails = () => {
                             placeholderTextColor="#94A3B8"
                             value={fullName}
                             onChangeText={setFullName}
-                            editable={!load}
+                            editable={!isPending}
                         />
                       </View>
                     </View>
@@ -735,7 +754,7 @@ const ExpertDetails = () => {
                             value={phoneNumber}
                             onChangeText={setPhoneNumber}
                             keyboardType="phone-pad"
-                            editable={!load}
+                            editable={!isPending}
                         />
                       </View>
                     </View>
@@ -745,7 +764,7 @@ const ExpertDetails = () => {
                           activeOpacity={0.8}
                           style={styles.inputContainer}
                           onPress={() => {
-                            if (Platform.OS !== 'web') {
+                            if (Platform.OS !== 'web' && !isPending) {
                               setOpen(true);
                             }
                           }}>
@@ -786,23 +805,7 @@ const ExpertDetails = () => {
                             placeholderTextColor="#94A3B8"
                             value={address}
                             onChangeText={setAddress}
-                            editable={!load}
-                        />
-                      </View>
-                    </View>
-
-                    <View style={styles.fieldGroup}>
-                      <Text style={styles.fieldLabel}>Price Budget (₦)</Text>
-                      <View style={styles.inputContainer}>
-                        <Text style={styles.nairaPrefix}>₦</Text>
-                        <TextInput
-                            style={styles.inputStyle}
-                            placeholder="e.g. 15000"
-                            placeholderTextColor="#94A3B8"
-                            value={price}
-                            onChangeText={setPrice}
-                            keyboardType="numeric"
-                            editable={!load}
+                            editable={!isPending}
                         />
                       </View>
                     </View>
@@ -811,6 +814,7 @@ const ExpertDetails = () => {
                       <TouchableOpacity
                           activeOpacity={0.8}
                           style={styles.uploadOptionBtn}
+                          disabled={isPending}
                           onPress={handleFilePick}>
                         <Icons.Feather name="image" size={16} color={color.defalt} />
                         <Text style={styles.uploadOptionText}>Select Photo</Text>
@@ -819,6 +823,7 @@ const ExpertDetails = () => {
                       <TouchableOpacity
                           activeOpacity={0.8}
                           style={styles.uploadOptionBtn}
+                          disabled={isPending}
                           onPress={handleCamera}>
                         <Icons.Feather name="camera" size={16} color={color.defalt} />
                         <Text style={styles.uploadOptionText}>Use Camera</Text>
@@ -832,7 +837,7 @@ const ExpertDetails = () => {
                             <Text numberOfLines={1} style={styles.previewNameText}>
                               {selectedfile.name}
                             </Text>
-                            <TouchableOpacity onPress={() => setSelectedFile(null)}>
+                            <TouchableOpacity disabled={isPending} onPress={() => setSelectedFile(null)}>
                               <Icons.Ionicons name="trash-outline" size={18} color="#EF4444" />
                             </TouchableOpacity>
                           </View>
@@ -840,15 +845,13 @@ const ExpertDetails = () => {
                     )}
 
                     <TouchableOpacity
-                        activeOpacity={isFormValid ? 0.85 : 1}
-                        style={[styles.submitBtn, !isFormValid && styles.btnDisabled]}
-                        disabled={!isFormValid || load}
+                        activeOpacity={isFormValid && !isPending ? 0.85 : 1}
+                        style={[styles.submitBtn, (!isFormValid || isPending) && styles.btnDisabled]}
+                        disabled={!isFormValid || isPending}
                         onPress={handleBookingConfirm}>
-                      {load ? (
-                          <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                          <Text style={styles.submitBtnText}>Send Booking Request</Text>
-                      )}
+                      <Text style={styles.submitBtnText}>
+                        {isPending ? 'Pending Booking Request' : 'Send Booking Request'}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
