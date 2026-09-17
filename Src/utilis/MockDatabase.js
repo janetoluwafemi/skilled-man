@@ -7,7 +7,7 @@ export let sharedMockRequests = [
     status: 'pending',
     service: 'Driver',
     profile: null,
-    file: null,
+    file: 'license_copy_1001.pdf',
     price: '$45.00',
   },
   {
@@ -18,7 +18,7 @@ export let sharedMockRequests = [
     status: 'pending',
     service: 'Bricklayer',
     profile: null,
-    file: null,
+    file: 'wall_damage_photo.jpg',
     price: '$85.00',
   },
   {
@@ -29,7 +29,7 @@ export let sharedMockRequests = [
     status: 'pending',
     service: 'Plumber',
     profile: null,
-    file: null,
+    file: 'wall_damage_photo.jpg',
     price: '$120.00',
   },
 ];

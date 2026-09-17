@@ -195,11 +195,17 @@ const ExpertDetails = () => {
       formdata.append('name', fullName);
 
       if (selectedfile) {
-        formdata.append('file', {
-          uri: selectedfile.uri,
-          name: selectedfile.name || `IMG_${Date.now()}.jpg`,
-          type: selectedfile.type || 'image/jpeg',
-        });
+        if (Platform.OS === 'web') {
+          const fileBlobResponse = await fetch(selectedfile.uri);
+          const blob = await fileBlobResponse.blob();
+          formdata.append('file', blob, selectedfile.name || `IMG_${Date.now()}.jpg`);
+        } else {
+          formdata.append('file', {
+            uri: selectedfile.uri,
+            name: selectedfile.name || `IMG_${Date.now()}.jpg`,
+            type: selectedfile.type || 'image/jpeg',
+          });
+        }
       }
 
       const response = await fetch(`${BASIC_URL}user/submit_pending_booking.php`, {
