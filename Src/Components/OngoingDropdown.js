@@ -1,42 +1,119 @@
-import React, {useState, useRef} from 'react';
-import {View, Text, StyleSheet,
-  Platform} from 'react-native';
-import color from '../Assets/colors/colors';
-import {Picker} from '@react-native-picker/picker';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  UIManager,
+  LayoutAnimation,
+} from 'react-native';
+import {Icons} from './Icons';
+
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const OngoingDrpdwn = props => {
-  const pickerRef = useRef();
+  const [isOpen, setIsOpen] = useState(false);
 
   const businessOptions = [
-    {label: 'Select Action', value: '0'},
-    {label: 'Inprogress', value: 'progress'},
-    {label: 'Complete', value: 'complete'},
-    {label: 'Reject', value: 'reject'},
+    {label: 'Select Action', value: '0', icon: 'layers', color: '#94A3B8'},
+    {label: 'In Progress', value: 'progress', icon: 'clock', color: '#EA580C'},
+    {
+      label: 'Complete',
+      value: 'complete',
+      icon: 'check-circle',
+      color: '#10B981',
+    },
+    {label: 'Reject', value: 'reject', icon: 'x-circle', color: '#EF4444'},
   ];
 
+  const toggleDropdown = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsOpen(!isOpen);
+  };
+
+  const handleSelect = value => {
+    props.setselectedBusiness(value);
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsOpen(false);
+  };
+
+  const selectedOption =
+    businessOptions.find(o => o.value === props.selectedBusiness) ||
+    businessOptions[0];
+
   return (
-    <View style={styles.DropDownContainer}>
-      <Picker
-        ref={pickerRef}
-        selectedValue={props.selectedBusiness}
-        onValueChange={(itemValue, itemIndex) =>
-          props.setselectedBusiness(itemValue)
-        }
-        enabled={true}
-        mode={'dialog'}
-        dropdownIconColor={color.defalt}
-        prompt={props.titleText}
-        selectionColor={color.ylow}
-        itemStyle={styles.itemsStyle}>
-        {businessOptions.map((option, index) => (
-          <Picker.Item
-            key={index}
-            label={option.label}
-            value={option.value}
-            color={color.defalt}
+    <View style={styles.container}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={[styles.header, isOpen && styles.headerOpen]}
+        onPress={toggleDropdown}>
+        <View style={styles.headerLeft}>
+          <Icons.Feather
+            name={selectedOption.icon}
+            size={18}
+            color={selectedOption.color}
           />
-        ))}
-      </Picker>
+          <Text
+            style={[
+              styles.headerText,
+              props.selectedBusiness === '0' && styles.placeholderText,
+            ]}>
+            {selectedOption.label}
+          </Text>
+        </View>
+        <Icons.Feather
+          name={isOpen ? 'chevron-up' : 'chevron-down'}
+          size={20}
+          color="#94A3B8"
+        />
+      </TouchableOpacity>
+
+      {isOpen && (
+        <View style={styles.optionsList}>
+          {businessOptions
+            .filter(opt => opt.value !== '0')
+            .map((option, index) => {
+              const isSelected = props.selectedBusiness === option.value;
+
+              return (
+                <TouchableOpacity
+                  key={index}
+                  activeOpacity={0.7}
+                  style={[
+                    styles.optionItem,
+                    isSelected && styles.optionItemSelected,
+                  ]}
+                  onPress={() => handleSelect(option.value)}>
+                  <View style={styles.optionLeft}>
+                    <Icons.Feather
+                      name={option.icon}
+                      size={18}
+                      color={option.color}
+                    />
+                    <Text
+                      style={[
+                        styles.optionText,
+                        isSelected && styles.optionTextSelected,
+                      ]}>
+                      {option.label}
+                    </Text>
+                  </View>
+
+                  {/* Show checkmark if selected */}
+                  {isSelected && (
+                    <Icons.Feather name="check" size={18} color="#0F172A" />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+        </View>
+      )}
     </View>
   );
 };
@@ -44,20 +121,74 @@ const OngoingDrpdwn = props => {
 export default OngoingDrpdwn;
 
 const styles = StyleSheet.create({
-  DropDownContainer: {
-    borderColor: color.defalt,
-    borderWidth: 1,
-    paddingHorizontal: 5,
+  container: {
     width: '100%',
-    borderRadius: 6,
     marginTop: 6,
-    height: 53,
+    zIndex: 100, // Keeps dropdown above other elements if necessary
   },
-  itemsStyle: {
-    color: color.rd,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    height: 53,
+    paddingHorizontal: 16,
+  },
+  headerOpen: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0F172A',
+    marginLeft: 12,
+  },
+  placeholderText: {
+    color: '#64748B',
     fontWeight: '400',
   },
-  containerStyle: {
-    zIndex: 100,
+  optionsList: {
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: '#F1F5F9',
+    overflow: 'hidden',
+  },
+  optionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAFC',
+  },
+  optionItemSelected: {
+    backgroundColor: '#F8FAFC',
+  },
+  optionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  optionText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#334155',
+    marginLeft: 12,
+  },
+  optionTextSelected: {
+    fontWeight: '700',
+    color: '#0F172A',
   },
 });

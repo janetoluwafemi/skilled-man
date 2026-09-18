@@ -18,7 +18,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -36,10 +36,8 @@ const { width } = Dimensions.get('window');
 const ExpertDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const focus = useIsFocused();
   const item = route.params?.item;
-
-  const provider_id = item?.id;
-  const pendingKey = `pending_booking_${global.id || 'user'}_${provider_id}`;
 
   const [modalVisible, setModalVisible] = useState(false);
   const [reviewVisible, setReviewVisible] = useState(false);
@@ -71,11 +69,22 @@ const ExpertDetails = () => {
   const [feedback, setFeedback] = useState('');
 
   const [isPending, setIsPending] = useState(false);
-
   const [chatMessage, setChatMessage] = useState('');
   const [sendingChat, setSendingChat] = useState(false);
 
   const isSendingRef = useRef(false);
+
+  const provider_id = String(
+    item?.provider_id || item?.user_id || item?.id || '',
+  );
+
+  const pendingKey = `pending_booking_${global.id || 'user'}_${provider_id}`;
+
+  const [isFavorite, setIsFavorite] = useState(
+      item?.is_favorite === true ||
+      item?.favorite_status === '1' ||
+      item?.status === '1',
+  );
 
   const showAlert = (title, message, onPress = null) => {
     setCustomAlert({
@@ -85,6 +94,41 @@ const ExpertDetails = () => {
       onPress,
     });
   };
+
+  useEffect(() => {
+    const fetchFavoriteStatus = async () => {
+      try {
+        const formdata = new FormData();
+        formdata.append('user_id', global.id);
+
+        const response = await fetch(
+            `${BASIC_URL}user/get_favorite_provider.php`,
+            {
+              method: 'POST',
+              body: formdata,
+            },
+        );
+
+        const result = await response.json();
+        if (result?.favorite_providers) {
+          // Check all possible item ID variations against the database provider_id
+          const isFaved = result.favorite_providers.some(
+              fav =>
+                  String(fav.provider_id) === String(item?.id) ||
+                  String(fav.provider_id) === String(item?.provider_id) ||
+                  String(fav.provider_id) === String(item?.user_id)
+          );
+          setIsFavorite(isFaved);
+        }
+      } catch (error) {
+        console.log('Error checking favorite status:', error);
+      }
+    };
+
+    if (focus) {
+      fetchFavoriteStatus();
+    }
+  }, [focus, item]);
 
   useEffect(() => {
     const verifyBookingStatus = async () => {
@@ -174,6 +218,50 @@ const ExpertDetails = () => {
   const toggleSubmitReview = () => {
     setSubmitReviewVisible(prev => !prev);
     setReviewVisible(false);
+  };
+
+  const toggleFavourite = async () => {
+    const currentFavState = isFavorite;
+    setIsFavorite(!currentFavState);
+
+    try {
+      const formdata = new FormData();
+      if (!currentFavState) {
+        formdata.append('user_id', global.id);
+        formdata.append('provider_id', provider_id);
+        formdata.append('provider_name', item?.name);
+        formdata.append('rating', item?.averageRating?.toFixed(2) || '0.00');
+        formdata.append('total_jobs', item?.totaljob || item?.total_jobs || 0);
+        formdata.append('distance', item?.distance || '');
+        formdata.append('profile', item?.image || '');
+        formdata.append('service_name', item?.service_name || '');
+
+        const response = await fetch(`${BASIC_URL}user/favorite_providers.php`, {
+          method: 'POST',
+          body: formdata,
+        });
+        const result = await response.json();
+        if (result?.status) {
+          showToast('Added to favorites');
+        }
+      } else {
+        formdata.append('user_id', global.id);
+        formdata.append('provider_id', provider_id);
+        formdata.append('status', '0');
+
+        const response = await fetch(`${BASIC_URL}user/favorite_status_update.php`, {
+          method: 'POST',
+          body: formdata,
+        });
+        const result = await response.json();
+        if (!result?.error) {
+          showToast('Removed from favorites');
+        }
+      }
+    } catch (error) {
+      console.log('Error toggling favorite:', error);
+      setIsFavorite(currentFavState);
+    }
   };
 
   const handleBookingConfirm = async () => {
@@ -323,12 +411,7 @@ const ExpertDetails = () => {
       setSendingChat(true);
 
       const senderId = String(global?.id || '256');
-      const receiverId = String(
-          item?.id ||
-          item?.provider_id ||
-          provider_id ||
-          '251'
-      );
+      const receiverId = String(provider_id || '251');
 
       const formdata = new FormData();
       formdata.append('sender_id', senderId);
@@ -508,8 +591,18 @@ const ExpertDetails = () => {
                   </View>
                   <Text style={styles.serviceSubtitle}>{item?.service_name}</Text>
                 </View>
-                <TouchableOpacity activeOpacity={0.7} style={styles.bookmarkBtn}>
-                  <Icons.Feather name="bookmark" size={18} color={color.defalt} />
+
+                {/* Main Bookmark Toggle */}
+                <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={styles.bookmarkBtn}
+                    onPress={toggleFavourite}
+                >
+                  <Icons.FontAwesome
+                      name="bookmark"
+                      size={20}
+                      color={isFavorite ? color.defalt : "#CBD5E1"}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -549,7 +642,7 @@ const ExpertDetails = () => {
               <View style={styles.statDivider} />
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>Completed Jobs</Text>
-                <Text style={styles.statPrimaryText}>{item?.totaljob || 0}</Text>
+                <Text style={styles.statPrimaryText}>{item?.totaljob || item?.total_jobs || 0}</Text>
               </View>
             </View>
 

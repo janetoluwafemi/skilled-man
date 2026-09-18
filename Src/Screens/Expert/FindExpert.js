@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {useState, useEffect, useCallback, useMemo} from 'react';
 import {
   View,
   Text,
@@ -10,26 +10,29 @@ import {
   Modal,
   Alert,
   StatusBar,
-  Platform
+  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation, useRoute, useIsFocused} from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
-import { showToast } from '../../utilis/showToast';
+import {showToast} from '../../utilis/showToast';
 
 import color from '../../Assets/colors/colors';
-import { Icons } from '../../Components/Icons';
+import {Icons} from '../../Components/Icons';
 import InputSarchFiltr from '../../Components/InputSearchFilter';
 import BotonComp from '../../Components/BtnComp';
-import { BASIC_URL } from '../Signin/Signin';
+import {BASIC_URL} from '../Signin/Signin';
 
-const { height, width } = Dimensions.get('window');
+const {height, width} = Dimensions.get('window');
 
 const FindExpert = props => {
   const navigation = useNavigation();
   const route = useRoute();
-
-  const initialData = useMemo(() => route.params?.data || [], [route.params?.data]);
+  const focus = useIsFocused();
+  const initialData = useMemo(
+    () => route.params?.data || [],
+    [route.params?.data],
+  );
 
   const [expertProviders, setExpertProviders] = useState(initialData);
   const [modalVisible, setModalVisible] = useState(false);
@@ -41,14 +44,52 @@ const FindExpert = props => {
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedAccount, setSelectedAccount] = useState('');
 
+  const [favorites, setFavorites] = useState({});
+
   const accounts = [
-    { id: '1', name: 'Verified' },
-    { id: '2', name: 'Non Verified' },
+    {id: '1', name: 'Verified'},
+    {id: '2', name: 'Non Verified'},
   ];
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const formdata = new FormData();
+        formdata.append('user_id', global.id);
+
+        const response = await fetch(
+          `${BASIC_URL}user/get_favorite_provider.php`,
+          {
+            method: 'POST',
+            body: formdata,
+          },
+        );
+
+        const result = await response.json();
+        if (result?.favorite_providers) {
+          const favMap = {};
+          result.favorite_providers.forEach(fav => {
+            // Only add to favorites map if it hasn't been removed (status 0)
+            if (String(fav.status) !== '0') {
+              favMap[String(fav.provider_id)] = true;
+            }
+          });
+          setFavorites(favMap);
+        }
+      } catch (error) {
+        console.log('Error fetching favorites:', error);
+      }
+    };
+
+    if (focus) {
+      fetchFavorites();
+    }
+  }, [focus]);
 
   const getLocationData = useCallback(async () => {
     try {
-      const serviceName = expertProviders[0]?.service_name || initialData[0]?.service_name;
+      const serviceName =
+        expertProviders[0]?.service_name || initialData[0]?.service_name;
       if (!serviceName) return;
 
       const formdata = new FormData();
@@ -75,12 +116,17 @@ const FindExpert = props => {
   }, [getLocationData]);
 
   const filteredData = expertProviders.filter(item =>
-    item?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    item?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const sortedData = filteredData.slice().sort((a, b) =>
-    (a.name || '').localeCompare(b.name || '')
-  );
+  const sortedData = filteredData
+    .slice()
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    .map(item => {
+      const expertId = String(item.provider_id || item.user_id || item.id);
+      const isFav = !!favorites[expertId];
+      return {...item, is_favorite: isFav};
+    });
 
   const toggleModal = () => {
     setModalVisible(prev => !prev);
@@ -136,33 +182,64 @@ const FindExpert = props => {
     }
   };
 
-  const addToFavourite = async item => {
+  const toggleFavourite = async (item, currentId, isFav) => {
+    // Instantly update UI locally to remove or add the orange color
+    setFavorites(prev => {
+      const updatedFavs = {...prev};
+      if (isFav) {
+        delete updatedFavs[currentId]; // Remove from favorites
+      } else {
+        updatedFavs[currentId] = true; // Add to favorites
+      }
+      return updatedFavs;
+    });
+
     try {
       const formdata = new FormData();
-      formdata.append('user_id', global.id);
-      formdata.append('provider_id', item.id);
-      formdata.append('provider_name', item.name);
-      formdata.append('rating', item.averageRating?.toFixed(2) || '0.00');
-      formdata.append('total_jobs', item.totaljob);
-      formdata.append('distance', item.distance);
-      formdata.append('profile', item.image);
-      formdata.append('service_name', item.service_name);
+      if (!isFav) {
+        // ADD TO FAVORITES
+        formdata.append('user_id', global.id);
+        formdata.append('provider_id', currentId);
+        formdata.append('provider_name', item.name);
+        formdata.append('rating', item.averageRating?.toFixed(2) || '0.00');
+        formdata.append('total_jobs', item.totaljob || item.total_jobs || 0);
+        formdata.append('distance', item.distance || '');
+        formdata.append('profile', item.image || '');
+        formdata.append('service_name', item.service_name || '');
 
-      const response = await fetch(`${BASIC_URL}user/favorite_providers.php`, {
-        method: 'POST',
-        body: formdata,
-      });
+        await fetch(`${BASIC_URL}user/favorite_providers.php`, {
+          method: 'POST',
+          body: formdata,
+        });
+        showToast('Added to favorites');
+      } else {
+        // REMOVE FROM FAVORITES (Set status to '0')
+        formdata.append('user_id', global.id);
+        formdata.append('provider_id', currentId);
+        formdata.append('status', '0');
 
-      const result = await response.json();
-      if (result?.status) {
-        Alert.alert('Success', 'Added to favorites');
+        await fetch(`${BASIC_URL}user/favorite_status_update.php`, {
+          method: 'POST',
+          body: formdata,
+        });
+        showToast('Removed from favorites');
       }
     } catch (error) {
-      console.log('Error adding favorite:', error);
+      console.log('Error toggling favorite:', error);
+      // Revert mapped state on error
+      setFavorites(prev => {
+        const updatedFavs = {...prev};
+        if (isFav) {
+          updatedFavs[currentId] = true;
+        } else {
+          delete updatedFavs[currentId];
+        }
+        return updatedFavs;
+      });
     }
   };
 
-  const renderLocationItem = ({ item }) => (
+  const renderLocationItem = ({item}) => (
     <View style={styles.filterChipCol}>
       <TouchableOpacity
         style={[
@@ -177,7 +254,8 @@ const FindExpert = props => {
           numberOfLines={1}
           style={[
             styles.filterSelectChipText,
-            selectedLocation === item.address && styles.filterSelectChipTextActive,
+            selectedLocation === item.address &&
+              styles.filterSelectChipTextActive,
           ]}>
           {item.address}
         </Text>
@@ -185,7 +263,7 @@ const FindExpert = props => {
     </View>
   );
 
-  const renderAccountItem = ({ item }) => (
+  const renderAccountItem = ({item}) => (
     <View style={styles.filterChipCol}>
       <TouchableOpacity
         style={[
@@ -207,25 +285,29 @@ const FindExpert = props => {
     </View>
   );
 
-  const renderExpertItem = ({ item }) => {
+  const renderExpertItem = ({item}) => {
+    const currentId = String(item.provider_id || item.user_id || item.id);
+    const isFav = item.is_favorite;
     const imageUrl = `${BASIC_URL}uploads/${item.image}`;
-    const avgRating = typeof item.averageRating === 'number' ? item.averageRating.toFixed(2) : '0.00';
+    const avgRating =
+      typeof item.averageRating === 'number'
+        ? item.averageRating.toFixed(2)
+        : '0.00';
 
     return (
       <TouchableOpacity
         activeOpacity={0.85}
-        onPress={() => navigation.navigate('ExpertDetail', { item })}
+        onPress={() => navigation.navigate('ExpertDetail', {item})}
         style={styles.expertCard}>
         <Image
           style={styles.providerImg}
           resizeMode="cover"
           source={
             item.image
-              ? { uri: imageUrl }
+              ? {uri: imageUrl}
               : require('../../Assets/Images/user.jpg')
           }
         />
-
         <View style={styles.providerCardInfo}>
           <View style={styles.cardHeaderRow}>
             <View style={styles.nameVerifiedRow}>
@@ -237,16 +319,20 @@ const FindExpert = props => {
                   name="verified"
                   color={color.defalt}
                   size={15}
-                  style={{ marginLeft: 4 }}
+                  style={{marginLeft: 4}}
                 />
               )}
             </View>
 
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => addToFavourite(item)}
+              onPress={() => toggleFavourite(item, currentId, isFav)}
               style={styles.favBadge}>
-              <Icons.Feather name="bookmark" color={color.defalt} size={17} />
+              <Icons.FontAwesome
+                name="bookmark"
+                color={isFav ? color.defalt : '#CBD5E1'}
+                size={22}
+              />
             </TouchableOpacity>
           </View>
 
@@ -258,12 +344,16 @@ const FindExpert = props => {
 
             <View style={styles.statBadge}>
               <Icons.Feather name="check-circle" color="#64748B" size={12} />
-              <Text style={styles.statBadgeText}>{item.totaljob} Jobs</Text>
+              <Text style={styles.statBadgeText}>
+                {item.totaljob || item.total_jobs || 0} Jobs
+              </Text>
             </View>
 
             <View style={styles.statBadge}>
               <Icons.Feather name="briefcase" color="#64748B" size={12} />
-              <Text style={styles.statBadgeText}>{item.experience} Yrs</Text>
+              <Text style={styles.statBadgeText}>
+                {item.experience || 0} Yrs
+              </Text>
             </View>
           </View>
         </View>
@@ -284,10 +374,13 @@ const FindExpert = props => {
           style={styles.backArrowBtn}>
           <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
-        <View style={{ width: 40 }} />
+        <View style={{width: 40}} />
       </View>
 
-      <Animatable.View animation="fadeInUp" duration={600} style={styles.contentContainer}>
+      <Animatable.View
+        animation="fadeInUp"
+        duration={600}
+        style={styles.contentContainer}>
         <Text style={styles.welcomeTitle}>
           {serviceTitle ? `Experts: ${serviceTitle}` : 'Find Experts'}
         </Text>
@@ -305,7 +398,10 @@ const FindExpert = props => {
 
         <FlatList
           data={sortedData}
-          keyExtractor={(item, index) => `expert_${item.id || index}_${index}`}
+          extraData={favorites}
+          keyExtractor={(item, index) =>
+            `expert_${item.id || item.provider_id || index}_${index}`
+          }
           renderItem={renderExpertItem}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
@@ -316,7 +412,7 @@ const FindExpert = props => {
               </View>
               <Text style={styles.emptyTitle}>No Experts Found</Text>
               <Text style={styles.emptySubtitle}>
-                Try adjusting your searc h criteria or filter options.
+                Try adjusting your search criteria or filter options.
               </Text>
             </View>
           }
@@ -343,7 +439,9 @@ const FindExpert = props => {
                 {showLocation || showAccount ? modalTitle : 'Filter Providers'}
               </Text>
 
-              <TouchableOpacity style={styles.modalCloseIcon} onPress={toggleModal}>
+              <TouchableOpacity
+                style={styles.modalCloseIcon}
+                onPress={toggleModal}>
                 <Icons.Ionicons name="close-circle" color="#94A3B8" size={24} />
               </TouchableOpacity>
             </View>
@@ -361,7 +459,11 @@ const FindExpert = props => {
                         {selectedLocation || 'All Locations'}
                       </Text>
                     </View>
-                    <Icons.Feather name="chevron-right" size={18} color="#94A3B8" />
+                    <Icons.Feather
+                      name="chevron-right"
+                      size={18}
+                      color="#94A3B8"
+                    />
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -374,7 +476,11 @@ const FindExpert = props => {
                         {selectedAccount || 'All Accounts'}
                       </Text>
                     </View>
-                    <Icons.Feather name="chevron-right" size={18} color="#94A3B8" />
+                    <Icons.Feather
+                      name="chevron-right"
+                      size={18}
+                      color="#94A3B8"
+                    />
                   </TouchableOpacity>
                 </>
               ) : null}
@@ -383,9 +489,11 @@ const FindExpert = props => {
                 <FlatList
                   data={locations}
                   renderItem={renderLocationItem}
-                  keyExtractor={(item, index) => `location_${item.id || item.address || index}_${index}`}
+                  keyExtractor={(item, index) =>
+                    `location_${item.id || item.address || index}_${index}`
+                  }
                   numColumns={2}
-                  contentContainerStyle={{ paddingVertical: 6 }}
+                  contentContainerStyle={{paddingVertical: 6}}
                 />
               )}
 
@@ -393,9 +501,11 @@ const FindExpert = props => {
                 <FlatList
                   data={accounts}
                   renderItem={renderAccountItem}
-                  keyExtractor={(item, index) => `account_${item.id || index}_${index}`}
+                  keyExtractor={(item, index) =>
+                    `account_${item.id || index}_${index}`
+                  }
                   numColumns={2}
-                  contentContainerStyle={{ paddingVertical: 6 }}
+                  contentContainerStyle={{paddingVertical: 6}}
                 />
               )}
             </View>
@@ -440,7 +550,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     elevation: 1,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
@@ -483,14 +593,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EEF2F6',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)' }
+      ? {boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)'}
       : {
-        elevation: 2,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      }),
+          elevation: 2,
+          shadowColor: '#0F172A',
+          shadowOffset: {width: 0, height: 3},
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
+        }),
   },
   providerImg: {
     width: 60,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -6,17 +6,18 @@ import {
   FlatList,
   Platform,
   Dimensions,
-  StatusBar } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { showToast } from '../../utilis/showToast';
+  StatusBar,
+} from 'react-native';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {showToast} from '../../utilis/showToast';
 
 import HeaderWSearchFilter from '../../Components/HeaderWithSearchFilter';
 import SavCrd from '../../Components/SaveCard';
-import { Icons } from '../../Components/Icons';
-import { BASIC_URL } from '../Signin/Signin';
+import {Icons} from '../../Components/Icons';
+import {BASIC_URL} from '../Signin/Signin';
 
-const { height } = Dimensions.get('window');
+const {height} = Dimensions.get('window');
 
 const SaveScreen = () => {
   const navigation = useNavigation();
@@ -26,8 +27,8 @@ const SaveScreen = () => {
   const [favoriteList, setFavoriteList] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const removeFavoriteItem = async (pid) => {
-    const updatedList = favoriteList.filter(item => item.provider_id !== pid);
+  const removeFavoriteItem = async pid => {
+    const updatedList = favoriteList.filter(item => String(item.provider_id) !== String(pid));
     setFavoriteList(updatedList);
 
     try {
@@ -36,10 +37,13 @@ const SaveScreen = () => {
       formdata.append('provider_id', pid);
       formdata.append('status', '0');
 
-      const response = await fetch(`${BASIC_URL}user/favorite_status_update.php`, {
-        method: 'POST',
-        body: formdata,
-      });
+      const response = await fetch(
+          `${BASIC_URL}user/favorite_status_update.php`,
+          {
+            method: 'POST',
+            body: formdata,
+          },
+      );
 
       const result = await response.json();
       if (result?.error) {
@@ -56,10 +60,13 @@ const SaveScreen = () => {
         const formdata = new FormData();
         formdata.append('user_id', global.id);
 
-        const response = await fetch(`${BASIC_URL}user/get_favorite_provider.php`, {
-          method: 'POST',
-          body: formdata,
-        });
+        const response = await fetch(
+            `${BASIC_URL}user/get_favorite_provider.php`,
+            {
+              method: 'POST',
+              body: formdata,
+            },
+        );
 
         const result = await response.json();
         if (result?.favorite_providers) {
@@ -78,10 +85,13 @@ const SaveScreen = () => {
   }, [focus]);
 
   const filteredData = favoriteList.filter(item =>
-      item?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      item?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const bottomPadding = (height * 0.085) + Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) + 20;
+  const bottomPadding =
+      height * 0.085 +
+      Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
+      20;
 
   return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -100,12 +110,14 @@ const SaveScreen = () => {
 
         <FlatList
             data={filteredData}
-            keyExtractor={(item, index) => item.provider_id?.toString() || index.toString()}
-            renderItem={({ item }) => (
+            keyExtractor={(item, index) =>
+                item.provider_id?.toString() || index.toString()
+            }
+            renderItem={({item}) => (
                 <SavCrd
                     item={item}
                     showProfile={() =>
-                        navigation.navigate('IndividualChat', { currentuser: item })
+                        navigation.navigate('IndividualChat', {currentuser: item})
                     }
                     cardTitle={item.name}
                     time="12:00 AM"
@@ -122,7 +134,7 @@ const SaveScreen = () => {
             )}
             contentContainerStyle={StyleSheet.flatten([
               styles.cardContainer,
-              { paddingBottom: bottomPadding },
+              {paddingBottom: bottomPadding},
             ])}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
@@ -171,4 +183,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
 });
-

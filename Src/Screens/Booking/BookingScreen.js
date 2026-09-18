@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -175,7 +175,7 @@ const BookingScreen = () => {
             onPressnotification={() => navigation.navigate('edit_profile')}
             onChangeText={val => setSearchTerm(val)}
             value={searchTerm}
-            headerTitle="Your Bookings"
+            headerTitle=""
         />
 
         {booklist.length > 0 && (
