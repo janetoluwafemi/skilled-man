@@ -16,6 +16,7 @@ import HeaderWSearchFilter from '../../Components/HeaderWithSearchFilter';
 import SavCrd from '../../Components/SaveCard';
 import {Icons} from '../../Components/Icons';
 import {BASIC_URL} from '../Signin/Signin';
+import {getProviderId, isActiveFavorite} from '../../utilis/favoriteUtils';
 
 const {height} = Dimensions.get('window');
 
@@ -28,26 +29,33 @@ const SaveScreen = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const removeFavoriteItem = async pid => {
-    const updatedList = favoriteList.filter(item => String(item.provider_id) !== String(pid));
-    setFavoriteList(updatedList);
+    const providerId = String(pid ?? '');
+
+    setFavoriteList(prevList =>
+      prevList.filter(
+        item => getProviderId(item) !== providerId,
+      ),
+    );
 
     try {
       const formdata = new FormData();
       formdata.append('user_id', global.id);
-      formdata.append('provider_id', pid);
+      formdata.append('provider_id', providerId);
       formdata.append('status', '0');
 
       const response = await fetch(
-          `${BASIC_URL}user/favorite_status_update.php`,
-          {
-            method: 'POST',
-            body: formdata,
-          },
+        `${BASIC_URL}user/favorite_status_update.php`,
+        {
+          method: 'POST',
+          body: formdata,
+        },
       );
 
       const result = await response.json();
       if (result?.error) {
         console.log(result.error);
+      } else {
+        showToast('Removed from favorites');
       }
     } catch (error) {
       console.log('Error updating favorite status:', error);
@@ -70,7 +78,10 @@ const SaveScreen = () => {
 
         const result = await response.json();
         if (result?.favorite_providers) {
-          setFavoriteList(result.favorite_providers);
+          const activeFavorites = result.favorite_providers.filter(
+            isActiveFavorite,
+          );
+          setFavoriteList(activeFavorites);
         } else if (result?.error) {
           console.log(result.error);
         }

@@ -30,6 +30,7 @@ import { Icons } from '../../Components/Icons';
 import BotonComp from '../../Components/BtnComp';
 import C_TxtInput from '../../Components/C_TextInput';
 import { BASIC_URL } from '../Signin/Signin';
+import {getProviderId, hasActiveFavorite} from '../../utilis/favoriteUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -74,9 +75,7 @@ const ExpertDetails = () => {
 
   const isSendingRef = useRef(false);
 
-  const provider_id = String(
-    item?.provider_id || item?.user_id || item?.id || '',
-  );
+  const provider_id = getProviderId(item);
 
   const pendingKey = `pending_booking_${global.id || 'user'}_${provider_id}`;
 
@@ -111,13 +110,7 @@ const ExpertDetails = () => {
 
         const result = await response.json();
         if (result?.favorite_providers) {
-          // Check all possible item ID variations against the database provider_id
-          const isFaved = result.favorite_providers.some(
-              fav =>
-                  String(fav.provider_id) === String(item?.id) ||
-                  String(fav.provider_id) === String(item?.provider_id) ||
-                  String(fav.provider_id) === String(item?.user_id)
-          );
+          const isFaved = hasActiveFavorite(result.favorite_providers, item);
           setIsFavorite(isFaved);
         }
       } catch (error) {

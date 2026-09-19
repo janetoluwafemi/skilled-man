@@ -22,6 +22,10 @@ import {Icons} from '../../Components/Icons';
 import InputSarchFiltr from '../../Components/InputSearchFilter';
 import BotonComp from '../../Components/BtnComp';
 import {BASIC_URL} from '../Signin/Signin';
+import {
+  getProviderId,
+  isActiveFavorite,
+} from '../../utilis/favoriteUtils';
 
 const {height, width} = Dimensions.get('window');
 
@@ -69,9 +73,8 @@ const FindExpert = props => {
         if (result?.favorite_providers) {
           const favMap = {};
           result.favorite_providers.forEach(fav => {
-            // Only add to favorites map if it hasn't been removed (status 0)
-            if (String(fav.status) !== '0') {
-              favMap[String(fav.provider_id)] = true;
+            if (isActiveFavorite(fav)) {
+              favMap[getProviderId(fav)] = true;
             }
           });
           setFavorites(favMap);
@@ -123,7 +126,7 @@ const FindExpert = props => {
     .slice()
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
     .map(item => {
-      const expertId = String(item.provider_id || item.user_id || item.id);
+      const expertId = getProviderId(item);
       const isFav = !!favorites[expertId];
       return {...item, is_favorite: isFav};
     });
@@ -286,7 +289,7 @@ const FindExpert = props => {
   );
 
   const renderExpertItem = ({item}) => {
-    const currentId = String(item.provider_id || item.user_id || item.id);
+    const currentId = getProviderId(item);
     const isFav = item.is_favorite;
     const imageUrl = `${BASIC_URL}uploads/${item.image}`;
     const avgRating =

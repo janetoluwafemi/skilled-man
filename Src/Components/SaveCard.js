@@ -3,16 +3,17 @@ import {StyleSheet,
   Text,
   View,
   Image,
-  TouchableOpacity,
-
-  Platform} from 'react-native';
+  TouchableOpacity} from 'react-native';
 import colors from '../Assets/colors/colors';
 import { Icons } from './Icons';
+import {getProviderId} from '../utilis/favoriteUtils';
 
 const SavCrd = props => {
+  const providerId = getProviderId(props.item);
+
   const handleBookmarkPress = () => {
-    if (props.save && props.removefavouritem && props.item?.id) {
-      props.removefavouritem(props.item.id);
+    if (props.save && props.removefavouritem && providerId) {
+      props.removefavouritem(providerId);
     }
   };
 
