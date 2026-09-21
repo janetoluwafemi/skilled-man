@@ -78,8 +78,11 @@ const EditUserProfile = () => {
           setLongitude(String(result?.longitude || ''));
         }
       }
+
+      return result;
     } catch (error) {
       console.log('Fetch error in EditUserProfile:', error);
+      return null;
     }
   }, []);
 
@@ -145,7 +148,26 @@ const EditUserProfile = () => {
 
       const result = await response.json();
 
-      if (result && (result.success || !result.error)) {
+      const updateSucceeded =
+        Boolean(result?.success) ||
+        result?.status === 'success' ||
+        result?.status === true;
+
+      if (updateSucceeded) {
+        const updatedProfile = await getProfileData();
+
+        if (updatedProfile) {
+          await AsyncStorage.setItem('user', JSON.stringify(updatedProfile));
+          global.id = updatedProfile.id || userId;
+          global.name = updatedProfile.name || '';
+          global.email = updatedProfile.email || '';
+          global.phone_number = updatedProfile.phone_number || '';
+          global.address = updatedProfile.address || '';
+          global.lat = updatedProfile.latitude || '';
+          global.long = updatedProfile.longitude || '';
+          global.profile = updatedProfile.profile || '';
+        }
+
         showToast('Profile Updated Successfully');
         navigation.goBack();
       } else {
@@ -458,4 +480,3 @@ const styles = StyleSheet.create({
     }),
   },
 });
-

@@ -10,12 +10,11 @@ import {
   Modal,
   StatusBar,
   ActivityIndicator,
-  AsyncStorage
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import color from '../../Assets/colors/colors';
 import CustomAlert from '../../Components/CustomAlert';
 import { normalize } from '../../utilis/responsive';

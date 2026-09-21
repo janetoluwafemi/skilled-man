@@ -17,7 +17,8 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Animatable from 'react-native-animatable';
-import {showToast} from '../../utilis/showToast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { showToast } from '../../utilis/showToast';
 import color from '../../Assets/colors/colors';
 import { Icons } from '../../Components/Icons';
 import BotonComp from '../../Components/BtnComp';
@@ -69,12 +70,18 @@ const EditProfileScreen = props => {
 
   const getProfileData = useCallback(async () => {
     try {
-      let formdata = new FormData();
-      formdata.append('id', global.id);
+      let currentUserId = String(global.id || '').trim();
+      if (!currentUserId || ['251', '255', '256'].includes(currentUserId)) {
+        const rawUser = await AsyncStorage.getItem('user');
+        if (rawUser) {
+          const parsed = JSON.parse(rawUser);
+          const possibleId = parsed?.id ?? parsed?.user_id ?? parsed?.userId;
+          if (possibleId) currentUserId = String(possibleId).trim();
+        }
+      }
 
-      const response = await fetch(`${BASIC_URL}user/get_profile.php`, {
-        method: 'POST',
-        body: formdata,
+      const response = await fetch(`${BASIC_URL}user/get_profile.php?id=${currentUserId || '255'}`, {
+        method: 'GET',
       });
       const result = await response.json();
 
@@ -100,7 +107,7 @@ const EditProfileScreen = props => {
   const getSkills = useCallback(async () => {
     try {
       const response = await fetch(
-        `https://theskilledman.com/api/get_skills.php?user_id=${global.id}`,
+        `${BASIC_URL}get_skills.php?user_id=${global.id || '255'}`,
         { method: 'POST' }
       );
       const result = await response.json();
@@ -136,8 +143,14 @@ const EditProfileScreen = props => {
 
   const pickImage = async () => {
     try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        showToast('Permission to access photos is required');
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 0.8,
       });
 
@@ -164,74 +177,90 @@ const EditProfileScreen = props => {
     }
   };
 
+  const appendFileToFormData = async (formData, key, fileObj, defaultName) => {
+    if (!fileObj || !fileObj.uri) return;
+    if (Platform.OS === 'web') {
+      const response = await fetch(fileObj.uri);
+      const blob = await response.blob();
+      formData.append(key, blob, fileObj.name || fileObj.fileName || defaultName);
+    } else {
+      formData.append(key, {
+        uri: fileObj.uri,
+        name: fileObj.fileName || fileObj.name || defaultName,
+        type: fileObj.mimeType || fileObj.type || 'image/jpeg',
+      });
+    }
+  };
+
   const updateProfile = async () => {
     setLoad(true);
     try {
-      let formdata = new FormData();
+      let currentUserId = String(global.id || '').trim();
+      if (!currentUserId || ['251', '255', '256'].includes(currentUserId)) {
+        const rawUser = await AsyncStorage.getItem('user');
+        if (rawUser) {
+          const parsed = JSON.parse(rawUser);
+          const possibleId = parsed?.id ?? parsed?.user_id ?? parsed?.userId;
+          if (possibleId) currentUserId = String(possibleId).trim();
+        }
+      }
 
-      formdata.append('id', global.id);
+      let formdata = new FormData();
+      formdata.append('id', currentUserId || '255');
       formdata.append('name', name);
       formdata.append('email', email);
       formdata.append('phone_number', phone);
       formdata.append('address', address);
       formdata.append('working_experience', experience);
-      formdata.append('latitude', String(latitude));
-      formdata.append('longitude', String(longitude));
+      formdata.append('latitude', String(latitude || ''));
+      formdata.append('longitude', String(longitude || ''));
 
-      if (image && image.uri) {
-        formdata.append('profile', {
-          uri: image.uri,
-          name: image.fileName || image.name || 'profile.jpg',
-          type: image.mimeType || image.type || 'image/jpeg',
-        });
+      // Attach files cleanly
+      if (image) {
+        await appendFileToFormData(formdata, 'profile', image, `profile_${Date.now()}.jpg`);
+      }
+      if (certificate) {
+        await appendFileToFormData(formdata, 'certificates', certificate, `cert_${Date.now()}.jpg`);
+      }
+      if (evidence) {
+        await appendFileToFormData(formdata, 'job_references', evidence, `ref_${Date.now()}.jpg`);
+      }
+      if (guarantor) {
+        await appendFileToFormData(formdata, 'guarantor', guarantor, `guarantor_${Date.now()}.jpg`);
       }
 
-      if (certificate && certificate.uri) {
-        formdata.append('certificates', {
-          uri: certificate.uri,
-          name: certificate.name || 'certificate',
-          type: certificate.mimeType || certificate.type || 'application/octet-stream',
-        });
-      }
-
-      if (evidence && evidence.uri) {
-        formdata.append('job_references', {
-          uri: evidence.uri,
-          name: evidence.name || 'evidence',
-          type: evidence.mimeType || evidence.type || 'application/octet-stream',
-        });
-      }
-
-      if (guarantor && guarantor.uri) {
-        formdata.append('gurantor', {
-          uri: guarantor.uri,
-          name: guarantor.name || 'guarantor',
-          type: guarantor.mimeType || guarantor.type || 'application/octet-stream',
-        });
-      }
-
-      const response = await fetch(`${BASIC_URL}provider_profile.php`, {
+      // Exact endpoint from Postman: user/profile.php
+      const response = await fetch(`${BASIC_URL}user/profile.php`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        // Note: No manual Content-Type header so boundary is auto-generated
         body: formdata,
       });
 
       const textResponse = await response.text();
-      const result = JSON.parse(textResponse);
+      let result;
+      try {
+        result = JSON.parse(textResponse);
+      } catch (parseError) {
+        console.log('JSON Parse error on response:', textResponse);
+      }
 
-      if (result) {
+      if (result?.success || result?.status === 'success' || result?.profile) {
         showToast('Profile Updated Successfully');
+        if (result.profile) {
+          setProfileImg(result.profile);
+          global.profile = result.profile;
+        }
         setImage(null);
         setCertificate(null);
         setEvidence(null);
         setGuarantor(null);
         getProfileData();
+      } else {
+        showToast(result?.error || 'Profile update failed');
       }
     } catch (error) {
       console.log('Update Error:', error);
-      showToast('Update failed');
+      showToast('Update failed. Please check your connection.');
     } finally {
       setLoad(false);
     }
@@ -263,7 +292,7 @@ const EditProfileScreen = props => {
               <Image
                 source={
                   image
-                    ? { uri: image?.uri }
+                    ? { uri: image.uri }
                     : profileImg
                       ? { uri: `${BASIC_URL}uploads/${profileImg}` }
                       : require('../../Assets/Images/user.jpg')
@@ -408,7 +437,7 @@ const EditProfileScreen = props => {
                 <Text style={styles.certiStyle} numberOfLines={2}>
                   {guarantor
                     ? guarantor.name
-                    : profileData?.gurantor
+                    : profileData?.guarantor || profileData?.gurantor
                       ? 'Gua. Attached'
                       : 'Guarantor'}
                 </Text>

@@ -18,13 +18,12 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showToast } from '../../utilis/showToast';
 import color from '../../Assets/colors/colors';
 import HomeStakWSearch from '../../Components/HomeStackWithSearch';
 import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
-
-import { sharedMockRequests, updateMockRequestStatus } from '../../utilis/MockDatabase';
 
 const { height } = Dimensions.get('window');
 
@@ -50,26 +49,51 @@ const RequestScreen = () => {
     setModalVisible(true);
   };
 
+  // --- API INTEGRATION: Fetch Provider Booking Requests ---
   const getBookingRequests = useCallback(
     async (isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
 
       try {
-        setTimeout(() => {
-          let results = [...sharedMockRequests];
-          if (searchTerm.trim() !== '') {
-            results = results.filter(req =>
-              req.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-          }
-          setBooklist(results);
-          setLoading(false);
-          setRefreshing(false);
-        }, 800);
+        let currentUserId = String(global.id || '').trim();
 
+        // Fallback sync for missing global ID
+        if (!currentUserId || ['251', '255', '256'].includes(currentUserId)) {
+          const rawUser = await AsyncStorage.getItem('user');
+          if (rawUser) {
+            const parsed = JSON.parse(rawUser);
+            const possibleId = parsed?.id ?? parsed?.user_id ?? parsed?.provider_id;
+            if (possibleId && !['251', '255', '256'].includes(String(possibleId))) {
+              currentUserId = String(possibleId).trim();
+              global.id = currentUserId;
+            } else {
+              currentUserId = '251'; // Fallback for testing based on Postman
+            }
+          } else {
+            currentUserId = '251';
+          }
+        }
+
+        const formdata = new FormData();
+        formdata.append('provider_id', currentUserId);
+        formdata.append('searchTerm', searchTerm); // Hook search directly to API
+
+        const response = await fetch(`${BASIC_URL}provider_status.php`, {
+          method: 'POST',
+          body: formdata,
+        });
+
+        const result = await response.json();
+
+        if (result?.booking_request) {
+          setBooklist(result.booking_request);
+        } else {
+          setBooklist([]);
+        }
       } catch (error) {
         console.error('Error fetching bookings:', error);
+      } finally {
         setLoading(false);
         setRefreshing(false);
       }
@@ -83,17 +107,33 @@ const RequestScreen = () => {
     }
   }, [focused, getBookingRequests]);
 
+  // --- API INTEGRATION: Update Booking Status ---
   const changeStatus = async statusValue => {
     try {
-      updateMockRequestStatus(currentItem.booking_id, statusValue);
-      getBookingRequests();
+      if (!currentItem?.booking_id) return;
 
-      showToast(statusValue === 'accepted' ? 'Request Approved' : 'Request Declined');
-      setModalVisible(false);
-      setCurrentItem(null);
+      const formdata = new FormData();
+      formdata.append('id', currentItem.booking_id);
+      formdata.append('status', statusValue); // e.g. "accepted" or "rejected"
 
+      const response = await fetch(`${BASIC_URL}status_update.php`, {
+        method: 'POST',
+        body: formdata,
+      });
+
+      const result = await response.json();
+
+      if (result?.success || result?.status === 'success' || result?.status === 'OK' || result?.status?.toLowerCase().includes('successfully')) {
+        showToast(statusValue === 'accepted' ? 'Request Approved' : 'Request Declined');
+        setModalVisible(false);
+        setCurrentItem(null);
+        getBookingRequests(); // Silently refresh list
+      } else {
+        Alert.alert('Error', result?.error || result?.success || 'Failed to update status.');
+      }
     } catch (error) {
-      Alert.alert('Error', error?.message || 'An error occurred');
+      console.log('Update status error:', error);
+      Alert.alert('Error', 'Network error. Please try again.');
     }
   };
 
@@ -106,15 +146,23 @@ const RequestScreen = () => {
   };
 
   const getStatusStyle = (status) => {
-    switch (status) {
-      case 'accepted': return { bg: '#D1FAE5', text: '#047857' };
-      case 'rejected': return { bg: '#FEE2E2', text: '#B91C1C' };
-      default: return { bg: '#FEF3C7', text: '#D97706' };
+    const formattedStatus = (status || '').toLowerCase();
+    switch (formattedStatus) {
+      case 'accepted':
+      case 'complete':
+        return { bg: '#D1FAE5', text: '#047857' };
+      case 'rejected':
+        return { bg: '#FEE2E2', text: '#B91C1C' };
+      case 'progress':
+      case 'pending':
+      default:
+        return { bg: '#FEF3C7', text: '#D97706' };
     }
   };
 
   const renderBookingCard = ({ item }) => {
     const statusStyling = getStatusStyle(item.status);
+    const serviceName = item.service_name || item.service || 'Service Request';
 
     return (
       <TouchableOpacity
@@ -130,12 +178,12 @@ const RequestScreen = () => {
             />
             <View>
               <Text style={styles.cardName}>{item.name}</Text>
-              <Text style={styles.cardService}>{item.service} • #{item.booking_id}</Text>
+              <Text style={styles.cardService}>{serviceName} • #{item.booking_id}</Text>
             </View>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: statusStyling.bg }]}>
             <Text style={[styles.statusBadgeText, { color: statusStyling.text }]}>
-              {item.status.toUpperCase()}
+              {String(item.status || 'PENDING').toUpperCase()}
             </Text>
           </View>
         </View>
@@ -227,7 +275,7 @@ const RequestScreen = () => {
               />
               <View style={{flex: 1}}>
                 <Text style={styles.sheetName}>{currentItem?.name}</Text>
-                <Text style={styles.sheetService}>{currentItem?.service} • ID: #{currentItem?.booking_id}</Text>
+                <Text style={styles.sheetService}>{currentItem?.service_name || currentItem?.service || 'Service'} • ID: #{currentItem?.booking_id}</Text>
               </View>
             </View>
 
@@ -263,7 +311,9 @@ const RequestScreen = () => {
                 <Text style={styles.statusDisplayLabel}>Current Status:</Text>
                 <Text style={[styles.statusDisplayText, { color: getStatusStyle(currentItem?.status).text }]}>
                   {currentItem?.status === 'pending' ? 'Pending Confirmation' :
-                    currentItem?.status === 'accepted' ? 'Accepted by Provider' : 'Declined by Provider'}
+                    currentItem?.status === 'accepted' ? 'Accepted by Provider' :
+                      currentItem?.status === 'progress' ? 'In Progress' :
+                        currentItem?.status === 'complete' ? 'Completed' : 'Declined by Provider'}
                 </Text>
               </View>
             </View>

@@ -1,4 +1,4 @@
- import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,11 +17,11 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import color from '../../Assets/colors/colors';
 import HomeStakWSearch from '../../Components/HomeStackWithSearch';
 import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
-import { sharedMockRequests } from '../../utilis/MockDatabase';
 
 const { height } = Dimensions.get('window');
 
@@ -31,16 +31,16 @@ const BookingScreen = () => {
   const insets = useSafeAreaInsets();
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [booklist, setBooklist] = useState([]);
+  const [allBookings, setAllBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const bottomPadding =
-      height * 0.085 +
-      Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
-      28;
+    height * 0.085 +
+    Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
+    28;
 
   const toggleModal = item => {
     setCurrentItem(item);
@@ -48,29 +48,56 @@ const BookingScreen = () => {
   };
 
   const getBookingRequests = useCallback(
-      async (isRefresh = false) => {
-        if (isRefresh) setRefreshing(true);
-        else setLoading(true);
+    async (isRefresh = false) => {
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
 
-        try {
-          setTimeout(() => {
-            let results = [...sharedMockRequests];
-            if (searchTerm.trim() !== '') {
-              results = results.filter(req =>
-                  req.name.toLowerCase().includes(searchTerm.toLowerCase()),
-              );
+      try {
+        let currentUserId = String(global.id || '').trim();
+
+        // Sync user ID from storage if missing
+        if (!currentUserId || ['251', '255', '256'].includes(currentUserId)) {
+          const rawUser = await AsyncStorage.getItem('user');
+          if (rawUser) {
+            const parsed = JSON.parse(rawUser);
+            const possibleId = parsed?.id ?? parsed?.user_id ?? parsed?.userId;
+            if (possibleId && !['251', '255', '256'].includes(String(possibleId))) {
+              currentUserId = String(possibleId).trim();
+              global.id = currentUserId;
+            } else {
+              currentUserId = '256';
             }
-            setBooklist(results);
-            setLoading(false);
-            setRefreshing(false);
-          }, 800);
-        } catch (error) {
-          console.error(error);
-          setLoading(false);
-          setRefreshing(false);
+          } else {
+            currentUserId = '256';
+          }
         }
-      },
-      [searchTerm],
+
+        const formdata = new FormData();
+        formdata.append('user_id', currentUserId);
+
+        const response = await fetch(`${BASIC_URL}user/get_booking.php`, {
+          method: 'POST',
+          body: formdata,
+        });
+
+        const result = await response.json();
+
+        if (result && Array.isArray(result.bookings)) {
+          setAllBookings(result.bookings);
+        } else if (Array.isArray(result)) {
+          setAllBookings(result);
+        } else {
+          setAllBookings([]);
+        }
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+        setAllBookings([]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [],
   );
 
   useEffect(() => {
@@ -79,15 +106,22 @@ const BookingScreen = () => {
     }
   }, [focused, getBookingRequests]);
 
+  // Client-side search filter
+  const displayedBookings = allBookings.filter(req => {
+    const searchTarget = `${req?.provider_name || req?.name || ''} ${req?.service_name || req?.service || ''} ${req?.booking_id || ''}`.toLowerCase();
+    return searchTarget.includes((searchTerm || '').toLowerCase());
+  });
+
   const handlePayment = () => {
     setModalVisible(false);
     navigation.navigate('SelectPaymentMethod', {
-      price: currentItem?.price,
-      fullName: currentItem?.name,
-      date: currentItem?.service_date,
-      phoneNumber: '123-456-7890',
-      address: 'Service Location',
-      provider_id: currentItem?.booking_id,
+      price: currentItem?.price || '10000',
+      fullName: currentItem?.provider_name || currentItem?.name,
+      date: currentItem?.service_date || currentItem?.created_at,
+      phoneNumber: currentItem?.phone_number || currentItem?.provider_phone || 'N/A',
+      address: currentItem?.address || 'Service Location',
+      booking_id: currentItem?.booking_id || currentItem?.id,
+      provider_id: currentItem?.provider_id,
       selectedfile: currentItem?.file,
     });
   };
@@ -96,270 +130,287 @@ const BookingScreen = () => {
     if (!currentItem?.file) return;
     const fileURL = `${BASIC_URL}uploads/${currentItem.file}`;
     Linking.openURL(fileURL).catch(err =>
-        console.error(err),
+      console.error(err),
     );
   };
 
   const getStatusStyle = status => {
-    switch (status) {
+    const cleanStatus = (status || '').toLowerCase();
+    switch (cleanStatus) {
       case 'accepted':
-        return {bg: '#D1FAE5', text: '#047857'};
+      case 'completed':
+      case 'complete':
+        return { bg: '#D1FAE5', text: '#047857' };
       case 'rejected':
-        return {bg: '#FEE2E2', text: '#B91C1C'};
+        return { bg: '#FEE2E2', text: '#B91C1C' };
+      case 'progress':
+      case 'pending':
       default:
-        return {bg: '#FEF3C7', text: '#D97706'};
+        return { bg: '#FEF3C7', text: '#D97706' };
     }
   };
 
-  const renderBookingCard = ({item}) => {
+  const renderBookingCard = ({ item }) => {
     const statusStyling = getStatusStyle(item.status);
+    const displayName = item.provider_name || item.name || 'Artisan Service';
+    const displayService = item.service_name || item.service || 'Service Request';
+    const displayId = item.booking_id || item.id || item.provider_id || '';
 
     return (
-        <TouchableOpacity
-            activeOpacity={0.85}
-            style={styles.modernCard}
-            onPress={() => toggleModal(item)}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardUserInfo}>
-              <Image
-                  style={styles.cardAvatar}
-                  source={
-                    item.profile
-                        ? {uri: `${BASIC_URL}uploads/${item.profile}`}
-                        : require('../../Assets/Images/user.jpg')
-                  }
-              />
-              <View>
-                <Text style={styles.cardName}>{item.name}</Text>
-                <Text style={styles.cardService}>
-                  {item.service} • #{item.booking_id}
-                </Text>
-              </View>
-            </View>
-            <View
-                style={[styles.statusBadge, {backgroundColor: statusStyling.bg}]}>
-              <Text style={[styles.statusBadgeText, {color: statusStyling.text}]}>
-                {item.status.toUpperCase()}
+      <TouchableOpacity
+        activeOpacity={0.85}
+        style={styles.modernCard}
+        onPress={() => toggleModal(item)}>
+        <View style={styles.cardHeader}>
+          <View style={styles.cardUserInfo}>
+            <Image
+              style={styles.cardAvatar}
+              source={
+                item.profile || item.image
+                  ? { uri: `${BASIC_URL}uploads/${item.profile || item.image}` }
+                  : require('../../Assets/Images/user.jpg')
+              }
+            />
+            <View>
+              <Text style={styles.cardName}>{displayName}</Text>
+              <Text style={styles.cardService}>
+                {displayService} {displayId ? `• #${displayId}` : ''}
               </Text>
             </View>
           </View>
-
-          <View style={styles.cardDivider} />
-
-          <View style={styles.cardFooter}>
-            <View style={styles.footerItem}>
-              <Icons.Feather name="calendar" size={14} color="#64748B" />
-              <Text style={styles.footerText}>{item.service_date}</Text>
-            </View>
-            <View style={styles.footerItem}>
-              <Icons.Feather name="clock" size={14} color="#64748B" />
-              <Text style={styles.footerText}>{item.service_time}</Text>
-            </View>
-            <Icons.Feather
-                name="chevron-right"
-                size={18}
-                color="#CBD5E1"
-                style={{marginLeft: 'auto'}}
-            />
+          <View
+            style={[styles.statusBadge, { backgroundColor: statusStyling.bg }]}>
+            <Text style={[styles.statusBadgeText, { color: statusStyling.text }]}>
+              {String(item.status || 'PENDING').toUpperCase()}
+            </Text>
           </View>
-        </TouchableOpacity>
+        </View>
+
+        <View style={styles.cardDivider} />
+
+        <View style={styles.cardFooter}>
+          <View style={styles.footerItem}>
+            <Icons.Feather name="calendar" size={14} color="#64748B" />
+            <Text style={styles.footerText}>{item.service_date || item.created_at || 'Flexible'}</Text>
+          </View>
+          <View style={styles.footerItem}>
+            <Icons.Feather name="clock" size={14} color="#64748B" />
+            <Text style={styles.footerText}>{item.service_time || 'Standard Hours'}</Text>
+          </View>
+          <Icons.Feather
+            name="chevron-right"
+            size={18}
+            color="#CBD5E1"
+            style={{ marginLeft: 'auto' }}
+          />
+        </View>
+      </TouchableOpacity>
     );
   };
 
   return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-        <HomeStakWSearch
-            onPress={() => navigation.openDrawer()}
-            onPressnotification={() => navigation.navigate('edit_profile')}
-            onChangeText={val => setSearchTerm(val)}
-            value={searchTerm}
-            headerTitle=""
+      <HomeStakWSearch
+        onPress={() => navigation.openDrawer()}
+        onPressnotification={() => navigation.navigate('edit_profile')}
+        onChangeText={val => setSearchTerm(val)}
+        value={searchTerm}
+        headerTitle=""
+      />
+
+      {displayedBookings.length > 0 && (
+        <View style={styles.summaryBar}>
+          <Text style={styles.summaryTitle}>Your Bookings</Text>
+          <View style={styles.countBadge}>
+            <Text style={styles.countBadgeText}>{displayedBookings.length} Total</Text>
+          </View>
+        </View>
+      )}
+
+      {loading && displayedBookings.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={color.defalt} />
+          <Text style={styles.loadingText}>Fetching your bookings...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={displayedBookings}
+          keyExtractor={(item, index) =>
+            item.booking_id?.toString() || item.id?.toString() || index.toString()
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => getBookingRequests(true)}
+              colors={[color.defalt]}
+            />
+          }
+          renderItem={renderBookingCard}
+          contentContainerStyle={StyleSheet.flatten([
+            styles.cardContainer,
+            { paddingBottom: bottomPadding },
+          ])}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconCircle}>
+                <Icons.Feather name="inbox" size={34} color="#94A3B8" />
+              </View>
+              <Text style={styles.emptyTitle}>No Bookings Found</Text>
+              <Text style={styles.emptySubtitle}>
+                {searchTerm ? 'No bookings match your search term.' : 'You have not made any booking requests yet.'}
+              </Text>
+            </View>
+          }
         />
+      )}
 
-        {booklist.length > 0 && (
-            <View style={styles.summaryBar}>
-              <Text style={styles.summaryTitle}>Your Bookings</Text>
-              <View style={styles.countBadge}>
-                <Text style={styles.countBadgeText}>{booklist.length} Total</Text>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.bottomSheetOverlay}>
+          <TouchableOpacity
+            style={styles.overlayDismiss}
+            activeOpacity={1}
+            onPress={() => setModalVisible(false)}
+          />
+          <Animatable.View
+            animation="slideInUp"
+            duration={350}
+            style={styles.bottomSheetCard}>
+            <View style={styles.bottomSheetHandle} />
+
+            <View style={styles.sheetHeader}>
+              <Image
+                style={styles.sheetAvatar}
+                source={
+                  currentItem?.profile || currentItem?.image
+                    ? { uri: `${BASIC_URL}uploads/${currentItem?.profile || currentItem?.image}` }
+                    : require('../../Assets/Images/user.jpg')
+                }
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sheetName}>{currentItem?.provider_name || currentItem?.name}</Text>
+                <Text style={styles.sheetService}>
+                  {currentItem?.service_name || currentItem?.service || 'Service'} • ID: #{currentItem?.booking_id || currentItem?.id}
+                </Text>
               </View>
             </View>
-        )}
 
-        {loading && booklist.length === 0 ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={color.defalt} />
-              <Text style={styles.loadingText}>Fetching your bookings...</Text>
-            </View>
-        ) : (
-            <FlatList
-                data={booklist}
-                keyExtractor={(item, index) =>
-                    item.booking_id?.toString() || index.toString()
-                }
-                refreshControl={
-                  <RefreshControl
-                      refreshing={refreshing}
-                      onRefresh={() => getBookingRequests(true)}
-                      colors={[color.defalt]}
-                  />
-                }
-                renderItem={renderBookingCard}
-                contentContainerStyle={StyleSheet.flatten([
-                  styles.cardContainer,
-                  {paddingBottom: bottomPadding},
-                ])}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <View style={styles.emptyContainer}>
-                    <View style={styles.emptyIconCircle}>
-                      <Icons.Feather name="inbox" size={34} color="#94A3B8" />
-                    </View>
-                    <Text style={styles.emptyTitle}>No Bookings Found</Text>
-                    <Text style={styles.emptySubtitle}>
-                      You have not made any booking requests yet.
+            <View style={styles.sheetBody}>
+              <View style={styles.infoTile}>
+                <View style={styles.infoTileRow}>
+                  <View style={styles.tileIconWrap}>
+                    <Icons.Feather
+                      name="calendar"
+                      size={16}
+                      color={color.defalt}
+                    />
+                  </View>
+                  <View style={styles.tileTextCol}>
+                    <Text style={styles.tileLabel}>Scheduled Appointment</Text>
+                    <Text style={styles.tileValue}>
+                      {currentItem?.service_date || currentItem?.created_at || 'To Be Confirmed'} at{' '}
+                      {currentItem?.service_time || 'TBD'}
                     </Text>
                   </View>
-                }
-            />
-        )}
-
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={modalVisible}
-            onRequestClose={() => setModalVisible(false)}>
-          <View style={styles.bottomSheetOverlay}>
-            <TouchableOpacity
-                style={styles.overlayDismiss}
-                activeOpacity={1}
-                onPress={() => setModalVisible(false)}
-            />
-            <Animatable.View
-                animation="slideInUp"
-                duration={350}
-                style={styles.bottomSheetCard}>
-              <View style={styles.bottomSheetHandle} />
-
-              <View style={styles.sheetHeader}>
-                <Image
-                    style={styles.sheetAvatar}
-                    source={
-                      currentItem?.profile
-                          ? {uri: `${BASIC_URL}uploads/${currentItem?.profile}`}
-                          : require('../../Assets/Images/user.jpg')
-                    }
-                />
-                <View style={{flex: 1}}>
-                  <Text style={styles.sheetName}>{currentItem?.name}</Text>
-                  <Text style={styles.sheetService}>
-                    {currentItem?.service} • ID: #{currentItem?.booking_id}
-                  </Text>
                 </View>
               </View>
 
-              <View style={styles.sheetBody}>
-                <View style={styles.infoTile}>
-                  <View style={styles.infoTileRow}>
-                    <View style={styles.tileIconWrap}>
-                      <Icons.Feather
-                          name="calendar"
-                          size={16}
-                          color={color.defalt}
-                      />
-                    </View>
-                    <View style={styles.tileTextCol}>
-                      <Text style={styles.tileLabel}>Scheduled Appointment</Text>
-                      <Text style={styles.tileValue}>
-                        {currentItem?.service_date} at{' '}
-                        {currentItem?.service_time || 'TBD'}
-                      </Text>
-                    </View>
+              {currentItem?.file && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={openFile}
+                  style={styles.attachmentTile}>
+                  <View style={styles.tileIconWrap}>
+                    <Icons.Feather
+                      name="paperclip"
+                      size={16}
+                      color={color.defalt}
+                    />
                   </View>
-                </View>
+                  <View style={styles.tileTextCol}>
+                    <Text style={styles.attachmentTileTitle}>
+                      Service Attachment
+                    </Text>
+                    <Text style={styles.attachmentTileSub}>
+                      Tap to view uploaded file
+                    </Text>
+                  </View>
+                  <Icons.Feather
+                    name="external-link"
+                    size={16}
+                    color="#94A3B8"
+                  />
+                </TouchableOpacity>
+              )}
 
-                {currentItem?.file && (
-                    <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={openFile}
-                        style={styles.attachmentTile}>
-                      <View style={styles.tileIconWrap}>
-                        <Icons.Feather
-                            name="paperclip"
-                            size={16}
-                            color={color.defalt}
-                        />
-                      </View>
-                      <View style={styles.tileTextCol}>
-                        <Text style={styles.attachmentTileTitle}>
-                          Service Attachment
-                        </Text>
-                        <Text style={styles.attachmentTileSub}>
-                          Tap to view uploaded file
-                        </Text>
-                      </View>
-                      <Icons.Feather
-                          name="external-link"
-                          size={16}
-                          color="#94A3B8"
-                      />
-                    </TouchableOpacity>
-                )}
+              <View style={styles.statusDisplayWrap}>
+                <Text style={styles.statusDisplayLabel}>Current Status:</Text>
+                <Text
+                  style={[
+                    styles.statusDisplayText,
+                    { color: getStatusStyle(currentItem?.status).text },
+                  ]}>
+                  {currentItem?.status === 'pending'
+                    ? 'Pending Confirmation'
+                    : currentItem?.status === 'accepted'
+                      ? 'Accepted by Provider'
+                      : currentItem?.status === 'complete' || currentItem?.status === 'completed'
+                        ? 'Service Completed'
+                        : 'Declined by Provider'}
+                </Text>
+              </View>
+            </View>
 
-                <View style={styles.statusDisplayWrap}>
-                  <Text style={styles.statusDisplayLabel}>Current Status:</Text>
-                  <Text
-                      style={[
-                        styles.statusDisplayText,
-                        {color: getStatusStyle(currentItem?.status).text},
-                      ]}>
-                    {currentItem?.status === 'pending'
-                        ? 'Pending Confirmation'
-                        : currentItem?.status === 'accepted'
-                            ? 'Accepted by Provider'
-                            : 'Declined by Provider'}
+            <View style={styles.btnActionRow}>
+              {currentItem?.status === 'pending' && (
+                <View style={styles.disabledBtn}>
+                  <Text style={styles.disabledBtnText}>
+                    Waiting for Provider to Accept...
                   </Text>
                 </View>
-              </View>
-
-              <View style={styles.btnActionRow}>
-                {currentItem?.status === 'pending' && (
-                    <View style={styles.disabledBtn}>
-                      <Text style={styles.disabledBtnText}>
-                        Waiting for Provider to Accept...
-                      </Text>
-                    </View>
-                )}
-                {currentItem?.status === 'rejected' && (
-                    <View
-                        style={[styles.disabledBtn, {backgroundColor: '#FEE2E2'}]}>
-                      <Text style={[styles.disabledBtnText, {color: '#B91C1C'}]}>
-                        Provider Declined Request
-                      </Text>
-                    </View>
-                )}
-                {currentItem?.status === 'accepted' && (
-                    <TouchableOpacity
-                        activeOpacity={0.9}
-                        style={styles.payBtn}
-                        onPress={handlePayment}>
-                      <Icons.Feather
-                          name="credit-card"
-                          size={18}
-                          color="#FFFFFF"
-                          style={{marginRight: 8}}
-                      />
-                      <Text style={styles.payBtnText}>
-                        Pay {currentItem?.price || 'Now'} to Confirm
-                      </Text>
-                    </TouchableOpacity>
-                )}
-              </View>
-            </Animatable.View>
-          </View>
-        </Modal>
-      </SafeAreaView>
+              )}
+              {currentItem?.status === 'rejected' && (
+                <View
+                  style={[styles.disabledBtn, { backgroundColor: '#FEE2E2' }]}>
+                  <Text style={[styles.disabledBtnText, { color: '#B91C1C' }]}>
+                    Provider Declined Request
+                  </Text>
+                </View>
+              )}
+              {currentItem?.status === 'accepted' && (
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  style={styles.payBtn}
+                  onPress={handlePayment}>
+                  <Icons.Feather
+                    name="credit-card"
+                    size={18}
+                    color="#FFFFFF"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.payBtnText}>
+                    Pay {currentItem?.price || 'Now'} to Confirm
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {(currentItem?.status === 'complete' || currentItem?.status === 'completed') && (
+                <View style={[styles.disabledBtn, { backgroundColor: '#D1FAE5' }]}>
+                  <Text style={[styles.disabledBtnText, { color: '#047857' }]}>
+                    Order Completed
+                  </Text>
+                </View>
+              )}
+            </View>
+          </Animatable.View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 };
 
@@ -380,8 +431,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F1F5F9',
     ...(Platform.OS === 'web'
-        ? { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)' }
-        : { elevation: 2, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8 }),
+      ? { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)' }
+      : { elevation: 2, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8 }),
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardUserInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
