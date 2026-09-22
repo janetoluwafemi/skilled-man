@@ -81,6 +81,11 @@ const BookingScreen = () => {
         });
 
         const result = await response.json();
+        console.log('[BookingScreen] get_booking.php response:', result);
+        console.log(
+          '[BookingScreen] booking keys:',
+          Object.keys(result?.bookings?.[0] || {}),
+        );
 
         if (result && Array.isArray(result.bookings)) {
           setAllBookings(result.bookings);
@@ -152,8 +157,8 @@ const BookingScreen = () => {
 
   const renderBookingCard = ({ item }) => {
     const statusStyling = getStatusStyle(item.status);
-    const displayName = item.provider_name || item.name || 'Artisan Service';
-    const displayService = item.service_name || item.service || 'Service Request';
+    const displayName = item.provider_name || 'Artisan Service';
+    const displayService = item.service_name || 'Service Request';
     const displayId = item.booking_id || item.id || item.provider_id || '';
 
     return (

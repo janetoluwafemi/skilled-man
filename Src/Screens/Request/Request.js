@@ -40,9 +40,9 @@ const RequestScreen = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const bottomPadding =
-    height * 0.085 +
-    Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
-    28;
+      height * 0.085 +
+      Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
+      28;
 
   const toggleModal = item => {
     setCurrentItem(item);
@@ -51,54 +51,61 @@ const RequestScreen = () => {
 
   // --- API INTEGRATION: Fetch Provider Booking Requests ---
   const getBookingRequests = useCallback(
-    async (isRefresh = false) => {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
+      async (isRefresh = false) => {
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
 
-      try {
-        let currentUserId = String(global.id || '').trim();
+        try {
+          let currentUserId = String(global.id || '').trim();
 
-        // Fallback sync for missing global ID
-        if (!currentUserId || ['251', '255', '256'].includes(currentUserId)) {
-          const rawUser = await AsyncStorage.getItem('user');
-          if (rawUser) {
-            const parsed = JSON.parse(rawUser);
-            const possibleId = parsed?.id ?? parsed?.user_id ?? parsed?.provider_id;
-            if (possibleId && !['251', '255', '256'].includes(String(possibleId))) {
-              currentUserId = String(possibleId).trim();
-              global.id = currentUserId;
-            } else {
-              currentUserId = '251'; // Fallback for testing based on Postman
+          if (!currentUserId) {
+            const rawUser = await AsyncStorage.getItem('user');
+            if (rawUser) {
+              const parsed = JSON.parse(rawUser);
+              const possibleId = parsed?.id ?? parsed?.provider_id ?? parsed?.user_id;
+              if (possibleId) {
+                currentUserId = String(possibleId).trim();
+                global.id = currentUserId;
+              }
             }
-          } else {
-            currentUserId = '251';
           }
+
+          if (!currentUserId) {
+            console.warn('[RequestScreen] No active provider ID was found.');
+            setBooklist([]);
+            setLoading(false);
+            setRefreshing(false);
+            return;
+          }
+
+          const formdata = new FormData();
+          formdata.append('provider_id', currentUserId);
+          formdata.append('searchTerm', searchTerm); // Hook search directly to API
+
+          const response = await fetch(`${BASIC_URL}provider_status.php`, {
+            method: 'POST',
+            body: formdata,
+          });
+
+          const result = await response.json();
+          console.log('[Provider API Response]:', result); // 🔍 Debug log added here
+
+          if (Array.isArray(result?.booking_request)) {
+            setBooklist(result.booking_request);
+          } else if (result?.booking_request) {
+            // Safety fallback in case the API returns an object instead of an array
+            setBooklist(Object.values(result.booking_request));
+          } else {
+            setBooklist([]);
+          }
+        } catch (error) {
+          console.error('Error fetching bookings:', error);
+        } finally {
+          setLoading(false);
+          setRefreshing(false);
         }
-
-        const formdata = new FormData();
-        formdata.append('provider_id', currentUserId);
-        formdata.append('searchTerm', searchTerm); // Hook search directly to API
-
-        const response = await fetch(`${BASIC_URL}provider_status.php`, {
-          method: 'POST',
-          body: formdata,
-        });
-
-        const result = await response.json();
-
-        if (result?.booking_request) {
-          setBooklist(result.booking_request);
-        } else {
-          setBooklist([]);
-        }
-      } catch (error) {
-        console.error('Error fetching bookings:', error);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [searchTerm]
+      },
+      [searchTerm]
   );
 
   useEffect(() => {
@@ -141,7 +148,7 @@ const RequestScreen = () => {
     if (!currentItem?.file) return;
     const fileURL = `${BASIC_URL}uploads/${currentItem.file}`;
     Linking.openURL(fileURL).catch(err =>
-      console.error(`Error opening file: ${err}`)
+        console.error(`Error opening file: ${err}`)
     );
   };
 
@@ -165,179 +172,181 @@ const RequestScreen = () => {
     const serviceName = item.service_name || item.service || 'Service Request';
 
     return (
-      <TouchableOpacity
-        activeOpacity={0.85}
-        style={styles.modernCard}
-        onPress={() => toggleModal(item)}
-      >
-        <View style={styles.cardHeader}>
-          <View style={styles.cardUserInfo}>
-            <Image
-              style={styles.cardAvatar}
-              source={item.profile ? { uri: `${BASIC_URL}uploads/${item.profile}` } : require('../../Assets/Images/user.jpg')}
-            />
-            <View>
-              <Text style={styles.cardName}>{item.name}</Text>
-              <Text style={styles.cardService}>{serviceName} • #{item.booking_id}</Text>
+        <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.modernCard}
+            onPress={() => toggleModal(item)}
+        >
+          <View style={styles.cardHeader}>
+            <View style={styles.cardUserInfo}>
+              <Image
+                  style={styles.cardAvatar}
+                  source={item.profile ? { uri: `${BASIC_URL}uploads/${item.profile}` } : require('../../Assets/Images/user.jpg')}
+              />
+              <View>
+                <Text style={styles.cardName}>{item.name}</Text>
+                <Text style={styles.cardService}>{serviceName} • #{item.booking_id}</Text>
+              </View>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: statusStyling.bg }]}>
+              <Text style={[styles.statusBadgeText, { color: statusStyling.text }]}>
+                {String(item.status || 'PENDING').toUpperCase()}
+              </Text>
             </View>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusStyling.bg }]}>
-            <Text style={[styles.statusBadgeText, { color: statusStyling.text }]}>
-              {String(item.status || 'PENDING').toUpperCase()}
-            </Text>
-          </View>
-        </View>
 
-        <View style={styles.cardDivider} />
+          <View style={styles.cardDivider} />
 
-        <View style={styles.cardFooter}>
-          <View style={styles.footerItem}>
-            <Icons.Feather name="calendar" size={14} color="#64748B" />
-            <Text style={styles.footerText}>{item.service_date}</Text>
+          <View style={styles.cardFooter}>
+            <View style={styles.footerItem}>
+              <Icons.Feather name="calendar" size={14} color="#64748B" />
+              <Text style={styles.footerText}>{item.service_date}</Text>
+            </View>
+            {item.service_time && (
+                <View style={styles.footerItem}>
+                  <Icons.Feather name="clock" size={14} color="#64748B" />
+                  <Text style={styles.footerText}>{item.service_time}</Text>
+                </View>
+            )}
+            <Icons.Feather name="chevron-right" size={18} color="#CBD5E1" style={{marginLeft: 'auto'}}/>
           </View>
-          <View style={styles.footerItem}>
-            <Icons.Feather name="clock" size={14} color="#64748B" />
-            <Text style={styles.footerText}>{item.service_time}</Text>
-          </View>
-          <Icons.Feather name="chevron-right" size={18} color="#CBD5E1" style={{marginLeft: 'auto'}}/>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <HomeStakWSearch
-        onPress={() => navigation.openDrawer()}
-        onPressnotification={() => navigation.navigate('edit_profile')}
-        onChangeText={val => setSearchTerm(val)}
-        value={searchTerm}
-        headerTitle=""
-      />
-
-      {booklist.length > 0 && (
-        <View style={styles.summaryBar}>
-          <Text style={styles.summaryTitle}>Incoming Requests</Text>
-          <View style={styles.countBadge}>
-            <Text style={styles.countBadgeText}>{booklist.length} Total</Text>
-          </View>
-        </View>
-      )}
-
-      {loading && booklist.length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={color.defalt} />
-          <Text style={styles.loadingText}>Fetching requests...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={booklist}
-          keyExtractor={(item, index) => item.booking_id?.toString() || index.toString()}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => getBookingRequests(true)} colors={[color.defalt]} />
-          }
-          renderItem={renderBookingCard}
-          contentContainerStyle={StyleSheet.flatten([styles.cardContainer, { paddingBottom: bottomPadding }])}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyIconCircle}>
-                <Icons.Feather name="inbox" size={34} color="#94A3B8" />
-              </View>
-              <Text style={styles.emptyTitle}>No Booking Requests</Text>
-              <Text style={styles.emptySubtitle}>
-                New customer service requests will appear here.
-              </Text>
-            </View>
-          }
+        <HomeStakWSearch
+            onPress={() => navigation.openDrawer()}
+            onPressnotification={() => navigation.navigate('edit_profile')}
+            onChangeText={val => setSearchTerm(val)}
+            value={searchTerm}
+            headerTitle=""
         />
-      )}
 
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.bottomSheetOverlay}>
-
-          <TouchableOpacity style={styles.overlayDismiss} activeOpacity={1} onPress={() => setModalVisible(false)} />
-
-          <Animatable.View animation="slideInUp" duration={350} style={styles.bottomSheetCard}>
-
-            <View style={styles.bottomSheetHandle} />
-
-            <View style={styles.sheetHeader}>
-              <Image
-                style={styles.sheetAvatar}
-                source={currentItem?.profile ? { uri: `${BASIC_URL}uploads/${currentItem?.profile}` } : require('../../Assets/Images/user.jpg')}
-              />
-              <View style={{flex: 1}}>
-                <Text style={styles.sheetName}>{currentItem?.name}</Text>
-                <Text style={styles.sheetService}>{currentItem?.service_name || currentItem?.service || 'Service'} • ID: #{currentItem?.booking_id}</Text>
+        {booklist.length > 0 && (
+            <View style={styles.summaryBar}>
+              <Text style={styles.summaryTitle}>Incoming Requests</Text>
+              <View style={styles.countBadge}>
+                <Text style={styles.countBadgeText}>{booklist.length} Total</Text>
               </View>
             </View>
+        )}
 
-            <View style={styles.sheetBody}>
-              <View style={styles.infoTile}>
-                <View style={styles.infoTileRow}>
-                  <View style={styles.tileIconWrap}>
-                    <Icons.Feather name="calendar" size={16} color={color.defalt} />
-                  </View>
-                  <View style={styles.tileTextCol}>
-                    <Text style={styles.tileLabel}>Scheduled Appointment</Text>
-                    <Text style={styles.tileValue}>
-                      {currentItem?.service_date} at {currentItem?.service_time || 'TBD'}
+        {loading && booklist.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={color.defalt} />
+              <Text style={styles.loadingText}>Fetching requests...</Text>
+            </View>
+        ) : (
+            <FlatList
+                data={booklist}
+                keyExtractor={(item, index) => item.booking_id?.toString() || index.toString()}
+                refreshControl={
+                  <RefreshControl refreshing={refreshing} onRefresh={() => getBookingRequests(true)} colors={[color.defalt]} />
+                }
+                renderItem={renderBookingCard}
+                contentContainerStyle={StyleSheet.flatten([styles.cardContainer, { paddingBottom: bottomPadding }])}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                  <View style={styles.emptyContainer}>
+                    <View style={styles.emptyIconCircle}>
+                      <Icons.Feather name="inbox" size={34} color="#94A3B8" />
+                    </View>
+                    <Text style={styles.emptyTitle}>No Booking Requests</Text>
+                    <Text style={styles.emptySubtitle}>
+                      New customer service requests will appear here.
                     </Text>
                   </View>
+                }
+            />
+        )}
+
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}>
+          <View style={styles.bottomSheetOverlay}>
+
+            <TouchableOpacity style={styles.overlayDismiss} activeOpacity={1} onPress={() => setModalVisible(false)} />
+
+            <Animatable.View animation="slideInUp" duration={350} style={styles.bottomSheetCard}>
+
+              <View style={styles.bottomSheetHandle} />
+
+              <View style={styles.sheetHeader}>
+                <Image
+                    style={styles.sheetAvatar}
+                    source={currentItem?.profile ? { uri: `${BASIC_URL}uploads/${currentItem?.profile}` } : require('../../Assets/Images/user.jpg')}
+                />
+                <View style={{flex: 1}}>
+                  <Text style={styles.sheetName}>{currentItem?.name}</Text>
+                  <Text style={styles.sheetService}>{currentItem?.service_name || currentItem?.service || 'Service'} • ID: #{currentItem?.booking_id}</Text>
                 </View>
               </View>
 
-              {currentItem?.file && (
-                <TouchableOpacity activeOpacity={0.7} onPress={openFile} style={styles.attachmentTile}>
-                  <View style={styles.tileIconWrap}>
-                    <Icons.Feather name="paperclip" size={16} color={color.defalt} />
+              <View style={styles.sheetBody}>
+                <View style={styles.infoTile}>
+                  <View style={styles.infoTileRow}>
+                    <View style={styles.tileIconWrap}>
+                      <Icons.Feather name="calendar" size={16} color={color.defalt} />
+                    </View>
+                    <View style={styles.tileTextCol}>
+                      <Text style={styles.tileLabel}>Scheduled Appointment</Text>
+                      <Text style={styles.tileValue}>
+                        {currentItem?.service_date} at {currentItem?.service_time || 'TBD'}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.tileTextCol}>
-                    <Text style={styles.attachmentTileTitle}>Service Attachment</Text>
-                    <Text style={styles.attachmentTileSub}>Tap to view uploaded file</Text>
-                  </View>
-                  <Icons.Feather name="external-link" size={16} color="#94A3B8" />
-                </TouchableOpacity>
-              )}
+                </View>
 
-              <View style={styles.statusDisplayWrap}>
-                <Text style={styles.statusDisplayLabel}>Current Status:</Text>
-                <Text style={[styles.statusDisplayText, { color: getStatusStyle(currentItem?.status).text }]}>
-                  {currentItem?.status === 'pending' ? 'Pending Confirmation' :
-                    currentItem?.status === 'accepted' ? 'Accepted by Provider' :
-                      currentItem?.status === 'progress' ? 'In Progress' :
-                        currentItem?.status === 'complete' ? 'Completed' : 'Declined by Provider'}
-                </Text>
+                {currentItem?.file && (
+                    <TouchableOpacity activeOpacity={0.7} onPress={openFile} style={styles.attachmentTile}>
+                      <View style={styles.tileIconWrap}>
+                        <Icons.Feather name="paperclip" size={16} color={color.defalt} />
+                      </View>
+                      <View style={styles.tileTextCol}>
+                        <Text style={styles.attachmentTileTitle}>Service Attachment</Text>
+                        <Text style={styles.attachmentTileSub}>Tap to view uploaded file</Text>
+                      </View>
+                      <Icons.Feather name="external-link" size={16} color="#94A3B8" />
+                    </TouchableOpacity>
+                )}
+
+                <View style={styles.statusDisplayWrap}>
+                  <Text style={styles.statusDisplayLabel}>Current Status:</Text>
+                  <Text style={[styles.statusDisplayText, { color: getStatusStyle(currentItem?.status).text }]}>
+                    {currentItem?.status === 'pending' ? 'Pending Confirmation' :
+                        currentItem?.status === 'accepted' ? 'Accepted by Provider' :
+                            currentItem?.status === 'progress' ? 'In Progress' :
+                                currentItem?.status === 'complete' ? 'Completed' : 'Declined by Provider'}
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.btnActionRow}>
-              {currentItem?.status === 'pending' ? (
-                <>
-                  <TouchableOpacity activeOpacity={0.8} style={styles.rejectBtn} onPress={() => changeStatus('rejected')}>
-                    <Text style={styles.rejectBtnText}>Decline</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.8} style={styles.acceptBtn} onPress={() => changeStatus('accepted')}>
-                    <Text style={styles.acceptBtnText}>Accept Request</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <TouchableOpacity activeOpacity={0.8} style={styles.dismissBtn} onPress={() => setModalVisible(false)}>
-                  <Text style={styles.dismissBtnText}>Close Menu</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </Animatable.View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+              <View style={styles.btnActionRow}>
+                {currentItem?.status === 'pending' ? (
+                    <>
+                      <TouchableOpacity activeOpacity={0.8} style={styles.rejectBtn} onPress={() => changeStatus('rejected')}>
+                        <Text style={styles.rejectBtnText}>Decline</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity activeOpacity={0.8} style={styles.acceptBtn} onPress={() => changeStatus('accepted')}>
+                        <Text style={styles.acceptBtnText}>Accept Request</Text>
+                      </TouchableOpacity>
+                    </>
+                ) : (
+                    <TouchableOpacity activeOpacity={0.8} style={styles.dismissBtn} onPress={() => setModalVisible(false)}>
+                      <Text style={styles.dismissBtnText}>Close Menu</Text>
+                    </TouchableOpacity>
+                )}
+              </View>
+            </Animatable.View>
+          </View>
+        </Modal>
+      </SafeAreaView>
   );
 };
 
@@ -358,8 +367,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F1F5F9',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)' }
-      : { elevation: 2, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8 }),
+        ? { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)' }
+        : { elevation: 2, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8 }),
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardUserInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
