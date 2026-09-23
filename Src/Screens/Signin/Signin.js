@@ -90,8 +90,10 @@ const SignIn = () => {
           const result = await response.json();
 
           if (result && !result.error) {
+            // Save user data and explicit user ID
             await AsyncStorage.setItem('user', JSON.stringify(result));
             await AsyncStorage.setItem('role', roleString);
+            if (result.id) await AsyncStorage.setItem('userId', String(result.id));
 
             global.id = result.id;
             global.role = roleString;
@@ -164,8 +166,10 @@ const SignIn = () => {
       const result = await response.json();
 
       if (result && !result.error) {
+        // Save user data and explicit user ID
         await AsyncStorage.setItem('user', JSON.stringify(result));
         await AsyncStorage.setItem('role', roleString);
+        if (result.id) await AsyncStorage.setItem('userId', String(result.id));
 
         global.id = result.id;
         global.role = roleString;

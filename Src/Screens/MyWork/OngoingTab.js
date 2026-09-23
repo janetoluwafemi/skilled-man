@@ -10,23 +10,18 @@ import {
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useIsFocused} from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {showToast} from '../../utilis/showToast';
 
 import {Icons} from '../../Components/Icons';
 import color from '../../Assets/colors/colors';
-import {dummyBookings} from '../../utilis/MockJobsData';
-// import {BASIC_URL} from '../Signin/Signin';
+import {getBookings} from '../../utilis/providerStatus';
 
-const OngoingTabs = ({route}) => {
+const OngoingTabs = ({value = ''}) => {
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
-  const {height, width} = useWindowDimensions();
+  const {height} = useWindowDimensions();
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const value = route?.params?.value;
 
   const bottomPadding =
     height * 0.085 +
@@ -37,41 +32,7 @@ const OngoingTabs = ({route}) => {
     try {
       setLoading(true);
 
-      const filteredBookings = dummyBookings.filter(
-        item => item.status === 'ongoing',
-      );
-
-      setData(filteredBookings);
-
-      /*
-      const storedUser = await AsyncStorage.getItem('user');
-      const userObj = storedUser ? JSON.parse(storedUser) : null;
-      const providerId = global.id || userObj?.id || '255';
-
-      const formdata = new FormData();
-      formdata.append('provider_id', String(providerId));
-      formdata.append('status', 'progress');
-
-      if (value) {
-        formdata.append('searchTerm', value);
-      }
-
-      const response = await fetch(`${BASIC_URL}provider_status.php`, {
-        method: 'POST',
-        body: formdata,
-      });
-
-      const result = await response.json();
-
-      if (
-        result?.booking_request &&
-        Array.isArray(result.booking_request)
-      ) {
-        setData(result.booking_request);
-      } else {
-        setData([]);
-      }
-      */
+      setData(await getBookings({status: 'progress', searchTerm: value}));
     } catch (error) {
       console.log('Error fetching ongoing jobs:', error);
       setData([]);

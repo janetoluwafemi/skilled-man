@@ -15,14 +15,13 @@ import {useIsFocused} from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import {showToast} from '../../utilis/showToast';
 
-import {dummyBookings} from '../../utilis/MockJobsData';
 import color from '../../Assets/colors/colors';
 import {Icons} from '../../Components/Icons';
 import OngoingDrpdwn from '../../Components/OngoingDropdown';
 import BotonComp from '../../Components/BtnComp';
-// import {BASIC_URL} from '../Signin/Signin';
+import {getBookings, updateBookingStatus} from '../../utilis/providerStatus';
 
-const AllTabs = () => {
+const AllTabs = ({value = ''}) => {
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
   const {height, width} = useWindowDimensions();
@@ -31,6 +30,7 @@ const AllTabs = () => {
   const [data, setData] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState('0');
   const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const bottomPadding =
       height * 0.085 +
@@ -41,35 +41,17 @@ const AllTabs = () => {
     setModalVisible(prev => !prev);
   };
 
-  const getData = useCallback(() => {
+  const getData = useCallback(async () => {
     try {
-      setData(dummyBookings);
-
-      /*
-      const formdata = new FormData();
-      formdata.append('provider_id', global.id);
-
-      if (props?.value) {
-        formdata.append('searchTerm', props.value);
-      }
-
-      const response = await fetch(`${BASIC_URL}provider_status.php`, {
-        method: 'POST',
-        body: formdata,
-      });
-
-      const result = await response.json();
-
-      if (result?.booking_request) {
-        setData(result.booking_request);
-      } else if (result?.error) {
-        console.log(result.error);
-      }
-      */
+      setLoading(true);
+      setData(await getBookings({searchTerm: value}));
     } catch (error) {
       console.log('Error fetching provider status:', error);
+      setData([]);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [value]);
 
   useEffect(() => {
     if (focus) {
@@ -77,45 +59,20 @@ const AllTabs = () => {
     }
   }, [focus, getData]);
 
-  const changeStatus = bookingId => {
+  const changeStatus = async bookingId => {
     try {
       if (!selectedBusiness || selectedBusiness === '0') {
         Alert.alert('Please select a booking status.');
         return;
       }
 
-      /*
-      const formdata = new FormData();
-      formdata.append('id', bookingId);
-      formdata.append('status', selectedBusiness);
-
-      const response = await fetch(`${BASIC_URL}status_update.php`, {
-        method: 'POST',
-        body: formdata,
-      });
-
-      const result = await response.json();
-
-      if (result?.success) {
-        showToast(result.success);
-        getData();
-      } else if (result?.error) {
-        console.log(result.error);
-      }
-      */
-
-      const updatedData = data.map(item =>
-          item.booking_id === bookingId
-              ? {...item, status: selectedBusiness}
-              : item,
-      );
-
-      setData(updatedData);
+      await updateBookingStatus(bookingId, selectedBusiness);
       setSelectedBookingId(null);
       setSelectedBusiness('0');
       setModalVisible(false);
 
       showToast('Booking status updated successfully');
+      await getData();
     } catch (error) {
       Alert.alert('Error', error?.message || 'An error occurred');
     }
@@ -193,6 +150,8 @@ const AllTabs = () => {
       <View style={styles.flexContainer}>
         <FlatList
             data={data}
+            refreshing={loading}
+            onRefresh={getData}
             keyExtractor={(item, index) =>
                 item.booking_id?.toString() || index.toString()
             }

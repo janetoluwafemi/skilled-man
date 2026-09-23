@@ -48,11 +48,18 @@ const Dashboard = () => {
   const [guarantor, setGuarantor] = useState(null);
   const [jobReferences, setJobReferences] = useState(null);
 
-  const [selectedBusiness, setSelectedBusiness] = useState('Select Business');
+  const [selectedBusiness, setSelectedBusiness] = useState('Hairstylist');
   const [selectedExperience, setSelectedExperience] = useState('Year of experience');
 
+  // Hardcoded fixed user profession
+  const [userProfession, setUserProfession] = useState('Hairstylist');
+
   const [load, setLoad] = useState(false);
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState([
+    { id: '1', select_bussiness: 'Hairstylist' },
+    { id: '2', select_bussiness: 'Makeup Artist' },
+    { id: '3', select_bussiness: 'Barber' },
+  ]);
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState({
     isoCode: 'NG',
@@ -78,31 +85,13 @@ const Dashboard = () => {
   });
 
   const experienceOptions = [
-    { id: 1, select_bussiness: 'Year of experience' },
-    { id: 2, select_bussiness: '0-1' },
-    { id: 3, select_bussiness: '1-2' },
-    { id: 4, select_bussiness: '2-3' },
-    { id: 5, select_bussiness: '3-4' },
-    { id: 6, select_bussiness: '4-5' },
+    {id: 1, select_bussiness: 'Year of experience'},
+    {id: 2, select_bussiness: '0-1'},
+    {id: 3, select_bussiness: '1-2'},
+    {id: 4, select_bussiness: '2-3'},
+    {id: 5, select_bussiness: '3-4'},
+    {id: 6, select_bussiness: '4-5'},
   ];
-
-  const getOverallServices = useCallback(async () => {
-    try {
-      const formdata = new FormData();
-      formdata.append('searchTerm', '');
-
-      const response = await fetch(`${BASIC_URL}get_services.php`, {
-        method: 'POST',
-        body: formdata,
-      });
-      const result = await response.json();
-      if (result && result.add_skills) {
-        setItems(result.add_skills);
-      }
-    } catch (error) {
-      console.log('Error fetching services:', error);
-    }
-  }, []);
 
   const getProviderAnalytics = useCallback(async () => {
     let providerId = String(global.id || '').trim();
@@ -123,7 +112,7 @@ const Dashboard = () => {
     }
 
     if (!providerId || ['251', '255', '256'].includes(providerId)) {
-      providerId = '251'; // Fallback for API if still not found
+      providerId = '251';
     }
 
     const token = encodeURIComponent('xees&skilledman');
@@ -139,10 +128,7 @@ const Dashboard = () => {
         }
       );
 
-      if (!response.ok) {
-        console.log('Analytics endpoint status:', response.status);
-        return;
-      }
+      if (!response.ok) return;
 
       const result = await response.json();
 
@@ -168,9 +154,8 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    getOverallServices();
     getProviderAnalytics();
-  }, [getOverallServices, getProviderAnalytics]);
+  }, [getProviderAnalytics]);
 
   useEffect(() => {
     if (isFocused) {
@@ -184,24 +169,6 @@ const Dashboard = () => {
       setModalVisible(true);
       global.providerModalShown = true;
     }
-  }, [state?.isAuth]);
-
-  useEffect(() => {
-    const fetchUserDataAndCheckModal = async () => {
-      try {
-        const storedUserData = await AsyncStorage.getItem('userData');
-        if (storedUserData) {
-          const parsedUserData = JSON.parse(storedUserData);
-          if (parsedUserData?.working_experience && state?.isAuth === true) {
-            setsigninmodal(true);
-          }
-        }
-      } catch (error) {
-        console.log('AsyncStorage fetch error:', error);
-      }
-    };
-
-    fetchUserDataAndCheckModal();
   }, [state?.isAuth]);
 
   const onCountrySelect = country => {
@@ -255,7 +222,7 @@ const Dashboard = () => {
     try {
       setLoad(true);
       const formdata = new FormData();
-      
+
       let currentProviderId = String(global.id || '').trim();
       if (!currentProviderId || ['251', '255', '256'].includes(currentProviderId)) {
         const rawUser = await AsyncStorage.getItem('user');
@@ -297,11 +264,11 @@ const Dashboard = () => {
       });
 
       const result = await response.json();
-
       setLoad(false);
 
       if (result?.status === 'Record Inserted Successfully' || result?.success) {
         showToast('Business details saved successfully');
+        setUserProfession(selectedBusiness);
         handleNavigateToAddBank();
       } else {
         showToast(result?.error || 'Failed to submit profile details');
@@ -326,6 +293,7 @@ const Dashboard = () => {
       <StatusBar barStyle="light-content" backgroundColor={color.defalt} />
 
       <HomStakwithoutsarch
+        title={userProfession}
         onPress={() => navigation.openDrawer()}
         onPressnotification={() => navigation.navigate('edit_profile')}
       />
@@ -335,6 +303,14 @@ const Dashboard = () => {
         contentContainerStyle={scrollContentFlattened}
         showsVerticalScrollIndicator={false}>
         <View style={styles.contentWrapper}>
+
+          <View style={styles.headerGreetingRow}>
+            <View style={styles.professionPill}>
+              {Icons?.Feather && <Icons.Feather name="scissors" size={15} color={color.defalt} />}
+              <Text style={styles.professionPillText}>Hairstylist Professional</Text>
+            </View>
+          </View>
+
           <Two_Crd />
 
           <View style={styles.quickActionsContainer}>
@@ -387,7 +363,6 @@ const Dashboard = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Clean & Minimal Income Analytics */}
           <View style={styles.chartCard}>
             <View style={styles.cardHeader}>
               <Text style={styles.chartTitle}>Income Analytics</Text>
@@ -454,7 +429,7 @@ const Dashboard = () => {
             </View>
             <View style={styles.noticeTextCol}>
               <Text style={styles.noticeTitle}>Account Verified</Text>
-              <Text style={styles.noticeSub}>Your provider profile is active and eligible for bookings.</Text>
+              <Text style={styles.noticeSub}>Your Hairstylist profile is active and eligible for bookings.</Text>
             </View>
           </View>
         </View>
@@ -493,11 +468,6 @@ const Dashboard = () => {
                   responsibility for the quality, guarantee, pricing, delivery,
                   or any other aspect of the products or services offered by
                   artisans.
-                  {'\n\n'}
-                  Users are responsible for conducting their own due diligence
-                  before engaging in any business transactions. By using the
-                  Skilledman App, you acknowledge that you have read and
-                  understood this disclaimer.
                 </Text>
               </ScrollView>
 
@@ -611,39 +581,6 @@ const Dashboard = () => {
                     value={address}
                   />
                 </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Country</Text>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    style={styles.selectTile}
-                    onPress={() => setCountryModalVisible(true)}>
-                    {selectedCountry ? (
-                      <View style={styles.tileSelectedRow}>
-                        <Image
-                          source={{
-                            uri: `https://flagcdn.com/w40/${selectedCountry.isoCode.toLowerCase()}.png`,
-                          }}
-                          style={styles.flagImageSmall}
-                        />
-                        <Text style={styles.selectTileText}>{selectedCountry.name}</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.selectTilePlaceholder}>Select Country</Text>
-                    )}
-                    <Icons.Feather name="chevron-down" size={18} color="#64748B" />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Trade Association (Optional)</Text>
-                  <C_TxtInput
-                    placeholder="e.g. Nigerian Artisan Association"
-                    placeholderTextColor="#94A3B8"
-                    onChangeText={setAssociation}
-                    value={association}
-                  />
-                </View>
               </ScrollView>
 
               <View style={styles.actionButtonGroup}>
@@ -666,60 +603,6 @@ const Dashboard = () => {
           </View>
         </View>
       </Modal>
-
-      <Modal
-        visible={countryModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setCountryModalVisible(false)}>
-        <View style={styles.bottomSheetOverlay}>
-          <View style={styles.sheetContainer}>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Select Country</Text>
-              <TouchableOpacity onPress={() => setCountryModalVisible(false)}>
-                <Icons.Ionicons name="close-circle" size={24} color="#94A3B8" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.searchBar}>
-              <Icons.Feather name="search" size={18} color="#94A3B8" />
-              <TextInput
-                placeholder="Search country..."
-                placeholderTextColor="#94A3B8"
-                style={styles.searchInput}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
-
-            <FlatList
-              data={filteredCountries}
-              keyExtractor={(item, index) =>
-                `country_${item?.isoCode || ''}_${item?.phonecode || ''}_${index}`
-              }
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.optionRow}
-                  onPress={() => onCountrySelect(item)}>
-                  <View style={styles.dialOptionLeft}>
-                    <Image
-                      source={{
-                        uri: `https://flagcdn.com/w40/${item.isoCode.toLowerCase()}.png`,
-                      }}
-                      style={styles.flagImageOption}
-                    />
-                    <Text style={styles.optionText}>{item.name}</Text>
-                  </View>
-                  {selectedCountry?.isoCode === item.isoCode && (
-                    <Icons.Feather name="check" size={18} color={color.defalt} />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 };
@@ -727,6 +610,28 @@ const Dashboard = () => {
 export default Dashboard;
 
 const styles = StyleSheet.create({
+  headerGreetingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    marginTop: 4,
+  },
+  professionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7ECE4',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
+  },
+  professionPillText: {
+    fontSize: 15.5,
+    fontWeight: '800',
+    color: color.defalt,
+    marginLeft: 8,
+    letterSpacing: -0.2,
+  },
   safeContainer: {
     flex: 1,
     backgroundColor: '#F8FAFC',
@@ -909,15 +814,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#EEF2F6',
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
-      : {
-        elevation: 8,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.18,
-        shadowRadius: 20,
-      }),
   },
   formModalCard: {
     borderRadius: 24,
@@ -928,15 +824,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#EEF2F6',
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)' }
-      : {
-        elevation: 8,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.18,
-        shadowRadius: 20,
-      }),
   },
   modalHeader: {
     backgroundColor: '#FFFFFF',
@@ -1017,15 +904,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 15,
     borderWidth: 0,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 4px 14px rgba(192, 122, 80, 0.25)' }
-      : {
-        elevation: 3,
-        shadowColor: color.defalt,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-      }),
   },
   primaryModalBtnText: {
     fontSize: 16,
@@ -1044,36 +922,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     letterSpacing: -0.2,
   },
-  selectTile: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 14,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    height: 52,
-    paddingHorizontal: 16,
-  },
-  tileSelectedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  selectTileText: {
-    fontSize: 14.5,
-    color: '#0F172A',
-    fontWeight: '500',
-  },
-  selectTilePlaceholder: {
-    fontSize: 14.5,
-    color: '#94A3B8',
-  },
-  flagImageSmall: {
-    width: 24,
-    height: 16,
-    borderRadius: 3,
-    marginRight: 10,
-  },
   actionButtonGroup: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1087,11 +935,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 15,
     borderWidth: 0,
-    elevation: 3,
-    shadowColor: color.defalt,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
   },
   outlineAddBankBtn: {
     flex: 1,
@@ -1108,86 +951,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
-  bottomSheetOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 16,
-    paddingHorizontal: 18,
-    maxHeight: '75%',
-    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.15)' }
-      : {
-        elevation: 10,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-      }),
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  sheetTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: -0.3,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 44,
-    marginBottom: 12,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14.5,
-    color: '#0F172A',
-    marginLeft: 8,
-    padding: 0,
-    ...(Platform.OS === 'web' && {
-      outlineWidth: 0,
-      outlineColor: 'transparent',
-      outlineStyle: 'none',
-      borderStyle: 'none',
-    }),
-  },
-  optionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  dialOptionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  flagImageOption: {
-    width: 24,
-    height: 16,
-    borderRadius: 3,
-    marginRight: 12,
-  },
-  optionText: {
-    fontSize: 15,
-    color: '#334155',
-    fontWeight: '500',
-  },
 });
-

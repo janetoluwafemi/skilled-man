@@ -19,7 +19,7 @@ const getResponsiveSize = (small, medium, large) => {
 
 const Tab = createMaterialTopTabNavigator();
 
-const MyWorkTab = props => {
+const MyWorkTab = ({value = ''}) => {
   return (
     <View style={styles.wrapper}>
       <Tab.Navigator
@@ -47,19 +47,15 @@ const MyWorkTab = props => {
             borderRadius: 3,
           },
         }}>
-        <Tab.Screen
-          name="Complete"
-          component={ComplteTab}
-          options={{title: 'Complete'}}
-        />
-
-        <Tab.Screen
-          name="Ongoing"
-          component={OngoingTabs}
-          options={{title: 'Ongoing'}}
-        />
-
-        <Tab.Screen name="AllTab" component={AlTabs} options={{title: 'All'}} />
+        <Tab.Screen name="Complete" options={{title: 'Complete'}}>
+          {props => <ComplteTab {...props} value={value} />}
+        </Tab.Screen>
+        <Tab.Screen name="Ongoing" options={{title: 'Ongoing'}}>
+          {props => <OngoingTabs {...props} value={value} />}
+        </Tab.Screen>
+        <Tab.Screen name="AllTab" options={{title: 'All'}}>
+          {props => <AlTabs {...props} value={value} />}
+        </Tab.Screen>
       </Tab.Navigator>
     </View>
   );

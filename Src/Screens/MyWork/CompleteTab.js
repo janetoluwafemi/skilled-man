@@ -13,20 +13,20 @@ import {
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useIsFocused} from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
-import {dummyBookings} from '../../utilis/MockJobsData';
 import color from '../../Assets/colors/colors';
 import {Icons} from '../../Components/Icons';
 import OngoingDrpdwn from '../../Components/OngoingDropdown';
 import BotonComp from '../../Components/BtnComp';
-import {BASIC_URL} from '../Signin/Signin';
+import {getBookings} from '../../utilis/providerStatus';
 
-const CompleteTab = props => {
+const CompleteTab = ({value = ''}) => {
   const focus = useIsFocused();
   const insets = useSafeAreaInsets();
   const {height, width} = useWindowDimensions();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const bottomPadding =
       height * 0.085 +
@@ -39,36 +39,18 @@ const CompleteTab = props => {
 
   const getCompletedData = useCallback(async () => {
     try {
-      const filteredBookings = dummyBookings.filter(
-          item => item.status === 'complete',
-      );
-      setData(filteredBookings);
-
-      /*
-      const formdata = new FormData();
-      formdata.append('provider_id', global.id);
-      formdata.append('status', 'complete');
-
-      const response = await fetch(`${BASIC_URL}provider_status.php`, {
-        method: 'POST',
-        body: formdata,
-      });
-
-      const result = await response.json();
-
-      if (result?.booking_request) {
-        setData(result.booking_request);
-      } else if (result?.error) {
-        console.log(result.error);
-      }
-      */
+      setLoading(true);
+      setData(await getBookings({status: 'complete', searchTerm: value}));
     } catch (error) {
+      setData([]);
       Alert.alert(
           'Error',
           error?.message || String(error) || 'An error occurred',
       );
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [value]);
 
   useEffect(() => {
     if (focus) {
@@ -120,6 +102,8 @@ const CompleteTab = props => {
       <View style={styles.flexContainer}>
         <FlatList
             data={data}
+            refreshing={loading}
+            onRefresh={getCompletedData}
             keyExtractor={(item, index) =>
                 item.booking_id?.toString() || index.toString()
             }
