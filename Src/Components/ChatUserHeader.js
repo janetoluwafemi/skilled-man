@@ -17,6 +17,7 @@ const ChatUserHeader = ({
   userImage,
   onlineStatus,
   onProfilePress,
+  onSearchPress,
 }) => {
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
@@ -31,7 +32,6 @@ const ChatUserHeader = ({
         <Icons.Ionicons name="arrow-back" size={24} color="#0F172A" />
       </TouchableOpacity>
 
-      {/* Wrapped in TouchableOpacity to handle profile clicks */}
       <TouchableOpacity
         style={styles.profileSection}
         activeOpacity={0.7}
@@ -41,7 +41,7 @@ const ChatUserHeader = ({
             source={
               userImage
                 ? {uri: userImage}
-                : require('../Assets/Images/user.jpg') // Make sure this path is correct for your structure
+                : require('../Assets/Images/user.jpg')
             }
             style={styles.avatar}
           />
@@ -65,7 +65,6 @@ const ChatUserHeader = ({
         <TouchableOpacity style={styles.actionBtn}>
           <Icons.Feather name="phone" size={20} color="#0F172A" />
         </TouchableOpacity>
-        {/* Triggers the Dropdown Menu */}
         <TouchableOpacity
           style={styles.actionBtn}
           onPress={() => setMenuVisible(true)}>
@@ -73,7 +72,6 @@ const ChatUserHeader = ({
         </TouchableOpacity>
       </View>
 
-      {/* Dropdown Menu Modal */}
       <Modal
         visible={menuVisible}
         transparent={true}
@@ -82,13 +80,12 @@ const ChatUserHeader = ({
         <TouchableWithoutFeedback onPress={closeMenu}>
           <View style={styles.modalOverlay}>
             <View style={styles.dropdownMenu}>
-              <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
-                <Text style={styles.menuText}>New group</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
-                <Text style={styles.menuText}>Add to contacts</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  closeMenu();
+                  if (onSearchPress) onSearchPress();
+                }}>
                 <Text style={styles.menuText}>Search</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>

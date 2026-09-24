@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
   RefreshControl,
   Platform,
   Dimensions,
-  StatusBar
+  StatusBar,
+  Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +21,6 @@ import * as Animatable from 'react-native-animatable';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import color from '../../Assets/colors/colors';
 import ProflHader from '../../Components/ProfileHeader';
-import ProflCrd from '../../Components/ProfileCard';
 import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
 
@@ -30,12 +30,6 @@ const isSmallDevice = height < 700;
 const isMediumDevice = height >= 700 && height < 900;
 
 const getResponsiveSize = (small, medium, large) => {
-  if (isSmallDevice) return small;
-  if (isMediumDevice) return medium;
-  return large;
-};
-
-const getResponsiveSpacing = (small, medium, large) => {
   if (isSmallDevice) return small;
   if (isMediumDevice) return medium;
   return large;
@@ -53,10 +47,28 @@ const ChatScreen = props => {
   const [isToggled, setIsToggled] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Tracks chats that have been opened/read during this session so polling doesn't bring back the badge
-  const [clearedChatIds, setClearedChatIds] = useState(new Set());
+  const [memoryLoaded, setMemoryLoaded] = useState(false);
+  const readMemoryRef = useRef({});
+
+  useEffect(() => {
+    const loadMemory = async () => {
+      try {
+        const storedMemory = await AsyncStorage.getItem('chat_read_timestamps');
+        if (storedMemory) {
+          readMemoryRef.current = JSON.parse(storedMemory);
+        }
+      } catch (error) {
+        console.log('Error loading read memory:', error);
+      } finally {
+        setMemoryLoaded(true);
+      }
+    };
+    loadMemory();
+  }, []);
 
   const getAllChats = useCallback(async (isRefresh = false) => {
+    if (!memoryLoaded) return;
+
     if (isRefresh) setRefreshing(true);
     try {
       const formdata = new FormData();
@@ -75,7 +87,6 @@ const ChatScreen = props => {
       }
 
       if (!ownId || ['251', '255', '256'].includes(ownId)) {
-        console.log('ChatScreen: No valid ownId found for fetch');
         setLoading(false);
         setRefreshing(false);
         return;
@@ -93,9 +104,9 @@ const ChatScreen = props => {
       try {
         result = JSON.parse(text);
       } catch (e) {
-        console.log('Failed to parse JSON:', text);
         return;
       }
+
       if (result?.chat) {
         const chatData = Array.isArray(result.chat) ? result.chat : [];
 
@@ -104,10 +115,16 @@ const ChatScreen = props => {
             String(item.provider_id) === String(ownId) || String(item.id) === String(ownId)
           )
           .map(item => {
-            const chatId = String(item.id || item.provider_id);
-            if (clearedChatIds.has(chatId)) {
+            const chatId = String(item.id || item.provider_id || item.user_id);
+
+            if (String(item.sender_id) === String(ownId)) {
               return { ...item, unread_count: 0 };
             }
+
+            if (readMemoryRef.current[chatId] === item.created_at) {
+              return { ...item, unread_count: 0 };
+            }
+
             return item;
           });
 
@@ -119,7 +136,7 @@ const ChatScreen = props => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [clearedChatIds]);
+  }, [memoryLoaded]);
 
   useEffect(() => {
     let interval = null;
@@ -170,6 +187,83 @@ const ChatScreen = props => {
     Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0) +
     28;
 
+  const formatTime = (timeString) => {
+    if (!timeString) return '';
+    const date = new Date(timeString);
+    if (isNaN(date.getTime())) return timeString;
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const renderChatItem = ({ item }) => {
+    const unreadCount = Number(item.unread_count || 0);
+    const hasUnread = unreadCount > 0;
+
+    const avatarUri = item.image
+      ? (item.image.startsWith('http') ? item.image : `${BASIC_URL}uploads/${item.image.replace(/^\/+/, '')}`)
+      : null;
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={styles.chatRow}
+        onPress={() => {
+          const chatId = String(item.id || item.provider_id || item.user_id);
+
+          readMemoryRef.current[chatId] = item.created_at;
+          AsyncStorage.setItem('chat_read_timestamps', JSON.stringify(readMemoryRef.current)).catch(e => console.log(e));
+
+          setALlChat(prevChats =>
+            prevChats.map(chat =>
+              String(chat.id || chat.provider_id || chat.user_id) === chatId
+                ? { ...chat, unread_count: 0 }
+                : chat
+            )
+          );
+
+          navigation.navigate('IndividualChat', {
+            currentuser: item,
+            receiver_id: item?.id || item?.provider_id || item?.user_id,
+          });
+        }}
+      >
+        <View style={styles.avatarContainer}>
+          {avatarUri ? (
+            <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+          ) : (
+            <View style={styles.avatarPlaceholder}>
+              <Icons.Feather name="user" size={24} color="#94A3B8" />
+            </View>
+          )}
+          {hasUnread && <View style={styles.onlineDot} />}
+        </View>
+
+        <View style={styles.chatContent}>
+          <View style={styles.chatHeader}>
+            <Text style={[styles.chatName, hasUnread && styles.chatNameUnread]} numberOfLines={1}>
+              {item.name || 'Unknown User'}
+            </Text>
+            <Text style={[styles.chatTime, hasUnread && styles.chatTimeUnread]}>
+              {formatTime(item.created_at)}
+            </Text>
+          </View>
+
+          <View style={styles.chatFooter}>
+            <Text style={[styles.chatMessage, hasUnread && styles.chatMessageUnread]} numberOfLines={2}>
+              {item.message || 'Started a conversation'}
+            </Text>
+            {hasUnread && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadBadgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -201,7 +295,7 @@ const ChatScreen = props => {
               autoFocus={true}
             />
             {searchTerm.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchTerm('')} activeOpacity={0.7}>
+              <TouchableOpacity onPress={() => setSearchTerm('')} activeOpacity={0.7} style={styles.clearBtn}>
                 <Icons.Ionicons name="close-circle" size={18} color="#94A3B8" />
               </TouchableOpacity>
             )}
@@ -209,12 +303,14 @@ const ChatScreen = props => {
         </Animatable.View>
       )}
 
-      {getChat.length > 0 && countUnread > 0 && (
+      {getChat.length > 0 && (
         <View style={styles.topInfoBar}>
           <Text style={styles.conversationsHeading}>Recent Conversations</Text>
-          <View style={styles.unreadPill}>
-            <Text style={styles.unreadPillText}>{countUnread} New</Text>
-          </View>
+          {countUnread > 0 && (
+            <View style={styles.unreadPill}>
+              <Text style={styles.unreadPillText}>{countUnread} New</Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -242,42 +338,15 @@ const ChatScreen = props => {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconCircle}>
-                <Icons.Feather name="message-square" size={32} color="#94A3B8" />
+                <Icons.Feather name="message-square" size={32} color={color.defalt} />
               </View>
-              <Text style={styles.emptyTitle}>No Conversations Yet</Text>
+              <Text style={styles.emptyTitle}>No Conversations</Text>
               <Text style={styles.emptySubtitle}>
                 Your chats and messages with artisans will appear here.
               </Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <View style={styles.chatCardWrap}>
-              <ProflCrd
-                showProfile={() => {
-                  const chatId = String(item.id || item.provider_id);
-                  // Remember this chat has been read for the session
-                  setClearedChatIds(prev => new Set(prev).add(chatId));
-
-                  setALlChat(prevChats =>
-                    prevChats.map(chat =>
-                      String(chat.id || chat.provider_id) === chatId
-                        ? { ...chat, unread_count: 0 }
-                        : chat
-                    )
-                  );
-                  navigation.navigate('IndividualChat', {
-                    currentuser: item,
-                    receiver_id: item?.id || item?.provider_id || item?.user_id,
-                  });
-                }}
-                profile={item.image}
-                cardTitle={item.name}
-                time={item.created_at}
-                msgTitle={item.message}
-                noOfMsg={Number(item.unread_count)}
-              />
-            </View>
-          )}
+          renderItem={renderChatItem}
         />
       )}
     </SafeAreaView>
@@ -293,27 +362,18 @@ const styles = StyleSheet.create({
   },
   searchWrapper: {
     paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 4,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   searchContainer: {
     flexDirection: 'row',
-    height: 48,
+    height: 46,
     alignItems: 'center',
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    backgroundColor: '#F1F5F9',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)' }
-      : {
-        elevation: 2,
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 6,
-      }),
   },
   searchInput: {
     flex: 1,
@@ -328,6 +388,9 @@ const styles = StyleSheet.create({
       outlineStyle: 'none',
       borderStyle: 'none',
     }),
+  },
+  clearBtn: {
+    padding: 4,
   },
   topInfoBar: {
     flexDirection: 'row',
@@ -359,24 +422,118 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 16,
-    paddingTop: 6,
+    paddingTop: 10,
   },
-  chatCardWrap: {
-    marginBottom: 8,
-    borderRadius: 18,
+  chatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    overflow: 'hidden',
+    padding: 14,
+    marginBottom: 10,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#EEF2F6',
     ...(Platform.OS === 'web'
-      ? { boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)' }
+      ? { boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)' }
       : {
-        elevation: 1,
+        elevation: 2,
         shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.03,
-        shadowRadius: 4,
+        shadowRadius: 6,
       }),
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 14,
+  },
+  avatarImage: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#F1F5F9',
+  },
+  avatarPlaceholder: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  onlineDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: color.defalt,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  chatContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  chatName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#334155',
+    flex: 1,
+    paddingRight: 8,
+  },
+  chatNameUnread: {
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  chatTime: {
+    fontSize: 12,
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+  chatTimeUnread: {
+    color: color.defalt,
+    fontWeight: '600',
+  },
+  chatFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  chatMessage: {
+    fontSize: 13.5,
+    color: '#64748B',
+    flex: 1,
+    paddingRight: 12,
+    lineHeight: 18,
+  },
+  chatMessageUnread: {
+    color: '#334155',
+    fontWeight: '600',
+  },
+  unreadBadge: {
+    backgroundColor: color.defalt,
+    paddingHorizontal: 7,
+    height: 20,
+    minWidth: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  unreadBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
   },
   loadingContainer: {
     flex: 1,
@@ -398,24 +555,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
   emptyIconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#EEF2F6',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#F7ECE4',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   emptySubtitle: {
-    fontSize: 13.5,
+    fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
 });

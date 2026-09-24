@@ -21,7 +21,6 @@ import {
   TextInput,
   ScrollView,
   Keyboard,
-  InteractionManager,
   Alert,
   KeyboardAvoidingView,
   Linking,
@@ -125,16 +124,11 @@ const getSynchronizedUserId = async () => {
   return null;
 };
 
-const AudioMessage = ({
-                        audioUri,
-                        isMe,
-                      }) => {
+const AudioMessage = ({ audioUri, isMe }) => {
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const textColor = isMe
-    ? '#FFFFFF'
-    : color.defalt;
+  const textColor = isMe ? '#FFFFFF' : color.defalt;
 
   useEffect(() => {
     return sound
@@ -166,9 +160,7 @@ const AudioMessage = ({
           setIsPlaying(true);
         }
       } else {
-        const {
-          sound: newSound,
-        } = await Audio.Sound.createAsync({
+        const { sound: newSound } = await Audio.Sound.createAsync({
           uri: audioUri,
         });
 
@@ -177,19 +169,14 @@ const AudioMessage = ({
 
         await newSound.playAsync();
 
-        newSound.setOnPlaybackStatusUpdate(
-          status => {
-            if (status.didJustFinish) {
-              setIsPlaying(false);
-            }
+        newSound.setOnPlaybackStatusUpdate(status => {
+          if (status.didJustFinish) {
+            setIsPlaying(false);
           }
-        );
+        });
       }
     } catch (error) {
-      console.log(
-        'Error playing audio',
-        error
-      );
+      console.log('Error playing audio', error);
     }
   };
 
@@ -202,16 +189,9 @@ const AudioMessage = ({
         minWidth: 150,
       }}
     >
-      <TouchableOpacity
-        onPress={playAudio}
-        style={{ marginRight: 10 }}
-      >
+      <TouchableOpacity onPress={playAudio} style={{ marginRight: 10 }}>
         <Icons.Feather
-          name={
-            isPlaying
-              ? 'pause-circle'
-              : 'play-circle'
-          }
+          name={isPlaying ? 'pause-circle' : 'play-circle'}
           size={28}
           color={textColor}
         />
@@ -247,14 +227,8 @@ const AudioMessage = ({
   );
 };
 
-const NewMessage = ({
-                      userId,
-                      providerId,
-                      peerData,
-                      showAlert,
-                    }) => {
+const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
   const insets = useSafeAreaInsets();
-
   const navigation = useNavigation();
   const route = useRoute();
   const [messages, setMessages] = useState([]);
@@ -264,8 +238,10 @@ const NewMessage = ({
   const [selectedImage, setSelectedImage] = useState(null);
   const [recording, setRecording] = useState();
   const [isBlocked, setIsBlocked] = useState(false);
+
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [kebabVisible, setKebabVisible] = useState(false);
+
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
   const [openMenuMessageId, setOpenMenuMessageId] = useState(null);
   const [isSearchActive, setIsSearchActive] = useState(route.params?.startSearch || false);
@@ -302,7 +278,6 @@ const NewMessage = ({
     ? `${BASIC_URL}uploads/${peerData.image.replace(/^\/+/, '')}`
     : `${BASIC_URL}uploads/dumy.png`;
 
-  // 🟢 NEW: Keyboard listener to auto-hide emoji picker when native keyboard pops up
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
@@ -773,20 +748,22 @@ const NewMessage = ({
           </TouchableOpacity>
         </View>
       ) : (
-        <ChatUsrHeader
-          userName={peerData?.name || 'Chat'}
-          userImage={peerAvatar}
-          onlineStatus={!isBlocked}
-          onProfilePress={() => {
-            navigation.navigate('UserProfile', {
-              userId: peerId,
-              userData: peerData,
-            });
-          }}
-        />
+        <View style={{ zIndex: 10 }}>
+          <ChatUsrHeader
+            userName={peerData?.name || 'Chat'}
+            userImage={peerAvatar}
+            onlineStatus={!isBlocked}
+            onProfilePress={() => {
+              navigation.navigate('UserProfile', {
+                userId: peerId,
+                userData: peerData,
+              });
+            }}
+            onSearchPress={() => setIsSearchActive(true)}
+          />
+        </View>
       )}
 
-      {/* 🟢 NEW: Adjusted keyboard vertical offset to account for emoji picker space natively */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -916,7 +893,6 @@ const NewMessage = ({
             const hasText = props.text && props.text.trim().length > 0;
             return (
               <View style={styles.composerWrapper}>
-                {/* 🟢 NEW: Fixed Emoji Icon Toggle Logic */}
                 <TouchableOpacity
                   style={styles.inputActionBtn}
                   onPress={() => {
@@ -925,7 +901,6 @@ const NewMessage = ({
                       composerRef.current?.focus();
                     } else {
                       Keyboard.dismiss();
-                      // Slight delay mimics smooth native transition
                       setTimeout(() => {
                         setShowEmojiPicker(true);
                       }, 100);
@@ -933,7 +908,6 @@ const NewMessage = ({
                   }}
                   activeOpacity={0.7}
                 >
-                  {/* 🟢 NEW: Safely swap icons without crashing */}
                   {showEmojiPicker ? (
                     <Icons.Ionicons name="keyboard-outline" size={24} color="#64748B" />
                   ) : (
@@ -1018,7 +992,6 @@ const NewMessage = ({
           )}
         />
 
-        {/* 🟢 NEW: Fixed Emoji Picker - Disabled History to prevent AsyncStorage crash */}
         {showEmojiPicker && (
           <View style={{ height: 280, backgroundColor: '#FFFFFF' }}>
             <EmojiSelector
@@ -1040,6 +1013,7 @@ const NewMessage = ({
           )}
         </Pressable>
       </Modal>
+
       {selectedMessage && kebabVisible && (
         <View style={styles.kebabMenu}>
           <TouchableOpacity style={styles.kebabMenuItem} onPress={() => handleCopyAction(selectedMessage.text)}>
@@ -1057,24 +1031,14 @@ const NewMessage = ({
   );
 };
 const EncryptionInfoScreen = () => {
-  const navigation =
-    useNavigation();
+  const navigation = useNavigation();
+  const route = useRoute();
 
-  const route =
-    useRoute();
-
-  const {
-    userName,
-  } =
-  route.params || {
-    userName: 'User',
-  };
+  const { userName } = route.params || { userName: 'User' };
 
   return (
     <SafeAreaView
-      style={
-        styles.safeArea
-      }
+      style={styles.safeArea}
       edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}
     >
       <StatusBar
@@ -1082,18 +1046,10 @@ const EncryptionInfoScreen = () => {
         backgroundColor="#FFFFFF"
       />
 
-      <View
-        style={
-          styles.headerBar
-        }
-      >
+      <View style={styles.headerBar}>
         <TouchableOpacity
-          onPress={() =>
-            navigation.goBack()
-          }
-          style={
-            styles.iconBtn
-          }
+          onPress={() => navigation.goBack()}
+          style={styles.iconBtn}
         >
           <Icons.Ionicons
             name="arrow-back"
@@ -1102,31 +1058,15 @@ const EncryptionInfoScreen = () => {
           />
         </TouchableOpacity>
 
-        <Text
-          style={
-            styles.fullScreenModalTitle
-          }
-        >
+        <Text style={styles.fullScreenModalTitle}>
           Encryption
         </Text>
 
-        <View
-          style={{
-            flex: 1,
-          }}
-        />
+        <View style={{ flex: 1 }} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={
-          styles.encryptionBody
-        }
-      >
-        <View
-          style={
-            styles.lockBadgeBox
-          }
-        >
+      <ScrollView contentContainerStyle={styles.encryptionBody}>
+        <View style={styles.lockBadgeBox}>
           <Icons.Feather
             name="lock"
             size={48}
@@ -1134,32 +1074,17 @@ const EncryptionInfoScreen = () => {
           />
         </View>
 
-        <Text
-          style={
-            styles.encryptionMainTitle
-          }
-        >
+        <Text style={styles.encryptionMainTitle}>
           End-to-end encryption
         </Text>
 
-        <Text
-          style={
-            styles.encryptionDetailText
-          }
-        >
-          Messages and calls you
-          share with {userName} are
-          end-to-end encrypted.
-          This means WhatsApp and
-          third-party services cannot
-          read or listen to them.
+        <Text style={styles.encryptionDetailText}>
+          Messages and calls you share with {userName} are
+          end-to-end encrypted. This means WhatsApp and
+          third-party services cannot read or listen to them.
         </Text>
 
-        <View
-          style={
-            styles.qrPlaceholder
-          }
-        >
+        <View style={styles.qrPlaceholder}>
           <Icons.Ionicons
             name="qr-code-outline"
             size={140}
@@ -1167,27 +1092,15 @@ const EncryptionInfoScreen = () => {
           />
         </View>
 
-        <Text
-          style={
-            styles.securityCodeText
-          }
-        >
-          27189 45912 61234 88123
-          {'\n'}
-          99120 45719 33412 11094
-          {'\n'}
+        <Text style={styles.securityCodeText}>
+          27189 45912 61234 88123{'\n'}
+          99120 45719 33412 11094{'\n'}
           78213 54311 09843 66124
         </Text>
 
-        <Text
-          style={
-            styles.encryptionInfo
-          }
-        >
-          Verify this code with{' '}
-          {userName} by scanning
-          their QR code or comparing
-          the numbers above.
+        <Text style={styles.encryptionInfo}>
+          Verify this code with {userName} by scanning
+          their QR code or comparing the numbers above.
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -1195,8 +1108,7 @@ const EncryptionInfoScreen = () => {
 };
 
 const IndividualChat = () => {
-  const route =
-    useRoute();
+  const route = useRoute();
 
   const currentprovider =
     route.params?.currentuser ||
@@ -1216,47 +1128,29 @@ const IndividualChat = () => {
       ''
     ).trim();
 
-  const [
-    resolvedUserId,
-    setResolvedUserId,
-  ] = useState(null);
+  const [resolvedUserId, setResolvedUserId] = useState(null);
 
-  const [
-    alertConfig,
-    setAlertConfig,
-  ] = useState({
+  const [alertConfig, setAlertConfig] = useState({
     visible: false,
     title: '',
     message: '',
     onOk: () =>
-      setAlertConfig(
-        prev => ({
-          ...prev,
-          visible: false,
-        })
-      ),
+      setAlertConfig(prev => ({
+        ...prev,
+        visible: false,
+      })),
   });
 
-  const showAlert = (
-    title,
-    message,
-    onOk
-  ) => {
+  const showAlert = (title, message, onOk) => {
     setAlertConfig({
       visible: true,
-
       title,
-
       message,
-
       onOk: () => {
-        setAlertConfig(
-          prev => ({
-            ...prev,
-            visible: false,
-          })
-        );
-
+        setAlertConfig(prev => ({
+          ...prev,
+          visible: false,
+        }));
         if (onOk) {
           onOk();
         }
@@ -1265,36 +1159,22 @@ const IndividualChat = () => {
   };
 
   useEffect(() => {
-    const syncUser =
-      async () => {
-        const userId =
-          await getSynchronizedUserId();
-
-        if (userId) {
-          setResolvedUserId(
-            userId
-          );
-        } else if (
-          global.id
-        ) {
-          setResolvedUserId(
-            String(global.id)
-          );
-        }
-      };
-
+    const syncUser = async () => {
+      const userId = await getSynchronizedUserId();
+      if (userId) {
+        setResolvedUserId(userId);
+      } else if (global.id) {
+        setResolvedUserId(String(global.id));
+      }
+    };
     if (!resolvedUserId) {
       syncUser();
     }
-  }, [
-    resolvedUserId,
-  ]);
+  }, [resolvedUserId]);
 
   return (
     <SafeAreaView
-      style={
-        styles.safeArea
-      }
+      style={styles.safeArea}
       edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}
     >
       <StatusBar
@@ -1302,663 +1182,343 @@ const IndividualChat = () => {
         backgroundColor="#F8FAFC"
       />
 
-      <View
-        style={
-          styles.chatViewContainer
-        }
-      >
-        {resolvedUserId &&
-        peerId ? (
+      <View style={styles.chatViewContainer}>
+        {resolvedUserId && peerId ? (
           <NewMessage
-            userId={
-              resolvedUserId
-            }
-            providerId={
-              peerId
-            }
-            peerData={
-              currentprovider
-            }
-            showAlert={
-              showAlert
-            }
+            userId={resolvedUserId}
+            providerId={peerId}
+            peerData={currentprovider}
+            showAlert={showAlert}
           />
         ) : (
-          <View
-            style={
-              styles.missingUserBox
-            }
-          >
+          <View style={styles.missingUserBox}>
             <ActivityIndicator
               size="large"
-              color={
-                color.defalt
-              }
+              color={color.defalt}
             />
-
-            <Text
-              style={
-                styles.missingUserText
-              }
-            >
-              Connecting to
-              conversation...
+            <Text style={styles.missingUserText}>
+              Connecting to conversation...
             </Text>
           </View>
         )}
       </View>
 
       <CustomAlert
-        visible={
-          alertConfig.visible
-        }
-        title={
-          alertConfig.title
-        }
-        message={
-          alertConfig.message
-        }
-        onOk={
-          alertConfig.onOk
-        }
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onOk={alertConfig.onOk}
       />
     </SafeAreaView>
   );
 };
 
-export {
-  EncryptionInfoScreen,
-};
-
+export { EncryptionInfoScreen };
 export default IndividualChat;
 
-const styles =
-  StyleSheet.create({
-
-    safeArea: {
-      flex: 1,
-      backgroundColor:
-        '#FFFFFF',
-    },
-
-    chatWrapper: {
-      flex: 1,
-      backgroundColor:
-        '#F0F2F5',
-    },
-    chatViewContainer: {
-      flex: 1,
-      backgroundColor:
-        '#F0F2F5',
-    },
-    contextualHeader: {
-      height: 60,
-      backgroundColor:
-      color.defalt,
-      flexDirection:
-        'row',
-      alignItems:
-        'center',
-      justifyContent:
-        'space-between',
-      paddingHorizontal: 16,
-      zIndex: 10,
-      elevation: 4,
-    },
-    contextHeaderLeft: {
-      flexDirection:
-        'row',
-      alignItems:
-        'center',
-    },
-    contextHeaderText: {
-      color: '#FFFFFF',
-      fontSize: 18,
-      fontWeight:
-        'bold',
-      marginLeft: 20,
-    },
-    contextHeaderRight: {
-      flexDirection:
-        'row',
-      alignItems:
-        'center',
-    },
-    searchHeader: {
-      height: 60,
-      backgroundColor:
-        '#FFFFFF',
-      flexDirection:
-        'row',
-      alignItems:
-        'center',
-      paddingHorizontal: 16,
-      zIndex: 10,
-      elevation: 4,
-
-      shadowColor:
-        '#000',
-
-      shadowOffset: {
-        width: 0,
-        height: 2,
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  chatWrapper: {
+    flex: 1,
+    backgroundColor: '#F0F2F5',
+  },
+  chatViewContainer: {
+    flex: 1,
+    backgroundColor: '#F0F2F5',
+  },
+  contextualHeader: {
+    height: 60,
+    backgroundColor: color.defalt,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    zIndex: 10,
+    elevation: 4,
+  },
+  contextHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  contextHeaderText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 20,
+  },
+  contextHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchHeader: {
+    height: 60,
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    zIndex: 10,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+  },
+  searchHeaderInput: {
+    flex: 1,
+    height: 40,
+    marginLeft: 12,
+    fontSize: 16,
+    color: '#0F172A',
+    borderWidth: 0,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none',
+    }),
+  },
+  iconBtn: {
+    marginLeft: 16,
+    padding: 4,
+  },
+  kebabMenu: {
+    position: 'absolute',
+    top: 55,
+    right: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    paddingVertical: 4,
+    zIndex: 1000,
+  },
+  kebabMenuItem: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  kebabMenuText: {
+    fontSize: 15,
+    color: '#0F172A',
+    fontWeight: '500',
+  },
+  chatMsgImage: {
+    width: 240,
+    height: 180,
+    borderRadius: 12,
+    margin: 4,
+  },
+  inputToolbar: {
+    backgroundColor: '#F0F2F5',
+    borderTopWidth: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+  },
+  inputToolbarPrimary: {
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  composerWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingLeft: 4,
+    paddingRight: 4,
+    marginRight: 8,
+    minHeight: 46,
+    maxHeight: 120,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  inputActionBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  composerRightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  composerInput: {
+    flex: 1,
+    color: '#0F172A',
+    fontSize: 16,
+    lineHeight: 21,
+    paddingTop: Platform.OS === 'ios' ? 11 : 8,
+    paddingBottom: Platform.OS === 'ios' ? 11 : 8,
+    paddingHorizontal: 4,
+    ...(Platform.OS === 'web' && {
+      outlineWidth: 0,
+    }),
+  },
+  sendComponentWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  sendButton: {
+    backgroundColor: color.defalt,
+    borderRadius: 22,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: color.defalt,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
       },
-
-      shadowOpacity:
-        0.1,
-    },
-
-    searchHeaderInput: {
-      flex: 1,
-      height: 40,
-      marginLeft: 12,
-      fontSize: 16,
-      color: '#0F172A',
-      borderWidth: 0,
-
-      ...(Platform.OS ===
-        'web' && {
-          outlineStyle:
-            'none',
-        }),
-    },
-    iconBtn: {
-      marginLeft: 16,
-      padding: 4,
-    },
-    kebabMenu: {
-      position:
-        'absolute',
-
-      top: 55,
-
-      right: 16,
-
-      backgroundColor:
-        '#FFFFFF',
-
-      borderRadius: 8,
-
-      elevation: 5,
-
-      shadowColor:
-        '#000',
-
-      shadowOffset: {
-        width: 0,
-        height: 2,
+      android: {
+        elevation: 2,
       },
-
-      shadowOpacity:
-        0.2,
-
-      paddingVertical: 4,
-
-      zIndex: 1000,
-    },
-
-    kebabMenuItem: {
-      paddingHorizontal:
-        20,
-
-      paddingVertical:
-        12,
-    },
-
-    kebabMenuText: {
-      fontSize: 15,
-      color: '#0F172A',
-      fontWeight:
-        '500',
-    },
-    chatMsgImage: {
-      width: 240,
-      height: 180,
-      borderRadius: 12,
-      margin: 4,
-    },
-    inputToolbar: {
-      backgroundColor:
-        '#F0F2F5',
-
-      borderTopWidth:
-        0,
-
-      paddingHorizontal:
-        12,
-
-      paddingVertical:
-        8,
-
-      paddingBottom:
-        Platform.OS === 'ios'
-          ? 24
-          : 12,
-    },
-    inputToolbarPrimary: {
-      alignItems:
-        'flex-end',
-
-      justifyContent:
-        'space-between',
-    },
-    composerWrapper: {
-      flex: 1,
-
-      flexDirection:
-        'row',
-
-      alignItems:
-        'center',
-
-      backgroundColor:
-        '#FFFFFF',
-
-      borderRadius: 24,
-
-      paddingLeft: 4,
-
-      paddingRight: 4,
-
-      marginRight: 8,
-
-      minHeight: 46,
-
-      maxHeight: 120,
-
-      borderWidth: 1,
-
-      borderColor:
-        '#E2E8F0',
-    },
-    inputActionBtn: {
-      width: 40,
-      height: 40,
-
-      justifyContent:
-        'center',
-
-      alignItems:
-        'center',
-    },
-    composerRightIcons: {
-      flexDirection:
-        'row',
-
-      alignItems:
-        'center',
-    },
-    composerInput: {
-      flex: 1,
-
-      color:
-        '#0F172A',
-
-      fontSize: 16,
-
-      lineHeight: 21,
-
-      paddingTop:
-        Platform.OS === 'ios'
-          ? 11
-          : 8,
-
-      paddingBottom:
-        Platform.OS === 'ios'
-          ? 11
-          : 8,
-
-      paddingHorizontal: 4,
-
-      ...(Platform.OS ===
-        'web' && {
-          outlineWidth: 0,
-        }),
-    },
-    sendComponentWrapper: {
-      justifyContent:
-        'center',
-
-      alignItems:
-        'center',
-
-      marginBottom: 2,
-    },
-
-    sendButton: {
-      backgroundColor:
-      color.defalt,
-
-      borderRadius: 22,
-
-      width: 44,
-
-      height: 44,
-
-      justifyContent:
-        'center',
-
-      alignItems:
-        'center',
-
-      ...Platform.select({
-        ios: {
-          shadowColor:
-          color.defalt,
-
-          shadowOffset: {
-            width: 0,
-            height: 2,
-          },
-
-          shadowOpacity:
-            0.25,
-
-          shadowRadius: 4,
-        },
-
-        android: {
-          elevation: 2,
-        },
-
-        web: {
-          boxShadow:
-            '0 2px 6px rgba(186, 104, 56, 0.25)',
-        },
-      }),
-    },
-    modalContainer: {
-      flex: 1,
-
-      backgroundColor:
-        'rgba(15, 23, 42, 0.95)',
-
-      justifyContent:
-        'center',
-
-      alignItems:
-        'center',
-    },
-
-    fullImage: {
-      width:
-      Dimensions.get(
-        'window'
-      ).width,
-
-      height:
-      Dimensions.get(
-        'window'
-      ).height,
-    },
-    missingUserBox: {
-      flex: 1,
-
-      justifyContent:
-        'center',
-
-      alignItems:
-        'center',
-
-      paddingHorizontal: 20,
-    },
-
-    missingUserText: {
-      textAlign:
-        'center',
-
-      color:
-        '#64748B',
-
-      fontSize: 15,
-
-      fontWeight:
-        '600',
-
-      marginTop: 12,
-    },
-    blockedBannerContainer: {
-      backgroundColor:
-        '#F1F5F9',
-
-      paddingVertical:
-        14,
-
-      paddingHorizontal:
-        20,
-
-      alignItems:
-        'center',
-
-      justifyContent:
-        'center',
-
-      borderTopWidth: 1,
-
-      borderTopColor:
-        '#E2E8F0',
-    },
-
-    blockedBannerTextBold: {
-      fontSize: 14,
-
-      fontWeight:
-        '600',
-
-      color:
-        '#EF4444',
-
-      textAlign:
-        'center',
-    },
-
-    webChevronArrow: {
-      position:
-        'absolute',
-
-      top: 4,
-
-      zIndex: 10,
-
-      padding: 2,
-
-      backgroundColor:
-        'transparent',
-    },
-
-    webDropdownMenu: {
-      position:
-        'absolute',
-
-      top: 30,
-
-      backgroundColor:
-        '#FFFFFF',
-
-      borderRadius: 8,
-
-      paddingVertical: 8,
-
-      minWidth: 160,
-
-      zIndex: 9999,
-
-      ...Platform.select({
-        web: {
-          boxShadow:
-            '0 4px 12px rgba(0,0,0,0.15)',
-        },
-      }),
-    },
-
-    webDropdownItem: {
-      flexDirection:
-        'row',
-
-      alignItems:
-        'center',
-
-      paddingVertical:
-        10,
-
-      paddingHorizontal:
-        16,
-    },
-
-    webDropdownText: {
-      fontSize: 15,
-
-      color:
-        '#0F172A',
-
-      marginLeft: 12,
-
-      fontWeight:
-        '400',
-    },
-
-    fullScreenModal: {
-      flex: 1,
-      backgroundColor:
-        '#FFFFFF',
-    },
-
-    fullScreenModalTitle: {
-      fontSize: 18,
-
-      fontWeight:
-        '600',
-
-      color:
-        '#0F172A',
-
-      marginLeft: 16,
-
-      flex: 2,
-    },
-
-    headerBar: {
-      height: 60,
-
-      flexDirection:
-        'row',
-
-      alignItems:
-        'center',
-
-      paddingHorizontal: 8,
-
-      backgroundColor:
-        '#FFFFFF',
-
-      borderBottomWidth: 1,
-
-      borderBottomColor:
-        '#E2E8F0',
-    },
-
-    encryptionBody: {
-      padding: 24,
-
-      alignItems:
-        'center',
-    },
-
-    lockBadgeBox: {
-      width: 80,
-
-      height: 80,
-
-      borderRadius: 40,
-
-      backgroundColor:
-        '#F8FAFC',
-
-      justifyContent:
-        'center',
-
-      alignItems:
-        'center',
-
-      marginBottom: 20,
-    },
-
-    encryptionMainTitle: {
-      fontSize: 20,
-
-      fontWeight:
-        '700',
-
-      color:
-        '#0F172A',
-
-      marginBottom: 12,
-
-      textAlign:
-        'center',
-    },
-
-    encryptionDetailText: {
-      fontSize: 14,
-
-      color: '#64748B',
-
-      textAlign: 'center',
-
-      lineHeight: 22,
-
-      marginBottom: 24,
-    },
-
-    qrPlaceholder: {
-      marginVertical: 10,
-
-      padding: 15,
-
-      backgroundColor:
-        '#F8FAFC',
-
-      borderRadius: 16,
-    },
-    securityCodeText: {
-      fontSize: 16,
-
-      fontWeight:
-        '600',
-
-      color:
-        '#0F172A',
-
-      textAlign:
-        'center',
-
-      letterSpacing: 1.5,
-
-      lineHeight: 26,
-
-      marginVertical: 16,
-    },
-    encryptionInfo: {
-      fontSize: 13,
-
-      color:
-        '#64748B',
-
-      textAlign:
-        'center',
-
-      lineHeight: 20,
-
-      marginBottom: 20,
-    },
-    scanBtn: {
-      backgroundColor:
-      color.defalt,
-
-      paddingVertical: 12,
-
-      paddingHorizontal: 32,
-
-      borderRadius: 24,
-    },
-  });
+      web: {
+        boxShadow: '0 2px 6px rgba(186, 104, 56, 0.25)',
+      },
+    }),
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImage: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+  },
+  missingUserBox: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  missingUserText: {
+    textAlign: 'center',
+    color: '#64748B',
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: 12,
+  },
+  blockedBannerContainer: {
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  blockedBannerTextBold: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#EF4444',
+    textAlign: 'center',
+  },
+  webDropdownMenu: {
+    position: 'absolute',
+    top: 30,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 8,
+    minWidth: 160,
+    zIndex: 9999,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      },
+    }),
+  },
+  webDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  webDropdownText: {
+    fontSize: 15,
+    color: '#0F172A',
+    marginLeft: 12,
+    fontWeight: '400',
+  },
+  fullScreenModal: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  fullScreenModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#0F172A',
+    marginLeft: 16,
+    flex: 2,
+  },
+  headerBar: {
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  encryptionBody: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  lockBadgeBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  encryptionMainTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  encryptionDetailText: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  qrPlaceholder: {
+    marginVertical: 10,
+    padding: 15,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+  },
+  securityCodeText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: 1.5,
+    lineHeight: 26,
+    marginVertical: 16,
+  },
+  encryptionInfo: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  scanBtn: {
+    backgroundColor: color.defalt,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 24,
+  },
+});

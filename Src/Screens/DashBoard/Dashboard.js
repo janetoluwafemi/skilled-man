@@ -51,7 +51,6 @@ const Dashboard = () => {
   const [selectedBusiness, setSelectedBusiness] = useState('Hairstylist');
   const [selectedExperience, setSelectedExperience] = useState('Year of experience');
 
-  // Hardcoded fixed user profession
   const [userProfession, setUserProfession] = useState('Hairstylist');
 
   const [load, setLoad] = useState(false);
@@ -491,6 +490,15 @@ const Dashboard = () => {
         onRequestClose={() => setsigninmodal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.formModalCard}>
+            <View style={styles.modalTopBar}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setsigninmodal(false)}
+                style={styles.backArrowBtn}>
+                <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+
             <View style={styles.modalHeader}>
               <View style={styles.modalIconWrapper}>
                 {Icons?.Feather && (
@@ -804,6 +812,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
+  },
+  modalTopBar: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  backArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   disclaimerModalCard: {
     borderRadius: 24,

@@ -49,18 +49,15 @@ const UserProfile = () => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const [encryptionVisible, setEncryptionVisible] = useState(false);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const [mediaVisible, setMediaVisible] = useState(false);
   const [disappearingVisible, setDisappearingVisible] = useState(false);
-  const [createGroupVisible, setCreateGroupVisible] = useState(false);
 
   const [muteSelection, setMuteSelection] = useState('Off');
   const [mediaSelection, setMediaSelection] = useState('Default (Yes)');
   const [disappearingSelection, setDisappearingSelection] = useState('Off');
-  const [newGroupName, setNewGroupName] = useState('');
 
   const [confirmModal, setConfirmModal] = useState({
     visible: false,
@@ -204,48 +201,6 @@ const UserProfile = () => {
     }
   };
 
-  const handleCreateGroup = async () => {
-    if (newGroupName.trim() === '') {
-      Alert.alert('Error', 'Please enter a group subject');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('creator_id', currentUserId);
-      formData.append('participant_id', peerId);
-      formData.append('group_name', newGroupName.trim());
-
-      const response = await fetch(`${BASIC_URL}create_group.php`, {
-        method: 'POST',
-        body: formData,
-      });
-      const result = await response.json();
-
-      setIsLoading(false);
-      setCreateGroupVisible(false);
-      setNewGroupName('');
-
-      if (result.status === 'success') {
-        navigation.navigate('IndividualChat', {
-          receiver_id: result.group_id,
-          currentuser: {
-            id: result.group_id,
-            name: result.group_name,
-            image: '',
-          },
-        });
-      } else {
-        Alert.alert('Group Created', `You and ${userName} have been added to "${newGroupName}".`);
-      }
-    } catch (error) {
-      setIsLoading(false);
-      console.error('Create group error:', error);
-      Alert.alert('Error', 'Could not create group. Check your connection.');
-    }
-  };
-
   const saveMediaVisibility = async () => {
     await AsyncStorage.setItem(`media_pref_${peerId}`, mediaSelection);
     setMediaVisible(false);
@@ -315,7 +270,46 @@ const UserProfile = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Modals */}
+      <Modal
+        visible={menuVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeMenu}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={closeMenu}>
+          <View style={styles.dropdownMenu}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                closeMenu();
+                // Add Share functionality logic here if needed
+              }}>
+              <Text style={styles.menuText}>Share</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                closeMenu();
+                // Add View in Address Book logic here if needed
+              }}>
+              <Text style={styles.menuText}>View in address book</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                closeMenu();
+                setEncryptionVisible(true);
+              }}>
+              <Text style={styles.menuText}>Verify security code</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       <Modal
         visible={notificationsVisible}
         transparent={true}
@@ -406,49 +400,6 @@ const UserProfile = () => {
             </View>
           </View>
         </View>
-      </Modal>
-
-      {/* CREATE GROUP MODAL - CLEAN MOBILE DESIGN WITHOUT BLACK BORDER */}
-      <Modal
-        visible={createGroupVisible}
-        transparent={true}
-        animationType="slide">
-        <SafeAreaView style={styles.fullScreenModalSafe} edges={['top', 'bottom']}>
-          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-          <View style={styles.headerBar}>
-            <TouchableOpacity
-              onPress={() => setCreateGroupVisible(false)}
-              style={styles.iconBtn}>
-              <Icons.Ionicons name="close" size={24} color="#0F172A" />
-            </TouchableOpacity>
-            <Text style={styles.fullScreenModalTitle}>New group</Text>
-            <View style={{flex: 1}} />
-          </View>
-          <View style={styles.groupCreateBody}>
-            <View style={styles.groupParticipantsRow}>
-              <Text style={styles.groupParticipantLabel}>Participants: </Text>
-              <Text style={styles.groupParticipantNames}>You, {userName}</Text>
-            </View>
-            <TextInput
-              style={styles.groupInput}
-              placeholder="Type group subject here..."
-              placeholderTextColor="#94A3B8"
-              value={newGroupName}
-              onChangeText={setNewGroupName}
-              autoFocus={true}
-            />
-          </View>
-          <TouchableOpacity
-            style={[styles.fabBtn, isLoading && {opacity: 0.7}]}
-            onPress={handleCreateGroup}
-            disabled={isLoading}>
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Icons.Ionicons name="checkmark" size={28} color="#FFFFFF" />
-            )}
-          </TouchableOpacity>
-        </SafeAreaView>
       </Modal>
 
       <Modal
@@ -660,27 +611,6 @@ const UserProfile = () => {
 
           <View style={styles.divider} />
 
-          <View style={styles.footerInfoBox}>
-            <Text style={styles.footerInfoText}>No groups in common</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.optionItem}
-            onPress={() => setCreateGroupVisible(true)}>
-            <Icons.Feather
-              name="users"
-              size={20}
-              color={color.defalt}
-              style={styles.optionIcon}
-            />
-            <View style={styles.optionTextContainer}>
-              <Text style={[styles.optionTitle, {color: color.defalt}]}>
-                Create group with {userName}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* BLOCK / UNBLOCK TOGGLE OPTION */}
           {isBlocked ? (
             <TouchableOpacity
               style={styles.optionItem}
@@ -914,8 +844,6 @@ const styles = StyleSheet.create({
   optionTitle: {fontSize: 15, color: '#0F172A', fontWeight: '500'},
   optionSubtitle: {fontSize: 13, color: '#64748B', marginTop: 2},
   divider: {height: 8, backgroundColor: '#F8FAFC', marginVertical: 4},
-  footerInfoBox: {paddingVertical: 14, paddingHorizontal: 20},
-  footerInfoText: {color: '#64748B', fontSize: 13, fontWeight: '500'},
   fullScreenModalSafe: {flex: 1, backgroundColor: '#FFFFFF'},
   fullScreenModalTitle: {
     fontSize: 18,
@@ -954,33 +882,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   scanBtnText: {color: '#FFFFFF', fontSize: 15, fontWeight: '600'},
-  groupCreateBody: {padding: 20},
-  groupParticipantsRow: {flexDirection: 'row', marginBottom: 20},
-  groupParticipantLabel: {fontSize: 15, color: '#64748B'},
-  groupParticipantNames: {fontSize: 15, color: '#0F172A', fontWeight: '500'},
-  groupInput: {
-    borderBottomWidth: 2,
-    borderBottomColor: color.defalt,
-    fontSize: 16,
-    paddingVertical: 10,
-    color: '#0F172A',
-  },
-  fabBtn: {
-    position: 'absolute',
-    bottom: 30,
-    right: 24,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: color.defalt,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
   actionModalCard: {
     width: '85%',
     backgroundColor: '#FFFFFF',
