@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TextInput,
-  Dimensions,
   Platform,
   StatusBar,
   TouchableOpacity,
@@ -16,11 +15,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import color from '../../Assets/colors/colors';
 import ProflHader from '../../Components/ProfileHeader';
 import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
+import { getAllChats as fetchAllChats } from '../../utilis/chatApi';
 
 const UserChat = () => {
   const navigation = useNavigation();
@@ -35,22 +36,30 @@ const UserChat = () => {
   const getAllChats = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
-      const formdata = new FormData();
-      const ownId = String(global.id || '256');
-      formdata.append('own_id', ownId);
-
-      const response = await fetch(`${BASIC_URL}get_all_chats.php`, {
-        method: 'POST',
-        body: formdata,
-      });
-
-      const result = await response.json();
+      let ownId = String(global.id || '');
+      if (!ownId) {
+        const rawUser = await AsyncStorage.getItem('user');
+        if (rawUser) {
+          const savedUser = JSON.parse(rawUser);
+          ownId = String(
+            savedUser?.id ||
+            savedUser?.user_id ||
+            savedUser?.userId ||
+            savedUser?.data?.id ||
+            savedUser?.data?.user_id ||
+            ''
+          );
+          if (ownId) global.id = ownId;
+        }
+      }
+      if (!ownId) {
+        setLoading(false);
+        return;
+      }
+      const result = await fetchAllChats(ownId);
       if (result?.chat) {
         const chatData = Array.isArray(result.chat) ? result.chat : [];
-        const filtered = chatData.filter(item =>
-            String(item.user_id) === String(ownId) || String(item.id) === String(ownId)
-        );
-        setAllChat(filtered);
+        setAllChat(chatData);
       }
     } catch (error) {
       console.log('Error fetching chat list:', error);

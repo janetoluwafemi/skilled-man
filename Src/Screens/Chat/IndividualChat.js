@@ -71,7 +71,7 @@ const getAudioModule = () => {
   } catch (error) {
     cachedAudioModule = null;
     console.warn(
-      'Voice notes are unavailable because this app build does not include expo-av.'
+        'Voice notes are unavailable because this app build does not include expo-av.'
     );
   }
 
@@ -86,16 +86,16 @@ const getSynchronizedUserId = async () => {
       const parsed = JSON.parse(rawUser);
 
       const permanentId =
-        parsed?.id ||
-        parsed?.user_id ||
-        parsed?.userId;
+          parsed?.id ||
+          parsed?.user_id ||
+          parsed?.userId;
 
       if (
-        permanentId &&
-        String(permanentId).trim() !== '' &&
-        !['251', '255', '256'].includes(
-          String(permanentId)
-        )
+          permanentId &&
+          String(permanentId).trim() !== '' &&
+          !['251', '255', '256'].includes(
+              String(permanentId)
+          )
       ) {
         const cleanId = String(permanentId).trim();
 
@@ -106,17 +106,17 @@ const getSynchronizedUserId = async () => {
     }
   } catch (e) {
     console.log(
-      'Error reading AsyncStorage in getSynchronizedUserId:',
-      e
+        'Error reading AsyncStorage in getSynchronizedUserId:',
+        e
     );
   }
 
   if (
-    global.id &&
-    String(global.id).trim() !== '' &&
-    !['251', '255', '256'].includes(
-      String(global.id)
-    )
+      global.id &&
+      String(global.id).trim() !== '' &&
+      !['251', '255', '256'].includes(
+          String(global.id)
+      )
   ) {
     return String(global.id).trim();
   }
@@ -132,10 +132,10 @@ const AudioMessage = ({ audioUri, isMe }) => {
 
   useEffect(() => {
     return sound
-      ? () => {
-        sound.unloadAsync();
-      }
-      : undefined;
+        ? () => {
+          sound.unloadAsync();
+        }
+        : undefined;
   }, [sound]);
 
   const playAudio = async () => {
@@ -181,49 +181,49 @@ const AudioMessage = ({ audioUri, isMe }) => {
   };
 
   return (
-    <View
-      style={{
-        padding: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-        minWidth: 150,
-      }}
-    >
-      <TouchableOpacity onPress={playAudio} style={{ marginRight: 10 }}>
-        <Icons.Feather
-          name={isPlaying ? 'pause-circle' : 'play-circle'}
-          size={28}
-          color={textColor}
-        />
-      </TouchableOpacity>
-
-      <Icons.Feather
-        name="bar-chart-2"
-        size={24}
-        color={textColor}
-        style={{ opacity: 0.7 }}
-      />
-
-      <Icons.Feather
-        name="bar-chart-2"
-        size={24}
-        color={textColor}
-        style={{
-          opacity: 0.4,
-          marginLeft: -8,
-        }}
-      />
-
-      <Text
-        style={{
-          marginLeft: 10,
-          color: textColor,
-          fontSize: 12,
-        }}
+      <View
+          style={{
+            padding: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            minWidth: 150,
+          }}
       >
-        Voice Note
-      </Text>
-    </View>
+        <TouchableOpacity onPress={playAudio} style={{ marginRight: 10 }}>
+          <Icons.Feather
+              name={isPlaying ? 'pause-circle' : 'play-circle'}
+              size={28}
+              color={textColor}
+          />
+        </TouchableOpacity>
+
+        <Icons.Feather
+            name="bar-chart-2"
+            size={24}
+            color={textColor}
+            style={{ opacity: 0.7 }}
+        />
+
+        <Icons.Feather
+            name="bar-chart-2"
+            size={24}
+            color={textColor}
+            style={{
+              opacity: 0.4,
+              marginLeft: -8,
+            }}
+        />
+
+        <Text
+            style={{
+              marginLeft: 10,
+              color: textColor,
+              fontSize: 12,
+            }}
+        >
+          Voice Note
+        </Text>
+      </View>
   );
 };
 
@@ -271,19 +271,19 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
 
   const chatStorageKey = `chat_history_${cleanUserId}_${peerId}`;
   const myAvatar = global.profile
-    ? `${BASIC_URL}uploads/${global.profile.replace(/^\/+/, '')}`
-    : `${BASIC_URL}uploads/dumy.png`;
+      ? `${BASIC_URL}uploads/${global.profile.replace(/^\/+/, '')}`
+      : `${BASIC_URL}uploads/dumy.png`;
 
   const peerAvatar = peerData?.image
-    ? `${BASIC_URL}uploads/${peerData.image.replace(/^\/+/, '')}`
-    : `${BASIC_URL}uploads/dumy.png`;
+      ? `${BASIC_URL}uploads/${peerData.image.replace(/^\/+/, '')}`
+      : `${BASIC_URL}uploads/dumy.png`;
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => {
-        setShowEmojiPicker(false);
-      }
+        Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+        () => {
+          setShowEmojiPicker(false);
+        }
     );
 
     return () => {
@@ -318,11 +318,11 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         if (storedHistory) {
           const parsedHistory = JSON.parse(storedHistory);
           const alignedHistory = parsedHistory
-            .filter(msg => msg.senderRole)
-            .map(msg => {
-              msg.user._id = msg.senderRole === currentDashboardRole ? cleanUserId : peerId;
-              return msg;
-            });
+              .filter(msg => msg.senderRole)
+              .map(msg => {
+                msg.user._id = msg.senderRole === currentDashboardRole ? cleanUserId : peerId;
+                return msg;
+              });
           setMessages(alignedHistory);
         }
       } catch (error) {
@@ -351,11 +351,11 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
 
       const allChats = result?.chat || [];
       const specificChat = allChats.find(
-        c =>
-          String(c.chat_id) === peerId ||
-          String(c.user_id) === peerId ||
-          String(c.provider_id) === peerId ||
-          c.name === peerData?.name
+          c =>
+              String(c.chat_id) === peerId ||
+              String(c.user_id) === peerId ||
+              String(c.provider_id) === peerId ||
+              c.name === peerData?.name
       );
 
       if (specificChat) {
@@ -371,9 +371,9 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
 
         setMessages(previousMessages => {
           const alreadySentByMe = previousMessages.some(
-            m =>
-              m.text?.trim() === (specificChat.message || '').trim() &&
-              String(m.user?._id) === String(cleanUserId)
+              m =>
+                  m.text?.trim() === (specificChat.message || '').trim() &&
+                  String(m.user?._id) === String(cleanUserId)
           );
 
           if (alreadySentByMe) {
@@ -439,7 +439,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         playsInSilentModeIOS: true,
       });
       const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
+          Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
       if (!isStartingRef.current) {
         await newRecording.stopAndUnloadAsync();
@@ -565,17 +565,15 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         return;
       }
 
-      setText('');
-
       const currentSyncId = (await getSynchronizedUserId()) || cleanUserId;
       const textContent = msg.text
-        ? msg.text.trim()
-        : msg.audio
-          ? '🎤 Voice Note'
-          : msg.document
-            ? `📄 ${msg.documentName || 'Document'}`
-            : msg.image
-              ? '📷 Sent an image' : '';
+          ? msg.text.trim()
+          : msg.audio
+              ? '🎤 Voice Note'
+              : msg.document
+                  ? `📄 ${msg.documentName || 'Document'}`
+                  : msg.image
+                      ? '📷 Sent an image' : '';
 
       const formattedMsg = {
         _id: String(Date.now()),
@@ -626,16 +624,31 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
       notifyForm.append('receiver_id', peerId);
       notifyForm.append('message', textContent || '📷 Sent a file');
 
-      await Promise.allSettled([
-        fetch(`${BASIC_URL}firebase/chat.php`, {
-          method: 'POST',
-          body: chatForm,
-        }),
-        fetch(`${BASIC_URL}firebase/send_notification.php`, {
-          method: 'POST',
-          body: notifyForm,
-        }),
-      ]);
+      const chatResponse = await fetch(`${BASIC_URL}firebase/chat.php`, {
+        method: 'POST',
+        body: chatForm,
+      });
+
+      if (!chatResponse.ok) {
+        throw new Error(`Message save failed (${chatResponse.status})`);
+      }
+
+      setText('');
+
+      try {
+        const notificationResponse = await fetch(
+          `${BASIC_URL}firebase/send_notification.php`,
+          {
+            method: 'POST',
+            body: notifyForm,
+          }
+        );
+        if (!notificationResponse.ok) {
+          console.warn(`Message notification failed (${notificationResponse.status})`);
+        }
+      } catch (notificationError) {
+        console.warn('Message notification failed:', notificationError);
+      }
     } catch (error) {
       console.error('Send error:', error);
       showAlert('Send failed', 'Could not send message.');
@@ -675,361 +688,369 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
 
   if (!cleanUserId || !peerId || cleanUserId === 'undefined' || peerId === 'undefined') {
     return (
-      <View style={styles.missingUserBox}>
-        <Icons.Feather name="alert-circle" size={40} color="#CBD5E1" />
-        <Text style={styles.missingUserText}>Loading chat session...</Text>
-      </View>
+        <View style={styles.missingUserBox}>
+          <Icons.Feather name="alert-circle" size={40} color="#CBD5E1" />
+          <Text style={styles.missingUserText}>Loading chat session...</Text>
+        </View>
     );
   }
 
   const displayedMessages = searchQuery.trim()
-    ? messages.filter(m => m.text && m.text.toLowerCase().includes(searchQuery.toLowerCase()))
-    : messages;
+      ? messages.filter(m => m.text && m.text.toLowerCase().includes(searchQuery.toLowerCase()))
+      : messages;
 
   return (
-    <View style={styles.chatWrapper}>
-      {selectedMessage ? (
-        <View style={styles.contextualHeader}>
-          <View style={styles.contextHeaderLeft}>
-            <TouchableOpacity
-              onPress={() => {
-                setSelectedMessage(null);
-                setKebabVisible(false);
-              }}
-            >
-              <Icons.Feather name="arrow-left" size={24} color="#FFF" />
-            </TouchableOpacity>
-            <Text style={styles.contextHeaderText}>1</Text>
-          </View>
-          <View style={styles.contextHeaderRight}>
-            <TouchableOpacity style={styles.iconBtn}>
-              <Icons.Feather name="corner-up-left" size={22} color="#FFF" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
-              <Icons.Feather name="star" size={22} color="#FFF" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => deleteMessageLocally(selectedMessage._id)} style={styles.iconBtn}>
-              <Icons.Ionicons name="trash" size={22} color="#FFF" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleForwardAction(selectedMessage.text)} style={styles.iconBtn}>
-              <Icons.Feather name="corner-up-right" size={22} color="#FFF" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setKebabVisible(!kebabVisible)} style={styles.iconBtn}>
-              <Icons.Feather name="more-vertical" size={24} color="#FFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : isSearchActive ? (
-        <View style={styles.searchHeader}>
-          <TouchableOpacity
-            onPress={() => {
-              setIsSearchActive(false);
-              setSearchQuery('');
-              navigation.setParams({ startSearch: false });
-            }}
-          >
-            <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
-          </TouchableOpacity>
-          <TextInput
-            style={styles.searchHeaderInput}
-            placeholder="Search..."
-            placeholderTextColor="#94A3B8"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoFocus={true}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} style={{ marginRight: 12 }}>
-              <Icons.Feather name="x" size={20} color="#64748B" />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={styles.iconBtn}>
-            <Icons.Feather name="calendar" size={22} color="#0F172A" />
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={{ zIndex: 10 }}>
-          <ChatUsrHeader
-            userName={peerData?.name || 'Chat'}
-            userImage={peerAvatar}
-            onlineStatus={!isBlocked}
-            onProfilePress={() => {
-              navigation.navigate('UserProfile', {
-                userId: peerId,
-                userData: peerData,
-              });
-            }}
-            onSearchPress={() => setIsSearchActive(true)}
-          />
-        </View>
-      )}
-
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
-        <GiftedChat
-          messages={displayedMessages}
-          text={text}
-          onInputTextChanged={setText}
-          textInputProps={{
-            onFocus: () => setShowEmojiPicker(false)
-          }}
-          textInputRef={composerRef}
-          extraData={{
-            selectedMessage,
-            hoveredMessageId,
-            openMenuMessageId,
-            searchQuery,
-            isBlocked,
-            recording,
-          }}
-          bottomOffset={Platform.OS === 'ios' ? insets.bottom : 0}
-          onSend={messagesList => onSend(messagesList)}
-          user={{
-            _id: String(cleanUserId),
-          }}
-          isUserAvatarVisible={true}
-          alignTop={false}
-          scrollToBottom={true}
-          isAvatarOnTop={true}
-          isInverted={true}
-          isSendButtonAlwaysVisible
-          onLongPressMessage={handleLongPress}
-          onPressMessage={handlePress}
-          messagesContainerStyle={{
-            backgroundColor: '#F0F2F5',
-            paddingBottom: 10,
-          }}
-          listViewProps={{
-            style: { flex: 1 },
-            keyboardShouldPersistTaps: 'always',
-            keyboardDismissMode: Platform.OS === 'ios' ? 'interactive' : 'on-drag',
-          }}
-          renderCustomView={props => {
-            const { currentMessage, position } = props;
-            if (currentMessage.document) {
-              const isMe = position === 'right';
-              const textColor = isMe ? '#FFFFFF' : color.defalt;
-              return (
+      <View style={styles.chatWrapper}>
+        {selectedMessage ? (
+            <View style={styles.contextualHeader}>
+              <View style={styles.contextHeaderLeft}>
                 <TouchableOpacity
-                  style={{ padding: 12, flexDirection: 'row', alignItems: 'center' }}
-                  onPress={() => Linking.openURL(currentMessage.document).catch(() => {})}
+                    onPress={() => {
+                      setSelectedMessage(null);
+                      setKebabVisible(false);
+                    }}
                 >
-                  <Icons.Feather name="file-text" size={24} color={textColor} />
-                  <Text style={{ color: textColor, marginLeft: 8, fontSize: 14, textDecorationLine: 'underline', maxWidth: 200 }} numberOfLines={1}>
-                    {currentMessage.documentName || 'View Document'}
-                  </Text>
+                  <Icons.Feather name="arrow-left" size={24} color="#FFF" />
                 </TouchableOpacity>
-              );
-            }
-            return null;
-          }}
-          renderMessageAudio={props => {
-            const { currentMessage, position } = props;
-            return <AudioMessage audioUri={currentMessage.audio} isMe={position === 'right'} />;
-          }}
-          renderMessageImage={props => {
-            const { currentMessage } = props;
-            if (!currentMessage?.image) return null;
-            return (
+                <Text style={styles.contextHeaderText}>1</Text>
+              </View>
+              <View style={styles.contextHeaderRight}>
+                <TouchableOpacity style={styles.iconBtn}>
+                  <Icons.Feather name="corner-up-left" size={22} color="#FFF" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconBtn}>
+                  <Icons.Feather name="star" size={22} color="#FFF" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => deleteMessageLocally(selectedMessage._id)} style={styles.iconBtn}>
+                  <Icons.Ionicons name="trash" size={22} color="#FFF" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleForwardAction(selectedMessage.text)} style={styles.iconBtn}>
+                  <Icons.Feather name="corner-up-right" size={22} color="#FFF" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setKebabVisible(!kebabVisible)} style={styles.iconBtn}>
+                  <Icons.Feather name="more-vertical" size={24} color="#FFF" />
+                </TouchableOpacity>
+              </View>
+            </View>
+        ) : isSearchActive ? (
+            <View style={styles.searchHeader}>
               <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={() => {
-                  setSelectedImage(currentMessage.image);
-                  setImageModalVisible(true);
-                }}
-              >
-                <Image
-                  source={{ uri: currentMessage.image }}
-                  style={styles.chatMsgImage}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-            );
-          }}
-          renderMessageText={props => {
-            const { currentMessage } = props;
-            if (currentMessage?.audio || currentMessage?.document) return null;
-            return (
-              <MessageText
-                {...props}
-                textStyle={{
-                  left: {
-                    color: color.defalt,
-                    fontSize: 15.5,
-                    lineHeight: 22,
-                    ...(Platform.OS === 'web' && { wordBreak: 'break-word' })
-                  },
-                  right: {
-                    color: '#FFFFFF',
-                    fontSize: 15.5,
-                    lineHeight: 22,
-                    ...(Platform.OS === 'web' && { wordBreak: 'break-word' })
-                  },
-                }}
-              />
-            );
-          }}
-          renderInputToolbar={props => {
-            if (isBlocked) {
-              return (
-                <TouchableOpacity style={styles.blockedBannerContainer} onPress={unblockUser} activeOpacity={0.8}>
-                  <Text style={styles.blockedBannerTextBold}>You blocked this contact. Tap to unblock.</Text>
-                </TouchableOpacity>
-              );
-            }
-            return (
-              <InputToolbar
-                {...props}
-                containerStyle={styles.inputToolbar}
-                primaryStyle={styles.inputToolbarPrimary}
-              />
-            );
-          }}
-          renderComposer={props => {
-            if (isBlocked) return null;
-            const hasText = props.text && props.text.trim().length > 0;
-            return (
-              <View style={styles.composerWrapper}>
-                <TouchableOpacity
-                  style={styles.inputActionBtn}
                   onPress={() => {
-                    if (showEmojiPicker) {
-                      setShowEmojiPicker(false);
-                      composerRef.current?.focus();
-                    } else {
-                      Keyboard.dismiss();
-                      setTimeout(() => {
-                        setShowEmojiPicker(true);
-                      }, 100);
-                    }
+                    setIsSearchActive(false);
+                    setSearchQuery('');
+                    navigation.setParams({ startSearch: false });
                   }}
-                  activeOpacity={0.7}
-                >
-                  {showEmojiPicker ? (
-                    <Icons.Ionicons name="keyboard-outline" size={24} color="#64748B" />
-                  ) : (
-                    <Icons.Feather name="smile" size={24} color="#64748B" />
-                  )}
-                </TouchableOpacity>
-                <Composer
-                  {...props}
-                  placeholder="Message"
+              >
+                <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+              </TouchableOpacity>
+              <TextInput
+                  style={styles.searchHeaderInput}
+                  placeholder="Search..."
                   placeholderTextColor="#94A3B8"
-                  textInputStyle={[styles.composerInput, { color: '#0F172A' }]}
-                />
-                <View style={styles.composerRightIcons}>
-                  <TouchableOpacity style={styles.inputActionBtn} activeOpacity={0.7} onPress={pickDocument}>
-                    <Icons.Feather name="paperclip" size={22} color="#64748B" />
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  autoFocus={true}
+              />
+              {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery('')} style={{ marginRight: 12 }}>
+                    <Icons.Feather name="x" size={20} color="#64748B" />
                   </TouchableOpacity>
-                  {!hasText && !uploading && (
-                    <TouchableOpacity style={styles.inputActionBtn} onPress={openCamera} activeOpacity={0.7}>
-                      <Icons.Feather name="camera" size={22} color="#64748B" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-            );
-          }}
-          renderSend={props => {
-            if (isBlocked) return null;
-            const hasText = props.text && props.text.trim().length > 0;
-            return (
-              <View style={styles.sendComponentWrapper}>
-                {hasText ? (
-                  <Send {...props} containerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
-                    <View style={styles.sendButton}>
-                      {uploading ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <Icons.Feather name="send" size={16} color="#FFFFFF" style={{ marginLeft: -2 }} />
-                      )}
-                    </View>
-                  </Send>
-                ) : (
-                  <TouchableOpacity
-                    onPressIn={startRecording}
-                    onPressOut={stopRecording}
-                    activeOpacity={0.7}
-                    style={[styles.sendButton, recording && { backgroundColor: '#EF4444' }]}
-                  >
-                    <Icons.Feather name="mic" size={18} color="#FFFFFF" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            );
-          }}
-          renderBubble={props => (
-            <Bubble
-              {...props}
-              wrapperStyle={{
-                left: {
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: 16,
-                  borderBottomLeftRadius: 4,
-                  borderBottomRightRadius: 16,
-                  padding: 4,
-                  marginBottom: 4,
-                  maxWidth: Dimensions.get('window').width * 0.75,
-                },
-                right: {
-                  backgroundColor: color.defalt,
-                  borderRadius: 16,
-                  borderBottomLeftRadius: 16,
-                  borderBottomRightRadius: 4,
-                  padding: 4,
-                  marginBottom: 4,
-                  maxWidth: Dimensions.get('window').width * 0.75,
-                },
-              }}
-              textStyle={{
-                left: { color: color.defalt, fontSize: 15.5, lineHeight: 22 },
-                right: { color: '#FFFFFF', fontSize: 15.5, lineHeight: 22 },
-              }}
-            />
-          )}
-        />
-
-        {showEmojiPicker && (
-          <View style={{ height: 280, backgroundColor: '#FFFFFF' }}>
-            <EmojiSelector
-              onEmojiSelected={emoji => setText(prev => prev + emoji)}
-              showSearchBar={false}
-              columns={8}
-              showHistory={false}
-              showSectionTitles={false}
-            />
-          </View>
+              )}
+              <TouchableOpacity style={styles.iconBtn}>
+                <Icons.Feather name="calendar" size={22} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+        ) : (
+            <View style={{ zIndex: 10 }}>
+              <ChatUsrHeader
+                  userName={peerData?.name || 'Chat'}
+                  userImage={peerAvatar}
+                  onlineStatus={!isBlocked}
+                  onProfilePress={() => {
+                    navigation.navigate('UserProfile', {
+                      userId: peerId,
+                      userData: peerData,
+                    });
+                  }}
+                  onSearchPress={() => setIsSearchActive(true)}
+              />
+            </View>
         )}
 
-      </KeyboardAvoidingView>
+        <Modal
+            visible={false}
+            transparent={true}
+            animationType="fade">
+        </Modal>
 
-      <Modal visible={imageModalVisible} transparent={true} animationType="fade" onRequestClose={() => setImageModalVisible(false)}>
-        <Pressable style={styles.modalContainer} onPress={() => setImageModalVisible(false)}>
-          {selectedImage && (
-            <Image source={{ uri: selectedImage }} style={styles.fullImage} resizeMode="contain" />
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
+        >
+          <GiftedChat
+              messages={displayedMessages}
+              text={text}
+              textInputProps={{
+                onFocus: () => setShowEmojiPicker(false),
+                onChangeText: setText,
+              }}
+              textInputRef={composerRef}
+              extraData={{
+                selectedMessage,
+                hoveredMessageId,
+                openMenuMessageId,
+                searchQuery,
+                isBlocked,
+                recording,
+              }}
+              bottomOffset={Platform.OS === 'ios' ? insets.bottom : 10}
+              onSend={messagesList => onSend(messagesList)}
+              user={{
+                _id: String(cleanUserId),
+              }}
+              isUserAvatarVisible={true}
+              alignTop={false}
+              scrollToBottom={true}
+              isAvatarOnTop={true}
+              isInverted={true}
+              isSendButtonAlwaysVisible
+              onLongPressMessage={handleLongPress}
+              onPressMessage={handlePress}
+              messagesContainerStyle={{
+                backgroundColor: '#F0F2F5',
+                paddingBottom: 10,
+              }}
+              listViewProps={{
+                style: { flex: 1 },
+                keyboardShouldPersistTaps: 'always',
+                keyboardDismissMode: Platform.OS === 'ios' ? 'interactive' : 'on-drag',
+              }}
+              renderCustomView={props => {
+                const { currentMessage, position } = props;
+                if (currentMessage.document) {
+                  const isMe = position === 'right';
+                  const textColor = isMe ? '#FFFFFF' : color.defalt;
+                  return (
+                      <TouchableOpacity
+                          style={{ padding: 12, flexDirection: 'row', alignItems: 'center' }}
+                          onPress={() => Linking.openURL(currentMessage.document).catch(() => {})}
+                      >
+                        <Icons.Feather name="file-text" size={24} color={textColor} />
+                        <Text style={{ color: textColor, marginLeft: 8, fontSize: 14, textDecorationLine: 'underline', maxWidth: 200 }} numberOfLines={1}>
+                          {currentMessage.documentName || 'View Document'}
+                        </Text>
+                      </TouchableOpacity>
+                  );
+                }
+                return null;
+              }}
+              renderMessageAudio={props => {
+                const { currentMessage, position } = props;
+                return <AudioMessage audioUri={currentMessage.audio} isMe={position === 'right'} />;
+              }}
+              renderMessageImage={props => {
+                const { currentMessage } = props;
+                if (!currentMessage?.image) return null;
+                return (
+                    <TouchableOpacity
+                        activeOpacity={0.9}
+                        onPress={() => {
+                          setSelectedImage(currentMessage.image);
+                          setImageModalVisible(true);
+                        }}
+                    >
+                      <Image
+                          source={{ uri: currentMessage.image }}
+                          style={styles.chatMsgImage}
+                          resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                );
+              }}
+              renderMessageText={props => {
+                const { currentMessage } = props;
+                if (currentMessage?.audio || currentMessage?.document) return null;
+                return (
+                    <MessageText
+                        {...props}
+                        textStyle={{
+                          left: {
+                            color: color.defalt,
+                            fontSize: 15.5,
+                            lineHeight: 22,
+                            ...(Platform.OS === 'web' && { wordBreak: 'break-word' })
+                          },
+                          right: {
+                            color: '#FFFFFF',
+                            fontSize: 15.5,
+                            lineHeight: 22,
+                            ...(Platform.OS === 'web' && { wordBreak: 'break-word' })
+                          },
+                        }}
+                    />
+                );
+              }}
+              renderInputToolbar={props => {
+                if (isBlocked) {
+                  return (
+                      <TouchableOpacity style={styles.blockedBannerContainer} onPress={unblockUser} activeOpacity={0.8}>
+                        <Text style={styles.blockedBannerTextBold}>You blocked this contact. Tap to unblock.</Text>
+                      </TouchableOpacity>
+                  );
+                }
+                return (
+                    <InputToolbar
+                        {...props}
+                        containerStyle={styles.inputToolbar}
+                        primaryStyle={styles.inputToolbarPrimary}
+                    />
+                );
+              }}
+              renderComposer={props => {
+                if (isBlocked) return null;
+                const hasText = props.text && props.text.trim().length > 0;
+                return (
+                    <View style={styles.composerWrapper}>
+                      <TouchableOpacity
+                          style={styles.inputActionBtn}
+                          onPress={() => {
+                            if (showEmojiPicker) {
+                              setShowEmojiPicker(false);
+                              composerRef.current?.focus();
+                            } else {
+                              Keyboard.dismiss();
+                              setTimeout(() => {
+                                setShowEmojiPicker(true);
+                              }, 100);
+                            }
+                          }}
+                          activeOpacity={0.7}
+                      >
+                        {showEmojiPicker ? (
+                            <Icons.Ionicons name="keypad-outline" size={24} color="#64748B" />
+                        ) : (
+                            <Icons.Feather name="smile" size={24} color="#64748B" />
+                        )}
+                      </TouchableOpacity>
+                      <Composer
+                          {...props}
+                          placeholder="Message"
+                          placeholderTextColor="#94A3B8"
+                          textInputStyle={[styles.composerInput, { color: '#0F172A' }]}
+                      />
+                      <View style={styles.composerRightIcons}>
+                        <TouchableOpacity style={styles.inputActionBtn} activeOpacity={0.7} onPress={pickDocument}>
+                          <Icons.Feather name="paperclip" size={22} color="#64748B" />
+                        </TouchableOpacity>
+                        {!hasText && !uploading && (
+                            <TouchableOpacity style={styles.inputActionBtn} onPress={openCamera} activeOpacity={0.7}>
+                              <Icons.Feather name="camera" size={22} color="#64748B" />
+                            </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                );
+              }}
+              renderSend={props => {
+                if (isBlocked) return null;
+                const hasText = props.text && props.text.trim().length > 0;
+                return (
+                    <View style={styles.sendComponentWrapper}>
+                      {hasText ? (
+                          <Send {...props} containerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
+                            <View style={styles.sendButton}>
+                              {uploading ? (
+                                  <ActivityIndicator size="small" color="#FFFFFF" />
+                              ) : (
+                                  <Icons.Feather name="send" size={16} color="#FFFFFF" style={{ marginLeft: -2 }} />
+                              )}
+                            </View>
+                          </Send>
+                      ) : (
+                          <TouchableOpacity
+                              onPressIn={startRecording}
+                              onPressOut={stopRecording}
+                              activeOpacity={0.7}
+                              style={[styles.sendButton, recording && { backgroundColor: '#EF4444' }]}
+                          >
+                            <Icons.Feather name="mic" size={18} color="#FFFFFF" />
+                          </TouchableOpacity>
+                      )}
+                    </View>
+                );
+              }}
+              renderBubble={props => (
+                  <Bubble
+                      {...props}
+                      wrapperStyle={{
+                        left: {
+                          backgroundColor: '#FFFFFF',
+                          borderRadius: 16,
+                          borderBottomLeftRadius: 4,
+                          borderBottomRightRadius: 16,
+                          padding: 4,
+                          marginBottom: 4,
+                          maxWidth: Dimensions.get('window').width * 0.75,
+                        },
+                        right: {
+                          backgroundColor: color.defalt,
+                          borderRadius: 16,
+                          borderBottomLeftRadius: 16,
+                          borderBottomRightRadius: 4,
+                          padding: 4,
+                          marginBottom: 4,
+                          maxWidth: Dimensions.get('window').width * 0.75,
+                        },
+                      }}
+                      textStyle={{
+                        left: { color: color.defalt, fontSize: 15.5, lineHeight: 22 },
+                        right: { color: '#FFFFFF', fontSize: 15.5, lineHeight: 22 },
+                      }}
+                  />
+              )}
+          />
+
+          {showEmojiPicker && (
+              <View style={{ height: 280, backgroundColor: '#FFFFFF' }}>
+                <EmojiSelector
+                    onEmojiSelected={emoji => setText(prev => prev + emoji)}
+                    showSearchBar={false}
+                    columns={8}
+                    showHistory={false}
+                    showSectionTitles={false}
+                    showTabs={false}
+                />
+              </View>
           )}
-        </Pressable>
-      </Modal>
 
-      {selectedMessage && kebabVisible && (
-        <View style={styles.kebabMenu}>
-          <TouchableOpacity style={styles.kebabMenuItem} onPress={() => handleCopyAction(selectedMessage.text)}>
-            <Text style={styles.kebabMenuText}>Copy</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.kebabMenuItem} onPress={() => handleForwardAction(selectedMessage.text)}>
-            <Text style={styles.kebabMenuText}>Forward</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.kebabMenuItem} onPress={handleClearChatAction}>
-            <Text style={[styles.kebabMenuText, { color: '#EF4444' }]}>Clear chat</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+        </KeyboardAvoidingView>
+
+        <Modal visible={imageModalVisible} transparent={true} animationType="fade" onRequestClose={() => setImageModalVisible(false)}>
+          <Pressable style={styles.modalContainer} onPress={() => setImageModalVisible(false)}>
+            {selectedImage && (
+                <Image source={{ uri: selectedImage }} style={styles.fullImage} resizeMode="contain" />
+            )}
+          </Pressable>
+        </Modal>
+
+        {selectedMessage && kebabVisible && (
+            <View style={styles.kebabMenu}>
+              <TouchableOpacity style={styles.kebabMenuItem} onPress={() => handleCopyAction(selectedMessage.text)}>
+                <Text style={styles.kebabMenuText}>Copy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.kebabMenuItem} onPress={() => handleForwardAction(selectedMessage.text)}>
+                <Text style={styles.kebabMenuText}>Forward</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.kebabMenuItem} onPress={handleClearChatAction}>
+                <Text style={[styles.kebabMenuText, { color: '#EF4444' }]}>Clear chat</Text>
+              </TouchableOpacity>
+            </View>
+        )}
+      </View>
   );
 };
+
 const EncryptionInfoScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -1037,73 +1058,73 @@ const EncryptionInfoScreen = () => {
   const { userName } = route.params || { userName: 'User' };
 
   return (
-    <SafeAreaView
-      style={styles.safeArea}
-      edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}
-    >
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#FFFFFF"
-      />
+      <SafeAreaView
+          style={styles.safeArea}
+          edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}
+      >
+        <StatusBar
+            barStyle="dark-content"
+            backgroundColor="#FFFFFF"
+        />
 
-      <View style={styles.headerBar}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.iconBtn}
-        >
-          <Icons.Ionicons
-            name="arrow-back"
-            size={24}
-            color="#0F172A"
-          />
-        </TouchableOpacity>
+        <View style={styles.headerBar}>
+          <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.iconBtn}
+          >
+            <Icons.Ionicons
+                name="arrow-back"
+                size={24}
+                color="#0F172A"
+            />
+          </TouchableOpacity>
 
-        <Text style={styles.fullScreenModalTitle}>
-          Encryption
-        </Text>
+          <Text style={styles.fullScreenModalTitle}>
+            Encryption
+          </Text>
 
-        <View style={{ flex: 1 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.encryptionBody}>
-        <View style={styles.lockBadgeBox}>
-          <Icons.Feather
-            name="lock"
-            size={48}
-            color={color.defalt}
-          />
+          <View style={{ flex: 1 }} />
         </View>
 
-        <Text style={styles.encryptionMainTitle}>
-          End-to-end encryption
-        </Text>
+        <ScrollView contentContainerStyle={styles.encryptionBody}>
+          <View style={styles.lockBadgeBox}>
+            <Icons.Feather
+                name="lock"
+                size={48}
+                color={color.defalt}
+            />
+          </View>
 
-        <Text style={styles.encryptionDetailText}>
-          Messages and calls you share with {userName} are
-          end-to-end encrypted. This means WhatsApp and
-          third-party services cannot read or listen to them.
-        </Text>
+          <Text style={styles.encryptionMainTitle}>
+            End-to-end encryption
+          </Text>
 
-        <View style={styles.qrPlaceholder}>
-          <Icons.Ionicons
-            name="qr-code-outline"
-            size={140}
-            color="#0F172A"
-          />
-        </View>
+          <Text style={styles.encryptionDetailText}>
+            Messages and calls you share with {userName} are
+            end-to-end encrypted. This means WhatsApp and
+            third-party services cannot read or listen to them.
+          </Text>
 
-        <Text style={styles.securityCodeText}>
-          27189 45912 61234 88123{'\n'}
-          99120 45719 33412 11094{'\n'}
-          78213 54311 09843 66124
-        </Text>
+          <View style={styles.qrPlaceholder}>
+            <Icons.Ionicons
+                name="qr-code-outline"
+                size={140}
+                color="#0F172A"
+            />
+          </View>
 
-        <Text style={styles.encryptionInfo}>
-          Verify this code with {userName} by scanning
-          their QR code or comparing the numbers above.
-        </Text>
-      </ScrollView>
-    </SafeAreaView>
+          <Text style={styles.securityCodeText}>
+            27189 45912 61234 88123{'\n'}
+            99120 45719 33412 11094{'\n'}
+            78213 54311 09843 66124
+          </Text>
+
+          <Text style={styles.encryptionInfo}>
+            Verify this code with {userName} by scanning
+            their QR code or comparing the numbers above.
+          </Text>
+        </ScrollView>
+      </SafeAreaView>
   );
 };
 
@@ -1111,22 +1132,22 @@ const IndividualChat = () => {
   const route = useRoute();
 
   const currentprovider =
-    route.params?.currentuser ||
-    route.params?.userData ||
-    route.params?.provider ||
-    route.params?.item ||
-    route.params?.user;
+      route.params?.currentuser ||
+      route.params?.userData ||
+      route.params?.provider ||
+      route.params?.item ||
+      route.params?.user;
 
   const peerId =
-    String(
-      route.params?.receiver_id ||
-      route.params?.userId ||
-      currentprovider?.id ||
-      currentprovider?.provider_id ||
-      currentprovider?.user_id ||
-      currentprovider?.uuid ||
-      ''
-    ).trim();
+      String(
+          route.params?.receiver_id ||
+          route.params?.userId ||
+          currentprovider?.id ||
+          currentprovider?.provider_id ||
+          currentprovider?.user_id ||
+          currentprovider?.uuid ||
+          ''
+      ).trim();
 
   const [resolvedUserId, setResolvedUserId] = useState(null);
 
@@ -1135,10 +1156,10 @@ const IndividualChat = () => {
     title: '',
     message: '',
     onOk: () =>
-      setAlertConfig(prev => ({
-        ...prev,
-        visible: false,
-      })),
+        setAlertConfig(prev => ({
+          ...prev,
+          visible: false,
+        })),
   });
 
   const showAlert = (title, message, onOk) => {
@@ -1173,43 +1194,43 @@ const IndividualChat = () => {
   }, [resolvedUserId]);
 
   return (
-    <SafeAreaView
-      style={styles.safeArea}
-      edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}
-    >
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#F8FAFC"
-      />
+      <SafeAreaView
+          style={styles.safeArea}
+          edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}
+      >
+        <StatusBar
+            barStyle="dark-content"
+            backgroundColor="#F8FAFC"
+        />
 
-      <View style={styles.chatViewContainer}>
-        {resolvedUserId && peerId ? (
-          <NewMessage
-            userId={resolvedUserId}
-            providerId={peerId}
-            peerData={currentprovider}
-            showAlert={showAlert}
-          />
-        ) : (
-          <View style={styles.missingUserBox}>
-            <ActivityIndicator
-              size="large"
-              color={color.defalt}
-            />
-            <Text style={styles.missingUserText}>
-              Connecting to conversation...
-            </Text>
-          </View>
-        )}
-      </View>
+        <View style={styles.chatViewContainer}>
+          {resolvedUserId && peerId ? (
+              <NewMessage
+                  userId={resolvedUserId}
+                  providerId={peerId}
+                  peerData={currentprovider}
+                  showAlert={showAlert}
+              />
+          ) : (
+              <View style={styles.missingUserBox}>
+                <ActivityIndicator
+                    size="large"
+                    color={color.defalt}
+                />
+                <Text style={styles.missingUserText}>
+                  Connecting to conversation...
+                </Text>
+              </View>
+          )}
+        </View>
 
-      <CustomAlert
-        visible={alertConfig.visible}
-        title={alertConfig.title}
-        message={alertConfig.message}
-        onOk={alertConfig.onOk}
-      />
-    </SafeAreaView>
+        <CustomAlert
+            visible={alertConfig.visible}
+            title={alertConfig.title}
+            message={alertConfig.message}
+            onOk={alertConfig.onOk}
+        />
+      </SafeAreaView>
   );
 };
 

@@ -23,6 +23,7 @@ import color from '../../Assets/colors/colors';
 import ProflHader from '../../Components/ProfileHeader';
 import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
+import { getAllChats as fetchAllChats } from '../../utilis/chatApi';
 
 const { height } = Dimensions.get('window');
 
@@ -71,7 +72,6 @@ const ChatScreen = props => {
 
     if (isRefresh) setRefreshing(true);
     try {
-      const formdata = new FormData();
       let ownId = String(global?.id || '');
 
       if (!ownId || ['251', '255', '256'].includes(ownId)) {
@@ -92,29 +92,12 @@ const ChatScreen = props => {
         return;
       }
 
-      formdata.append('own_id', ownId);
-
-      const response = await fetch(`${BASIC_URL}get_all_chats.php`, {
-        method: 'POST',
-        body: formdata,
-      });
-
-      const text = await response.text();
-      let result;
-      try {
-        result = JSON.parse(text);
-      } catch (e) {
-        return;
-      }
+      const result = await fetchAllChats(ownId);
 
       if (result?.chat) {
         const chatData = Array.isArray(result.chat) ? result.chat : [];
 
-        const filtered = chatData
-          .filter(item =>
-            String(item.provider_id) === String(ownId) || String(item.id) === String(ownId)
-          )
-          .map(item => {
+        const normalizedChats = chatData.map(item => {
             const chatId = String(item.id || item.provider_id || item.user_id);
 
             if (String(item.sender_id) === String(ownId)) {
@@ -128,7 +111,7 @@ const ChatScreen = props => {
             return item;
           });
 
-        setALlChat(filtered);
+        setALlChat(normalizedChats);
       }
     } catch (error) {
       console.log('Error fetching chat list:', error);

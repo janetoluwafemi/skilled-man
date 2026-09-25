@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {StyleSheet, View, Image, StatusBar ,
   Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,7 +11,7 @@ function SplashScreen({ navigation }) {
   const { dispatch } = useAuth();
   const isFocused = useIsFocused();
 
-  const checkUserAuthAndRole = async () => {
+  const checkUserAuthAndRole = useCallback(async () => {
     try {
       const user = await AsyncStorage.getItem('user');
       const role = await AsyncStorage.getItem('role');
@@ -32,10 +32,8 @@ function SplashScreen({ navigation }) {
         global.profile = data.profile;
 
         if (role === '0' || role === '1') {
-          navigation.reset({
-            index: 0,
-            routes: [{name: 'Parent'}],
-          });
+          // AuthProvider switches to the private navigator after LOGIN.
+          // Resetting here targets the still-mounted public navigator.
         } else {
           navigation.reset({
             index: 0,
@@ -54,7 +52,7 @@ function SplashScreen({ navigation }) {
         routes: [{name: 'Signin'}],
       });
     }
-  };
+  }, [dispatch, navigation]);
 
   useEffect(() => {
     let timer;
@@ -70,7 +68,7 @@ function SplashScreen({ navigation }) {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [isFocused]);
+  }, [isFocused, checkUserAuthAndRole]);
 
   return (
     <View style={styles.container}>

@@ -22,6 +22,13 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import {Icons} from '../../Components/Icons';
 import color from '../../Assets/colors/colors';
 import {BASIC_URL} from '../Signin/Signin';
+import {
+  blockChatUser,
+  clearChat,
+  getBlockedChatUsers,
+  reportChatUser,
+  unblockChatUser,
+} from '../../utilis/chatApi';
 
 const UserProfile = () => {
   const navigation = useNavigation();
@@ -39,7 +46,7 @@ const UserProfile = () => {
     activeUserObject?.uuid ||
     '',
   ).trim();
-  const currentUserId = global.id;
+  const [currentUserId, setCurrentUserId] = useState(String(global.id || ''));
 
   const userImage = activeUserObject?.image
     ? `${BASIC_URL}uploads/${activeUserObject.image.replace(/^\/+/, '')}`
@@ -70,12 +77,25 @@ const UserProfile = () => {
   useEffect(() => {
     const loadPreferences = async () => {
       try {
+        const rawUser = await AsyncStorage.getItem('user');
+        if (rawUser) {
+          const savedUser = JSON.parse(rawUser);
+          const savedId =
+            savedUser?.id ||
+            savedUser?.user_id ||
+            savedUser?.userId ||
+            savedUser?.data?.id ||
+            savedUser?.data?.user_id;
+          if (savedId) {
+            setCurrentUserId(String(savedId));
+            global.id = String(savedId);
+          }
+        }
+
         const lockedState = await AsyncStorage.getItem(`chat_locked_${peerId}`);
         if (lockedState === 'true') setIsChatLocked(true);
 
-        const blockedState = await AsyncStorage.getItem(
-          `user_blocked_${peerId}`,
-        );
+        const blockedState = await AsyncStorage.getItem(`user_blocked_${peerId}`);
         if (blockedState === 'true') setIsBlocked(true);
 
         const mediaPref = await AsyncStorage.getItem(`media_pref_${peerId}`);
@@ -89,6 +109,27 @@ const UserProfile = () => {
     };
     if (peerId) loadPreferences();
   }, [peerId]);
+
+  useEffect(() => {
+    if (!currentUserId || !peerId) return;
+
+    getBlockedChatUsers(currentUserId)
+      .then(result => {
+        const blockedUsers = result?.blocked_users || result?.blocked || result?.data || [];
+        const isServerBlocked = Array.isArray(blockedUsers)
+          ? blockedUsers.some(item =>
+              String(item?.blocked_id || item?.user_id || item?.id) === peerId
+            )
+          : false;
+        setIsBlocked(isServerBlocked);
+        if (isServerBlocked) {
+          AsyncStorage.setItem(`user_blocked_${peerId}`, 'true').catch(error =>
+            console.log('Error saving blocked state:', error)
+          );
+        }
+      })
+      .catch(error => console.log('Error loading blocked users:', error));
+  }, [currentUserId, peerId]);
 
   const closeMenu = () => setMenuVisible(false);
 
@@ -136,29 +177,33 @@ const UserProfile = () => {
     });
 
     try {
-      const formData = new FormData();
-      formData.append('user_id', currentUserId);
-      formData.append('peer_id', peerId);
+      if (!currentUserId || !peerId) {
+        throw new Error('A valid user and contact are required.');
+      }
 
       if (type === 'clear') {
+        await clearChat(currentUserId, peerId);
         await AsyncStorage.removeItem(
           `chat_history_${currentUserId}_${peerId}`,
         );
-        Alert.alert('Cleared', 'Chat history has been cleared locally.');
+        Alert.alert('Cleared', 'Chat history has been cleared.');
       } else if (type === 'block') {
+        await blockChatUser(currentUserId, peerId);
         await AsyncStorage.setItem(`user_blocked_${peerId}`, 'true');
         setIsBlocked(true);
         Alert.alert('Blocked', `${userName} has been blocked.`);
       } else if (type === 'unblock') {
+        await unblockChatUser(currentUserId, peerId);
         await AsyncStorage.removeItem(`user_blocked_${peerId}`);
         setIsBlocked(false);
         Alert.alert('Unblocked', `${userName} has been unblocked.`);
       } else if (type === 'report') {
-        const response = await fetch(`${BASIC_URL}report_user.php`, {
-          method: 'POST',
-          body: formData,
-        });
-        const result = await response.json();
+        const result = await reportChatUser(
+          currentUserId,
+          peerId,
+          'Harassment',
+          `Report submitted for ${userName}.`,
+        );
         Alert.alert(
           'Reported',
           result.message || 'User successfully reported.',
