@@ -33,7 +33,7 @@
     "deprecated-react-native-prop-types": "^5.0.0",
     "expo": "~57.0.22",
     "expo-auth-session": "~57.0.12",
-    "expo-av": "^16.0.8",
+    "expo-av": "~16.0.8",
     "expo-dev-client": "~57.0.19",
     "expo-document-picker": "~57.0.2",
     "expo-font": "~57.0.4",

@@ -12,6 +12,7 @@ import {Icons} from './Icons';
 
 if (
   Platform.OS === 'android' &&
+  !global.nativeFabricUIManager &&
   UIManager.setLayoutAnimationEnabledExperimental
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
