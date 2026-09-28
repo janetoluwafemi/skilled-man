@@ -38,8 +38,8 @@ const TabArr = [
   {
     route: 'RequestScreen',
     label: 'Request',
-    type: Icons.FontAwesome,
-    icon: 'commenting-o',
+    type: Icons.MaterialCommunityIcons,
+    icon: 'calendar-check',
     component: ReqestScren,
   },
   {
