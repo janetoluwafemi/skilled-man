@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
-  Platform } from 'react-native';
+  Platform
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -42,8 +43,8 @@ const EditUserProfile = () => {
     setAddressLoading(true);
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
-        { headers: { 'User-Agent': 'SkilledManApp' } }
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
+          { headers: { 'User-Agent': 'SkilledManApp' } }
       );
       const data = await response.json();
       if (data && data.display_name) {
@@ -175,16 +176,16 @@ const EditUserProfile = () => {
       const result = await response.json();
 
       const updateSucceeded =
-        Boolean(result?.success) ||
-        result?.status === 'success' ||
-        result?.status === true;
+          Boolean(result?.success) ||
+          result?.status === 'success' ||
+          result?.status === true;
 
       if (updateSucceeded) {
         const updatedProfile = await getProfileData();
         const updatedImage = updatedProfile?.profile || result?.profile;
         const profileToStore = updatedProfile
-          ? { ...updatedProfile, ...(updatedImage ? { profile: updatedImage } : {}) }
-          : null;
+            ? { ...updatedProfile, ...(updatedImage ? { profile: updatedImage } : {}) }
+            : null;
 
         if (profileToStore) {
           await AsyncStorage.setItem('user', JSON.stringify(profileToStore));
@@ -217,126 +218,127 @@ const EditUserProfile = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <View style={styles.headerBar}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => navigation.goBack()}
-          style={styles.backArrowBtn}>
-          <Icons.Feather name="arrow-left" size={20} color="#0F172A" />
-        </TouchableOpacity>
-        <View style={{ width: 40 }} />
-      </View>
+        <View style={styles.headerBar}>
+          <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.goBack()}
+              style={styles.backArrowBtn}>
+            <Icons.Feather name="arrow-left" size={20} color="#0F172A" />
+          </TouchableOpacity>
+          <View style={{ width: 40 }} />
+        </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
-        <Animatable.View animation="fadeInUp" duration={500} style={styles.formContainer}>
+        <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+          {/* FIX: Added useNativeDriver={true} to avoid main thread JS layout thrashing */}
+          <Animatable.View animation="fadeInUp" duration={500} useNativeDriver={true} style={styles.formContainer}>
 
-          <View style={styles.avatarSection}>
-            <View style={styles.avatarWrapper}>
-              <Image
-                source={
-                  image?.uri
-                    ? { uri: image.uri }
-                    : profileImgUrl
-                      ? {
-                          uri: `${BASIC_URL}uploads/${profileImgUrl}?v=${profileImageVersion}`,
-                        }
-                      : require('../../Assets/Images/user.jpg')
-                }
-                style={styles.profileImage}
-              />
-              <TouchableOpacity activeOpacity={0.85} onPress={onGalry} style={styles.cameraButton}>
-                <Icons.Feather name="camera" color="#FFFFFF" size={14} />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.userNameHeader}>{name || 'User Profile'}</Text>
-            <Text style={styles.userEmailHeader}>{email || 'Manage Account'}</Text>
-          </View>
-
-          <View style={styles.cardWrapper}>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Full Name</Text>
-              <InputEditProfile
-                value={name}
-                placeholder="Your full name"
-                placeholderTextColor="#94A3B8"
-                onChangeText={setName}
-                icon="user"
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Email Address</Text>
-              <InputEditProfile
-                value={email}
-                placeholder="Email address"
-                placeholderTextColor="#94A3B8"
-                editable={false}
-                icon="mail"
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Phone Number</Text>
-              <InputEditProfile
-                value={phone}
-                placeholder="Phone number"
-                placeholderTextColor="#94A3B8"
-                onChangeText={setPhone}
-                keyboardType="numeric"
-                icon="phone"
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Home / Delivery Address</Text>
-              <View style={styles.relativeBox}>
-                <InputEditProfile
-                  value={address}
-                  placeholder="Street address or landmark"
-                  placeholderTextColor="#94A3B8"
-                  onChangeText={setAddress}
-                  icon="map-pin"
-                  multiline={true}
+            <View style={styles.avatarSection}>
+              <View style={styles.avatarWrapper}>
+                <Image
+                    source={
+                      image?.uri
+                          ? { uri: image.uri }
+                          : profileImgUrl
+                              ? {
+                                uri: `${BASIC_URL}uploads/${profileImgUrl}?v=${profileImageVersion}`,
+                              }
+                              : require('../../Assets/Images/user.jpg')
+                    }
+                    style={styles.profileImage}
                 />
-                {addressLoading && (
-                  <ActivityIndicator
-                    size="small"
-                    color={color.defalt}
-                    style={styles.addressLoader}
-                  />
-                )}
+                <TouchableOpacity activeOpacity={0.85} onPress={onGalry} style={styles.cameraButton}>
+                  <Icons.Feather name="camera" color="#FFFFFF" size={14} />
+                </TouchableOpacity>
               </View>
+              <Text style={styles.userNameHeader}>{name || 'User Profile'}</Text>
+              <Text style={styles.userEmailHeader}>{email || 'Manage Account'}</Text>
             </View>
 
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={styles.mapBtnStyle}
-              onPress={() => navigation.navigate('Maplatln')}>
-              <Icons.Feather name="map-pin" size={16} color={color.defalt} style={{ marginRight: 8 }} />
-              <Text style={styles.mapBtnText}>Pin Address from Map</Text>
-            </TouchableOpacity>
+            <View style={styles.cardWrapper}>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Full Name</Text>
+                <InputEditProfile
+                    value={name}
+                    placeholder="Your full name"
+                    placeholderTextColor="#94A3B8"
+                    onChangeText={setName}
+                    icon="user"
+                />
+              </View>
 
-            <BotonComp
-              BtnStyle={styles.submitBtn}
-              onPressFunc={handleUpdate}
-              btnText={
-                load ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  'Save Changes'
-                )
-              }
-            />
-          </View>
-        </Animatable.View>
-      </ScrollView>
-    </SafeAreaView>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Email Address</Text>
+                <InputEditProfile
+                    value={email}
+                    placeholder="Email address"
+                    placeholderTextColor="#94A3B8"
+                    editable={false}
+                    icon="mail"
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Phone Number</Text>
+                <InputEditProfile
+                    value={phone}
+                    placeholder="Phone number"
+                    placeholderTextColor="#94A3B8"
+                    onChangeText={setPhone}
+                    keyboardType="numeric"
+                    icon="phone"
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Home / Delivery Address</Text>
+                <View style={styles.relativeBox}>
+                  <InputEditProfile
+                      value={address}
+                      placeholder="Street address or landmark"
+                      placeholderTextColor="#94A3B8"
+                      onChangeText={setAddress}
+                      icon="map-pin"
+                      multiline={true}
+                  />
+                  {addressLoading && (
+                      <ActivityIndicator
+                          size="small"
+                          color={color.defalt}
+                          style={styles.addressLoader}
+                      />
+                  )}
+                </View>
+              </View>
+
+              <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.mapBtnStyle}
+                  onPress={() => navigation.navigate('Maplatln')}>
+                <Icons.Feather name="map-pin" size={16} color={color.defalt} style={{ marginRight: 8 }} />
+                <Text style={styles.mapBtnText}>Pin Address from Map</Text>
+              </TouchableOpacity>
+
+              <BotonComp
+                  BtnStyle={styles.submitBtn}
+                  onPressFunc={handleUpdate}
+                  btnText={
+                    load ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                        'Save Changes'
+                    )
+                  }
+              />
+            </View>
+          </Animatable.View>
+        </ScrollView>
+      </SafeAreaView>
   );
 };
 
