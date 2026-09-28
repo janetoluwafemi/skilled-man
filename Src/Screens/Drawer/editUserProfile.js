@@ -34,6 +34,7 @@ const EditUserProfile = () => {
   const [longitude, setLongitude] = useState('');
   const [image, setImage] = useState(null);
   const [profileImgUrl, setProfileImgUrl] = useState(null);
+  const [profileImageVersion, setProfileImageVersion] = useState(0);
   const [load, setLoad] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
 
@@ -105,8 +106,16 @@ const EditUserProfile = () => {
 
   const onGalry = async () => {
     try {
+      if (Platform.OS !== 'web') {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+          showToast('Permission to access photos is required');
+          return;
+        }
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 0.8,
       });
       if (!result.canceled && result.assets && result.assets[0]) {
@@ -133,18 +142,35 @@ const EditUserProfile = () => {
       profileFormData.append('latitude', latitude || '0');
       profileFormData.append('longitude', longitude || '0');
 
-      if (image && image.uri) {
-        profileFormData.append('profile', {
-          uri: image.uri,
-          name: image.fileName || 'profile.jpg',
-          type: image.mimeType || 'image/jpeg',
-        });
+      if (image?.uri) {
+        const mimeType = image.mimeType || 'image/jpeg';
+        const extension = mimeType.split('/')[1]?.split(';')[0] || 'jpg';
+        const fileName = `profile_${Date.now()}.${extension}`;
+
+        if (Platform.OS === 'web') {
+          const fileResponse = await fetch(image.uri);
+          if (!fileResponse.ok) {
+            throw new Error('Could not read the selected profile image');
+          }
+          const fileBlob = await fileResponse.blob();
+          profileFormData.append('profile', fileBlob, fileName);
+        } else {
+          profileFormData.append('profile', {
+            uri: image.uri,
+            name: fileName,
+            type: mimeType,
+          });
+        }
       }
 
       const response = await fetch(`${BASIC_URL}user/profile.php`, {
         method: 'POST',
         body: profileFormData,
       });
+
+      if (!response.ok) {
+        throw new Error(`Profile update failed with status ${response.status}`);
+      }
 
       const result = await response.json();
 
@@ -155,17 +181,26 @@ const EditUserProfile = () => {
 
       if (updateSucceeded) {
         const updatedProfile = await getProfileData();
+        const updatedImage = updatedProfile?.profile || result?.profile;
+        const profileToStore = updatedProfile
+          ? { ...updatedProfile, ...(updatedImage ? { profile: updatedImage } : {}) }
+          : null;
 
-        if (updatedProfile) {
-          await AsyncStorage.setItem('user', JSON.stringify(updatedProfile));
-          global.id = updatedProfile.id || userId;
-          global.name = updatedProfile.name || '';
-          global.email = updatedProfile.email || '';
-          global.phone_number = updatedProfile.phone_number || '';
-          global.address = updatedProfile.address || '';
-          global.lat = updatedProfile.latitude || '';
-          global.long = updatedProfile.longitude || '';
-          global.profile = updatedProfile.profile || '';
+        if (profileToStore) {
+          await AsyncStorage.setItem('user', JSON.stringify(profileToStore));
+          global.id = profileToStore.id || userId;
+          global.name = profileToStore.name || '';
+          global.email = profileToStore.email || '';
+          global.phone_number = profileToStore.phone_number || '';
+          global.address = profileToStore.address || '';
+          global.lat = profileToStore.latitude || '';
+          global.long = profileToStore.longitude || '';
+          global.profile = updatedImage || '';
+        }
+
+        if (updatedImage) {
+          setProfileImgUrl(updatedImage);
+          setProfileImageVersion(Date.now());
         }
 
         showToast('Profile Updated Successfully');
@@ -208,7 +243,9 @@ const EditUserProfile = () => {
                   image?.uri
                     ? { uri: image.uri }
                     : profileImgUrl
-                      ? { uri: `${BASIC_URL}uploads/${profileImgUrl}` }
+                      ? {
+                          uri: `${BASIC_URL}uploads/${profileImgUrl}?v=${profileImageVersion}`,
+                        }
                       : require('../../Assets/Images/user.jpg')
                 }
                 style={styles.profileImage}

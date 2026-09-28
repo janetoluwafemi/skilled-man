@@ -6,9 +6,9 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const guidelineBaseWidth = 375;
 const guidelineBaseHeight = 812;
 
-const scale = SCREEN_WIDTH / guidelineBaseWidth;
-const verticalScale = SCREEN_HEIGHT / guidelineBaseHeight;
-const moderateScale = (size, factor = 0.5) => size + (scale(size) - size) * factor;
+const widthScale = size => (SCREEN_WIDTH / guidelineBaseWidth) * size;
+export const moderateScale = (size, factor = 0.5) =>
+  size + (widthScale(size) - size) * factor;
 
 /**
  * Normalizes font sizes and layout dimensions based on screen width.
@@ -16,7 +16,7 @@ const moderateScale = (size, factor = 0.5) => size + (scale(size) - size) * fact
  * @returns {number} The normalized size.
  */
 export const normalize = (size) => {
-  const newSize = size * scale;
+  const newSize = widthScale(size);
   if (Platform.OS === 'ios') {
     return Math.round(PixelRatio.roundToNearestPixel(newSize));
   } else {
@@ -48,6 +48,7 @@ export const heightPercentage = (percent) => {
 
 export default {
   normalize,
+  moderateScale,
   horizontalScale,
   verticalScale: verticalScaleSize,
   widthPercentage,

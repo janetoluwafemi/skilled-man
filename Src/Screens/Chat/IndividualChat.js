@@ -1324,7 +1324,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   chatMsgImage: {
-    width: 240,
+    width: Math.min(Dimensions.get('window').width * 0.72, 240),
     height: 180,
     borderRadius: 12,
     margin: 4,
