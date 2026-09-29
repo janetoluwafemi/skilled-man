@@ -81,7 +81,32 @@ const SaveScreen = () => {
           const activeFavorites = result.favorite_providers.filter(
             isActiveFavorite,
           );
-          setFavoriteList(activeFavorites);
+          const favoritesWithFreshProfiles = await Promise.all(
+            activeFavorites.map(async favorite => {
+              const providerId = getProviderId(favorite);
+              if (!providerId) {
+                return favorite;
+              }
+
+              try {
+                const profileResponse = await fetch(
+                  `${BASIC_URL}user/get_profile.php?id=${providerId}`,
+                  {method: 'GET'},
+                );
+                const profile = await profileResponse.json();
+                return profile?.profile
+                  ? {...favorite, image: profile.profile}
+                  : favorite;
+              } catch (error) {
+                console.log(
+                  `Error fetching profile for provider ${providerId}:`,
+                  error,
+                );
+                return favorite;
+              }
+            }),
+          );
+          setFavoriteList(favoritesWithFreshProfiles);
         } else if (result?.error) {
           console.log(result.error);
         }

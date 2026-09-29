@@ -277,6 +277,32 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
   const peerAvatar = peerData?.image
       ? `${BASIC_URL}uploads/${peerData.image.replace(/^\/+/, '')}`
       : `${BASIC_URL}uploads/dumy.png`;
+  const [livePeerAvatar, setLivePeerAvatar] = useState(peerAvatar);
+
+  useEffect(() => {
+    let isCurrent = true;
+    setLivePeerAvatar(peerAvatar);
+
+    const fetchPeerAvatar = async () => {
+      try {
+        const response = await fetch(`${BASIC_URL}user/get_profile.php?id=${peerId}`);
+        const result = await response.json();
+        if (isCurrent && result?.profile) {
+          const profile = result.profile;
+          setLivePeerAvatar(
+              `${BASIC_URL}uploads/${profile.replace(/^\/+/, '')}?v=${Date.now()}`
+          );
+        }
+      } catch (error) {
+        console.log('Error fetching chat peer profile:', error);
+      }
+    };
+
+    fetchPeerAvatar();
+    return () => {
+      isCurrent = false;
+    };
+  }, [peerId, peerAvatar]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
@@ -393,7 +419,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
             user: {
               _id: msgSenderRole === currentDashboardRole ? cleanUserId : peerId,
               name: isActuallyMe ? 'Me' : specificChat.name || peerData?.name || 'User',
-              avatar: isActuallyMe ? myAvatar : peerAvatar,
+              avatar: isActuallyMe ? myAvatar : livePeerAvatar,
             },
           };
 
@@ -409,7 +435,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     } catch (error) {
       console.log('Error fetching chat messages:', error);
     }
-  }, [cleanUserId, peerId, peerData, chatStorageKey, myAvatar, peerAvatar, currentDashboardRole]);
+  }, [cleanUserId, peerId, peerData, chatStorageKey, myAvatar, livePeerAvatar, currentDashboardRole]);
 
   useEffect(() => {
     fetchApiMessages();
@@ -764,7 +790,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
             <View style={{ zIndex: 10 }}>
               <ChatUsrHeader
                   userName={peerData?.name || 'Chat'}
-                  userImage={peerAvatar}
+                  userImage={livePeerAvatar}
                   onlineStatus={!isBlocked}
                   onProfilePress={() => {
                     navigation.navigate('UserProfile', {

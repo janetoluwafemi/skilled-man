@@ -44,9 +44,9 @@ const TabArr = [
   },
   {
     route: 'BookingScreen',
-    label: 'Booking',
-    type: Icons.MaterialCommunityIcons,
-    icon: 'home-variant',
+    label: 'My Bookings',
+    type: Icons.Ionicons,
+    icon: 'ticket-outline',
     component: BokngScren,
   },
   {
