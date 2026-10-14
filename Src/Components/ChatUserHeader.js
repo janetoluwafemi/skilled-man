@@ -8,109 +8,169 @@ import {
   Platform,
   Modal,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {Icons} from './Icons';
 
 const ChatUserHeader = ({
-  userName,
-  userImage,
-  onlineStatus,
-  onProfilePress,
-  onSearchPress,
-}) => {
+                          userName,
+                          userImage,
+                          onlineStatus,
+                          onProfilePress,
+                          onSearchPress,
+                          onBlockPress,
+                          onDeleteChatPress,
+                          onReportPress,
+                          onVoiceCallPress,
+                          voiceCallLoading = false,
+                          isBlocked = false,
+                        }) => {
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
 
-  const closeMenu = () => setMenuVisible(false);
+  const closeMenu = () => {
+    setMenuVisible(false);
+    // Reset "More" state after a short delay so it resets smoothly while the modal fades out
+    setTimeout(() => {
+      setShowMoreOptions(false);
+    }, 300);
+  };
 
   return (
-    <View style={styles.headerContainer}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.backBtn}>
-        <Icons.Ionicons name="arrow-back" size={24} color="#0F172A" />
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.profileSection}
-        activeOpacity={0.7}
-        onPress={onProfilePress}>
-        <View style={styles.avatarContainer}>
-          <Image
-            source={
-              userImage
-                ? {uri: userImage}
-                : require('../Assets/Images/user.jpg')
-            }
-            style={styles.avatar}
-          />
-          {onlineStatus ? <View style={styles.onlineBadge} /> : null}
-        </View>
-
-        <View style={styles.userInfo}>
-          <Text style={styles.userName} numberOfLines={1}>
-            {userName || 'User'}
-          </Text>
-          <Text style={styles.statusText}>
-            {onlineStatus ? 'Online' : 'Offline'}
-          </Text>
-        </View>
-      </TouchableOpacity>
-
-      <View style={styles.headerRightActions}>
-        <TouchableOpacity style={styles.actionBtn}>
-          <Icons.Feather name="video" size={22} color="#0F172A" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionBtn}>
-          <Icons.Feather name="phone" size={20} color="#0F172A" />
-        </TouchableOpacity>
+      <View style={styles.headerContainer}>
         <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => setMenuVisible(true)}>
-          <Icons.Feather name="more-vertical" size={22} color="#0F172A" />
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}>
+          <Icons.Ionicons name="arrow-back" size={24} color="#0F172A" />
         </TouchableOpacity>
-      </View>
 
-      <Modal
-        visible={menuVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={closeMenu}>
-        <TouchableWithoutFeedback onPress={closeMenu}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.dropdownMenu}>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => {
-                  closeMenu();
-                  if (onSearchPress) onSearchPress();
-                }}>
-                <Text style={styles.menuText}>Search</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
-                <Text style={styles.menuText}>Media, links, and docs</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
-                <Text style={styles.menuText}>Mute notifications</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
-                <Text style={styles.menuText}>Disappearing messages</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
-                <Text style={styles.menuText}>Chat theme</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.menuItem, styles.menuItemMore]}
-                onPress={closeMenu}>
-                <Text style={styles.menuText}>More</Text>
-                <Icons.Feather name="chevron-right" size={20} color="#0F172A" />
-              </TouchableOpacity>
-            </View>
+        <TouchableOpacity
+            style={styles.profileSection}
+            activeOpacity={0.7}
+            onPress={onProfilePress}>
+          <View style={styles.avatarContainer}>
+            <Image
+                source={
+                  userImage
+                      ? {uri: userImage}
+                      : require('../Assets/Images/user.jpg')
+                }
+                style={styles.avatar}
+            />
+            {onlineStatus ? <View style={styles.onlineBadge} /> : null}
           </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    </View>
+
+          <View style={styles.userInfo}>
+            <Text style={styles.userName} numberOfLines={1}>
+              {userName || 'User'}
+            </Text>
+            <Text style={styles.statusText}>
+              {onlineStatus ? 'Online' : 'Offline'}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <View style={styles.headerRightActions}>
+          <TouchableOpacity style={styles.actionBtn}>
+            <Icons.Feather name="video" size={22} color="#0F172A" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Start voice call"
+            accessibilityState={{disabled: voiceCallLoading}}
+            disabled={voiceCallLoading}
+            onPress={onVoiceCallPress}>
+            {voiceCallLoading ? (
+              <ActivityIndicator size="small" color="#0F172A" />
+            ) : (
+              <Icons.Feather name="phone" size={20} color="#0F172A" />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => setMenuVisible(true)}>
+            <Icons.Feather name="more-vertical" size={22} color="#0F172A" />
+          </TouchableOpacity>
+        </View>
+
+        <Modal
+            visible={menuVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={closeMenu}>
+          <TouchableWithoutFeedback onPress={closeMenu}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.dropdownMenu}>
+                  <TouchableOpacity
+                      style={styles.menuItem}
+                      onPress={() => {
+                        closeMenu();
+                        if (onSearchPress) onSearchPress();
+                      }}>
+                    <Text style={styles.menuText}>Search</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+                    <Text style={styles.menuText}>Media, links, and docs</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+                    <Text style={styles.menuText}>Mute notifications</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+                    <Text style={styles.menuText}>Disappearing messages</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+                    <Text style={styles.menuText}>Chat theme</Text>
+                  </TouchableOpacity>
+
+                  {showMoreOptions ? (
+                      <>
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+                              closeMenu();
+                              if (onBlockPress) onBlockPress();
+                            }}>
+                          <Text style={styles.menuText}>
+                            {isBlocked ? 'Unblock' : 'Block'}
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+                              closeMenu();
+                              if (onDeleteChatPress) onDeleteChatPress();
+                            }}>
+                          <Text style={styles.menuText}>Delete chat</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => {
+                              closeMenu();
+                              if (onReportPress) onReportPress();
+                            }}>
+                          <Text style={styles.menuText}>Report</Text>
+                        </TouchableOpacity>
+                      </>
+                  ) : (
+                      <TouchableOpacity
+                          style={[styles.menuItem, styles.menuItemMore]}
+                          onPress={() => setShowMoreOptions(true)}>
+                        <Text style={styles.menuText}>More</Text>
+                        <Icons.Feather name="chevron-right" size={20} color="#0F172A" />
+                      </TouchableOpacity>
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      </View>
   );
 };
 

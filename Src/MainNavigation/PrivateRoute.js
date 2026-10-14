@@ -23,6 +23,7 @@ import NotificationScreen from '../Screens/Drawer/NotificationScreen';
 import AccSetting from '../Screens/Drawer/AccountSetting';
 import ChangePassword from '../Screens/Drawer/ChangePassword';
 import HistryScren from '../Screens/Drawer/HistoryScreen';
+import HistoryDetailScreen from '../Screens/Drawer/HistoryDetailScreen';
 import PrivacyPolicy from '../Screens/Drawer/PrivacyPolicy';
 import Term_Condition from '../Screens/Drawer/TermsConditions';
 import AbutUs from '../Screens/Drawer/AboutUs';
@@ -63,6 +64,7 @@ const PrivateRoute = () => {
       <Stack.Screen name="account_setting" component={AccSetting} />
       <Stack.Screen name="ChangePassword" component={ChangePassword} />
       <Stack.Screen name="HistoryScreen" component={HistryScren} />
+      <Stack.Screen name="HistoryDetail" component={HistoryDetailScreen} />
       <Stack.Screen name="privacy_policy" component={PrivacyPolicy} />
       <Stack.Screen name="terms_condidtions" component={Term_Condition} />
       <Stack.Screen name="AboutUs" component={AbutUs} />

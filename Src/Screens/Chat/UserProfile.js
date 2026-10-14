@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -30,12 +30,50 @@ import {
   unblockChatUser,
 } from '../../utilis/chatApi';
 
+const EMPTY_PROFILE = {};
+
+const getProfilePhone = (...profiles) => {
+  const phoneFields = [
+    'phone_number',
+    'phone',
+    'user_number',
+    'mobile_number',
+    'mobile',
+    'contact_number',
+  ];
+  const nestedKeys = ['data', 'user', 'profile', 'provider'];
+
+  for (const profile of profiles) {
+    if (!profile || typeof profile !== 'object') {
+      continue;
+    }
+    const candidates = [
+      profile,
+      ...nestedKeys
+        .map(key => profile[key])
+        .filter(value => value && typeof value === 'object'),
+    ];
+    for (const candidate of candidates) {
+      for (const field of phoneFields) {
+        const value = candidate[field];
+        if (typeof value === 'string' || typeof value === 'number') {
+          const phone = String(value).trim();
+          if (phone) {
+            return phone;
+          }
+        }
+      }
+    }
+  }
+  return '';
+};
+
 const UserProfile = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
   const {userId, userData, provider, item, user} = route.params || {};
-  const activeUserObject = userData || provider || item || user || {};
+  const activeUserObject = userData || provider || item || user || EMPTY_PROFILE;
 
   const userName = activeUserObject?.name || 'User';
   const peerId = String(
@@ -47,6 +85,9 @@ const UserProfile = () => {
     '',
   ).trim();
   const [currentUserId, setCurrentUserId] = useState(String(global.id || ''));
+  const [peerProfile, setPeerProfile] = useState(activeUserObject);
+  const [voiceCallLoading, setVoiceCallLoading] = useState(false);
+  const voiceCallInProgressRef = useRef(false);
 
   const userImage = activeUserObject?.image
     ? `${BASIC_URL}uploads/${activeUserObject.image.replace(/^\/+/, '')}`
@@ -73,6 +114,38 @@ const UserProfile = () => {
     message: '',
     iconName: '',
   });
+
+  useEffect(() => {
+    let isCurrent = true;
+    setPeerProfile(activeUserObject);
+    const fetchPeerProfile = async () => {
+      if (!peerId) {
+        return;
+      }
+      try {
+        const response = await fetch(
+          `${BASIC_URL}user/get_profile.php?id=${encodeURIComponent(peerId)}`,
+        );
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result?.error || 'Unable to load contact profile.');
+        }
+        if (isCurrent) {
+          setPeerProfile(
+            result?.data && typeof result.data === 'object'
+              ? {...activeUserObject, ...result.data}
+              : {...activeUserObject, ...result},
+          );
+        }
+      } catch (error) {
+        console.log('Error fetching contact profile:', error);
+      }
+    };
+    fetchPeerProfile();
+    return () => {
+      isCurrent = false;
+    };
+  }, [activeUserObject, peerId]);
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -262,6 +335,98 @@ const UserProfile = () => {
       currentuser: activeUserObject,
       startSearch: true,
     });
+  };
+
+  const startVoiceCall = async () => {
+    if (voiceCallInProgressRef.current) {
+      return;
+    }
+
+    voiceCallInProgressRef.current = true;
+    setVoiceCallLoading(true);
+    try {
+      const storedUser = await AsyncStorage.getItem('user');
+      if (!storedUser) {
+        throw new Error('Your account details are unavailable. Please sign in again.');
+      }
+      const callerProfile = JSON.parse(storedUser);
+      const callerPhone = getProfilePhone(callerProfile);
+      let recipientPhone = getProfilePhone(peerProfile, activeUserObject);
+
+      if (!recipientPhone && peerId) {
+        const profileResponse = await fetch(
+          `${BASIC_URL}user/get_profile.php?id=${encodeURIComponent(peerId)}`,
+        );
+        const profileResult = await profileResponse.json();
+        if (!profileResponse.ok) {
+          throw new Error(
+            profileResult?.error || 'Unable to load the recipient phone number.',
+          );
+        }
+        setPeerProfile(
+          profileResult?.data && typeof profileResult.data === 'object'
+            ? {...activeUserObject, ...profileResult.data}
+            : {...activeUserObject, ...profileResult},
+        );
+        recipientPhone = getProfilePhone(profileResult);
+      }
+
+      if (!callerPhone || !recipientPhone) {
+        throw new Error(
+          !callerPhone && !recipientPhone
+            ? 'Phone numbers are missing for both call participants.'
+            : !callerPhone
+              ? 'Your phone number is missing from your profile.'
+              : 'The recipient phone number is missing from their profile.',
+        );
+      }
+
+      const response = await fetch(`${BASIC_URL}make-call`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          caller_id: currentUserId,
+          peer_id: peerId,
+          from: callerPhone,
+          to: recipientPhone,
+        }),
+      });
+      const responseText = await response.text();
+      let result;
+      try {
+        result = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error('The call service returned an invalid response.');
+      }
+
+      const callStatus = String(
+        result?.status || result?.call_status || '',
+      ).toLowerCase();
+      const callFailed =
+        !response.ok ||
+        result?.error ||
+        result?.success === false ||
+        String(result?.success).toLowerCase() === 'false' ||
+        ['error', 'failed', 'failure', 'rejected'].includes(callStatus);
+
+      if (callFailed) {
+        throw new Error(
+          result?.error || result?.message || 'Unable to start the voice call.',
+        );
+      }
+      Alert.alert(
+        'Call requested',
+        result?.message || 'Your voice call request has been sent.',
+      );
+    } catch (error) {
+      Alert.alert(
+        'Unable to make call',
+        error?.message || 'Please try again in a moment.',
+      );
+    } finally {
+      voiceCallInProgressRef.current = false;
+      setVoiceCallLoading(false);
+    }
   };
 
   const renderRadioOption = (label, currentSelection, onSelect) => (
@@ -547,9 +712,21 @@ const UserProfile = () => {
           </Text>
 
           <View style={styles.actionButtonsRow}>
-            <TouchableOpacity style={styles.circleActionBtn}>
-              <Icons.Feather name="phone" size={20} color={color.defalt} />
-              <Text style={styles.actionButtonText}>Audio</Text>
+            <TouchableOpacity
+              style={styles.circleActionBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Start voice call"
+              accessibilityState={{disabled: voiceCallLoading}}
+              disabled={voiceCallLoading}
+              onPress={startVoiceCall}>
+              {voiceCallLoading ? (
+                <ActivityIndicator size="small" color={color.defalt} />
+              ) : (
+                <Icons.Feather name="phone" size={20} color={color.defalt} />
+              )}
+              <Text style={styles.actionButtonText}>
+                {voiceCallLoading ? 'Calling...' : 'Audio'}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.circleActionBtn}>
               <Icons.Feather name="video" size={20} color={color.defalt} />

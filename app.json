@@ -26,6 +26,26 @@
           "locationWhenInUsePermission": "Allow Skilledman to use your location while selecting a service address."
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static",
+            "forceStaticLinking": [
+              "RNFBApp",
+              "stream-react-native-webrtc"
+            ]
+          }
+        }
+      ],
+      "@stream-io/video-react-native-sdk",
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "cameraPermission": "Allow Skilledman to use the camera for video calls.",
+          "microphonePermission": "Allow Skilledman to use the microphone for audio calls."
+        }
+      ],
       "expo-sharing",
       "expo-web-browser",
       "expo-font"

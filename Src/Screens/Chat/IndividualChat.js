@@ -24,6 +24,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Linking,
+  Switch,
 } from 'react-native';
 
 import {
@@ -42,6 +43,7 @@ import {
 
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 import {
   useNavigation,
@@ -55,6 +57,13 @@ import CustomAlert from '../../Components/CustomAlert';
 import ChatUsrHeader from '../../Components/ChatUserHeader';
 import { Icons } from '../../Components/Icons';
 import { BASIC_URL } from '../Signin/Signin';
+import {
+  blockChatUser,
+  clearChat,
+  getBlockedChatUsers,
+  reportChatUser,
+  unblockChatUser,
+} from '../../utilis/chatApi';
 
 let cachedAudioModule;
 let didResolveAudioModule = false;
@@ -63,94 +72,90 @@ const getAudioModule = () => {
   if (didResolveAudioModule) {
     return cachedAudioModule;
   }
-
   didResolveAudioModule = true;
-
   try {
     cachedAudioModule = require('expo-av').Audio;
   } catch (error) {
     cachedAudioModule = null;
-    console.warn(
-        'Voice notes are unavailable because this app build does not include expo-av.'
-    );
+    console.warn('Voice notes are unavailable because this app build does not include expo-av.');
   }
-
   return cachedAudioModule;
 };
 
 const getSynchronizedUserId = async () => {
   try {
     const rawUser = await AsyncStorage.getItem('user');
-
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
-
-      const permanentId =
-          parsed?.id ||
-          parsed?.user_id ||
-          parsed?.userId;
-
-      if (
-          permanentId &&
-          String(permanentId).trim() !== '' &&
-          !['251', '255', '256'].includes(
-              String(permanentId)
-          )
-      ) {
+      const permanentId = parsed?.id || parsed?.user_id || parsed?.userId;
+      if (permanentId && String(permanentId).trim() !== '' && !['251', '255', '256'].includes(String(permanentId))) {
         const cleanId = String(permanentId).trim();
-
         global.id = cleanId;
-
         return cleanId;
       }
     }
   } catch (e) {
-    console.log(
-        'Error reading AsyncStorage in getSynchronizedUserId:',
-        e
-    );
+    console.log('Error reading AsyncStorage in getSynchronizedUserId:', e);
   }
-
-  if (
-      global.id &&
-      String(global.id).trim() !== '' &&
-      !['251', '255', '256'].includes(
-          String(global.id)
-      )
-  ) {
+  if (global.id && String(global.id).trim() !== '' && !['251', '255', '256'].includes(String(global.id))) {
     return String(global.id).trim();
   }
-
   return null;
+};
+
+const getProfilePhone = (...profiles) => {
+  const fields = [
+    'phone_number',
+    'phone',
+    'user_number',
+    'mobile_number',
+    'mobile',
+    'contact_number',
+  ];
+  const nestedProfileKeys = ['data', 'user', 'profile', 'provider'];
+
+  for (const profile of profiles) {
+    if (!profile || typeof profile !== 'object') {
+      continue;
+    }
+    const profileCandidates = [
+      profile,
+      ...nestedProfileKeys
+          .map(key => profile[key])
+          .filter(value => value && typeof value === 'object'),
+    ];
+    for (const candidate of profileCandidates) {
+      for (const field of fields) {
+        const phone = candidate[field];
+        if (typeof phone === 'string' || typeof phone === 'number') {
+          const normalizedPhone = String(phone).trim();
+          if (normalizedPhone) {
+            return normalizedPhone;
+          }
+        }
+      }
+    }
+  }
+  return '';
 };
 
 const AudioMessage = ({ audioUri, isMe }) => {
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-
   const textColor = isMe ? '#FFFFFF' : color.defalt;
 
   useEffect(() => {
-    return sound
-        ? () => {
-          sound.unloadAsync();
-        }
-        : undefined;
+    return sound ? () => { sound.unloadAsync(); } : undefined;
   }, [sound]);
 
   const playAudio = async () => {
     const Audio = getAudioModule();
-
-    if (!Audio) {
-      return;
-    }
-
+    if (!Audio) return;
     try {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
         allowsRecordingIOS: false,
       });
-
       if (sound) {
         if (isPlaying) {
           await sound.pauseAsync();
@@ -160,19 +165,12 @@ const AudioMessage = ({ audioUri, isMe }) => {
           setIsPlaying(true);
         }
       } else {
-        const { sound: newSound } = await Audio.Sound.createAsync({
-          uri: audioUri,
-        });
-
+        const { sound: newSound } = await Audio.Sound.createAsync({ uri: audioUri });
         setSound(newSound);
         setIsPlaying(true);
-
         await newSound.playAsync();
-
         newSound.setOnPlaybackStatusUpdate(status => {
-          if (status.didJustFinish) {
-            setIsPlaying(false);
-          }
+          if (status.didJustFinish) setIsPlaying(false);
         });
       }
     } catch (error) {
@@ -181,48 +179,13 @@ const AudioMessage = ({ audioUri, isMe }) => {
   };
 
   return (
-      <View
-          style={{
-            padding: 10,
-            flexDirection: 'row',
-            alignItems: 'center',
-            minWidth: 150,
-          }}
-      >
+      <View style={{ padding: 10, flexDirection: 'row', alignItems: 'center', minWidth: 150 }}>
         <TouchableOpacity onPress={playAudio} style={{ marginRight: 10 }}>
-          <Icons.Feather
-              name={isPlaying ? 'pause-circle' : 'play-circle'}
-              size={28}
-              color={textColor}
-          />
+          <Icons.Feather name={isPlaying ? 'pause-circle' : 'play-circle'} size={28} color={textColor} />
         </TouchableOpacity>
-
-        <Icons.Feather
-            name="bar-chart-2"
-            size={24}
-            color={textColor}
-            style={{ opacity: 0.7 }}
-        />
-
-        <Icons.Feather
-            name="bar-chart-2"
-            size={24}
-            color={textColor}
-            style={{
-              opacity: 0.4,
-              marginLeft: -8,
-            }}
-        />
-
-        <Text
-            style={{
-              marginLeft: 10,
-              color: textColor,
-              fontSize: 12,
-            }}
-        >
-          Voice Note
-        </Text>
+        <Icons.Feather name="bar-chart-2" size={24} color={textColor} style={{ opacity: 0.7 }} />
+        <Icons.Feather name="bar-chart-2" size={24} color={textColor} style={{ opacity: 0.4, marginLeft: -8 }} />
+        <Text style={{ marginLeft: 10, color: textColor, fontSize: 12 }}>Voice Note</Text>
       </View>
   );
 };
@@ -234,19 +197,24 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
   const [messages, setMessages] = useState([]);
 
   const [uploading, setUploading] = useState(false);
+  const [voiceCallLoading, setVoiceCallLoading] = useState(false);
+  const voiceCallInProgressRef = useRef(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [recording, setRecording] = useState();
+
+  // WhatsApp Style Recording States
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const timerRef = useRef(null);
+
   const [isBlocked, setIsBlocked] = useState(false);
+  const [showBlockedActionsBar, setShowBlockedActionsBar] = useState(false);
 
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [kebabVisible, setKebabVisible] = useState(false);
-
-  const [hoveredMessageId, setHoveredMessageId] = useState(null);
-  const [openMenuMessageId, setOpenMenuMessageId] = useState(null);
-  const [isSearchActive, setIsSearchActive] = useState(route.params?.startSearch || false);
   const [searchQuery, setSearchQuery] = useState('');
-
+  const [isSearchActive, setIsSearchActive] = useState(route.params?.startSearch || false);
   const [text, setText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -257,84 +225,196 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
   const cleanUserId = String(userId ?? '').trim();
 
   let peerId = String(providerId ?? '').trim();
-
   if (peerId === cleanUserId) {
-    const possibleIds = [
-      peerData?.user_id,
-      peerData?.provider_id,
-      peerData?.id,
-    ].map(id => String(id || '').trim());
-
+    const possibleIds = [peerData?.user_id, peerData?.provider_id, peerData?.id].map(id => String(id || '').trim());
     const actualPeer = possibleIds.find(id => id && id !== cleanUserId);
     peerId = actualPeer || 'incoming-peer-fallback';
   }
 
   const chatStorageKey = `chat_history_${cleanUserId}_${peerId}`;
-  const myAvatar = global.profile
-      ? `${BASIC_URL}uploads/${global.profile.replace(/^\/+/, '')}`
-      : `${BASIC_URL}uploads/dumy.png`;
 
-  const peerAvatar = peerData?.image
-      ? `${BASIC_URL}uploads/${peerData.image.replace(/^\/+/, '')}`
-      : `${BASIC_URL}uploads/dumy.png`;
+  // Dynamic User Avatar calculation supporting global profile updates
+  const [myAvatar, setMyAvatar] = useState(
+      global.profile ? `${BASIC_URL}uploads/${global.profile.replace(/^\/+/, '')}` : `${BASIC_URL}uploads/dumy.png`
+  );
+
+  useEffect(() => {
+    const updateMyAvatar = async () => {
+      if (global.profile) {
+        setMyAvatar(`${BASIC_URL}uploads/${global.profile.replace(/^\/+/, '')}?v=${Date.now()}`);
+      } else {
+        try {
+          const rawUser = await AsyncStorage.getItem('user');
+          if (rawUser) {
+            const parsed = JSON.parse(rawUser);
+            const profilePic = parsed?.profile || parsed?.image || parsed?.data?.profile;
+            if (profilePic) {
+              setMyAvatar(`${BASIC_URL}uploads/${String(profilePic).replace(/^\/+/, '')}?v=${Date.now()}`);
+            }
+          }
+        } catch (e) {}
+      }
+    };
+    updateMyAvatar();
+  }, []);
+
+  const peerAvatar = peerData?.image ? `${BASIC_URL}uploads/${peerData.image.replace(/^\/+/, '')}` : `${BASIC_URL}uploads/dumy.png`;
   const [livePeerAvatar, setLivePeerAvatar] = useState(peerAvatar);
+  const [livePeerProfile, setLivePeerProfile] = useState(peerData);
 
   useEffect(() => {
     let isCurrent = true;
     setLivePeerAvatar(peerAvatar);
-
+    setLivePeerProfile(peerData);
     const fetchPeerAvatar = async () => {
       try {
         const response = await fetch(`${BASIC_URL}user/get_profile.php?id=${peerId}`);
         const result = await response.json();
-        if (isCurrent && result?.profile) {
-          const profile = result.profile;
-          setLivePeerAvatar(
-              `${BASIC_URL}uploads/${profile.replace(/^\/+/, '')}?v=${Date.now()}`
-          );
+        if (isCurrent) {
+          setLivePeerProfile(result);
+          const image =
+              typeof result?.profile === 'string'
+                  ? result.profile
+                  : result?.profile?.image ||
+                  result?.data?.profile ||
+                  result?.data?.image;
+          if (image) {
+            setLivePeerAvatar(`${BASIC_URL}uploads/${String(image).replace(/^\/+/, '')}?v=${Date.now()}`);
+          }
         }
       } catch (error) {
         console.log('Error fetching chat peer profile:', error);
       }
     };
-
     fetchPeerAvatar();
-    return () => {
-      isCurrent = false;
-    };
-  }, [peerId, peerAvatar]);
+    return () => { isCurrent = false; };
+  }, [peerId, peerAvatar, peerData]);
+
+  // Timer effect for recording duration
+  useEffect(() => {
+    if (isRecording && !isPaused) {
+      timerRef.current = setInterval(() => {
+        setRecordSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [isRecording, isPaused]);
+
+  const formatRecordTime = (totalSecs) => {
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const startVoiceCall = async () => {
+    if (voiceCallInProgressRef.current) {
+      return;
+    }
+
+    voiceCallInProgressRef.current = true;
+    setVoiceCallLoading(true);
+    try {
+      const storedUser = await AsyncStorage.getItem('user');
+      if (!storedUser) {
+        throw new Error('Your account details are unavailable. Please sign in again.');
+      }
+      const callerProfile = JSON.parse(storedUser);
+      const callerPhone = getProfilePhone(callerProfile);
+      const receiverPhone = getProfilePhone(livePeerProfile, peerData);
+
+      if (!callerPhone || !receiverPhone) {
+        throw new Error(
+            !callerPhone && !receiverPhone
+                ? 'Phone numbers are missing for both call participants.'
+                : !callerPhone
+                    ? 'Your phone number is missing from your profile.'
+                    : 'The recipient phone number is missing from their profile.',
+        );
+      }
+
+      const response = await fetch(`${BASIC_URL}make-call`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          caller_id: cleanUserId,
+          peer_id: peerId,
+          from: callerPhone,
+          to: receiverPhone,
+        }),
+      });
+      const responseText = await response.text();
+      let result;
+      try {
+        result = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error('The call service returned an invalid response.');
+      }
+
+      if (!response.ok || result?.error || result?.success === false) {
+        throw new Error(
+            result?.error || result?.message || 'Unable to start the voice call.',
+        );
+      }
+
+      showAlert(
+          'Call requested',
+          result?.message || 'Your voice call request has been sent.',
+      );
+    } catch (error) {
+      showAlert(
+          'Unable to start call',
+          error?.message || 'Please try again in a moment.',
+      );
+    } finally {
+      voiceCallInProgressRef.current = false;
+      setVoiceCallLoading(false);
+    }
+  };
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
         Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-        () => {
-          setShowEmojiPicker(false);
-        }
+        () => setShowEmojiPicker(false)
     );
-
-    return () => {
-      showSubscription.remove();
-    };
+    return () => showSubscription.remove();
   }, []);
 
   useEffect(() => {
     const checkBlockedStatus = async () => {
-      const blockedState = await AsyncStorage.getItem(`user_blocked_${peerId}`);
-      if (blockedState === 'true') {
-        setIsBlocked(true);
-      } else {
-        setIsBlocked(false);
+      try {
+        const blockedState = await AsyncStorage.getItem(`user_blocked_${peerId}`);
+        setIsBlocked(blockedState === 'true');
+
+        if (cleanUserId && peerId) {
+          const result = await getBlockedChatUsers(cleanUserId);
+          const blockedUsers =
+              result?.blocked_users || result?.blocked || result?.data || [];
+          const isBlockedOnServer = Array.isArray(blockedUsers)
+              ? blockedUsers.some(item =>
+                  String(item?.blocked_id || item?.user_id || item?.id) === peerId,
+              )
+              : false;
+          setIsBlocked(isBlockedOnServer);
+          if (isBlockedOnServer) {
+            await AsyncStorage.setItem(`user_blocked_${peerId}`, 'true');
+          } else {
+            await AsyncStorage.removeItem(`user_blocked_${peerId}`);
+            setShowBlockedActionsBar(false);
+          }
+        }
+      } catch (error) {
+        console.log('Error checking blocked chat user:', error);
       }
     };
     checkBlockedStatus();
     const unsubscribe = navigation.addListener('focus', checkBlockedStatus);
     return unsubscribe;
-  }, [navigation, peerId]);
+  }, [navigation, peerId, cleanUserId]);
 
   useEffect(() => {
-    if (route.params?.startSearch) {
-      setIsSearchActive(true);
-    }
+    if (route.params?.startSearch) setIsSearchActive(true);
   }, [route.params?.startSearch]);
 
   useEffect(() => {
@@ -343,12 +423,10 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         const storedHistory = await AsyncStorage.getItem(chatStorageKey);
         if (storedHistory) {
           const parsedHistory = JSON.parse(storedHistory);
-          const alignedHistory = parsedHistory
-              .filter(msg => msg.senderRole)
-              .map(msg => {
-                msg.user._id = msg.senderRole === currentDashboardRole ? cleanUserId : peerId;
-                return msg;
-              });
+          const alignedHistory = parsedHistory.filter(msg => msg.senderRole).map(msg => {
+            msg.user._id = msg.senderRole === currentDashboardRole ? cleanUserId : peerId;
+            return msg;
+          });
           setMessages(alignedHistory);
         }
       } catch (error) {
@@ -362,49 +440,26 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     try {
       const formdata = new FormData();
       formdata.append('own_id', cleanUserId);
-
-      const response = await fetch(`${BASIC_URL}get_all_chats.php`, {
-        method: 'POST',
-        body: formdata,
-      });
+      const response = await fetch(`${BASIC_URL}get_all_chats.php`, { method: 'POST', body: formdata });
       const textRes = await response.text();
       let result;
-      try {
-        result = JSON.parse(textRes);
-      } catch (parseErr) {
-        return;
-      }
+      try { result = JSON.parse(textRes); } catch (parseErr) { return; }
 
       const allChats = result?.chat || [];
-      const specificChat = allChats.find(
-          c =>
-              String(c.chat_id) === peerId ||
-              String(c.user_id) === peerId ||
-              String(c.provider_id) === peerId ||
-              c.name === peerData?.name
-      );
+      const specificChat = allChats.find(c => String(c.chat_id) === peerId || String(c.user_id) === peerId || String(c.provider_id) === peerId || c.name === peerData?.name);
 
       if (specificChat) {
         let parsedDate = new Date();
         if (specificChat.created_at) {
           const d = new Date(specificChat.created_at);
-          if (!isNaN(d.getTime())) {
-            parsedDate = d;
-          }
+          if (!isNaN(d.getTime())) parsedDate = d;
         }
 
         const stableId = String(specificChat.id || `${specificChat.created_at}_${specificChat.message}`);
 
         setMessages(previousMessages => {
-          const alreadySentByMe = previousMessages.some(
-              m =>
-                  m.text?.trim() === (specificChat.message || '').trim() &&
-                  String(m.user?._id) === String(cleanUserId)
-          );
-
-          if (alreadySentByMe) {
-            return previousMessages;
-          }
+          const alreadySentByMe = previousMessages.some(m => m.text?.trim() === (specificChat.message || '').trim() && String(m.user?._id) === String(cleanUserId));
+          if (alreadySentByMe) return previousMessages;
 
           const rawSenderId = String(specificChat.sender_id || '');
           const isActuallyMe = rawSenderId === cleanUserId;
@@ -439,9 +494,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
 
   useEffect(() => {
     fetchApiMessages();
-    const interval = setInterval(() => {
-      fetchApiMessages();
-    }, 4000);
+    const interval = setInterval(() => fetchApiMessages(), 4000);
     return () => clearInterval(interval);
   }, [fetchApiMessages]);
 
@@ -460,19 +513,16 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         isStartingRef.current = false;
         return;
       }
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const { recording: newRecording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       if (!isStartingRef.current) {
         await newRecording.stopAndUnloadAsync();
         return;
       }
       recordingRef.current = newRecording;
-      setRecording(newRecording);
+      setRecordSeconds(0);
+      setIsPaused(false);
+      setIsRecording(true);
     } catch (err) {
       console.error('Failed to start recording', err);
     } finally {
@@ -480,31 +530,56 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     }
   };
 
-  const stopRecording = async () => {
-    isStartingRef.current = false;
-    const activeRecording = recordingRef.current || recording;
+  const pauseRecording = async () => {
+    const activeRecording = recordingRef.current;
     if (!activeRecording) return;
+    try {
+      if (isPaused) {
+        await activeRecording.startAsync();
+        setIsPaused(false);
+      } else {
+        await activeRecording.pauseAsync();
+        setIsPaused(true);
+      }
+    } catch (error) {
+      console.log('Error pausing/resuming recording', error);
+    }
+  };
+
+  const cancelRecording = async () => {
+    const activeRecording = recordingRef.current;
     recordingRef.current = null;
-    setRecording(undefined);
+    isStartingRef.current = false;
+    setIsRecording(false);
+    setIsPaused(false);
+    setRecordSeconds(0);
+    if (activeRecording) {
+      try {
+        await activeRecording.stopAndUnloadAsync();
+      } catch (e) {}
+    }
+  };
+
+  const stopAndSendRecording = async () => {
+    isStartingRef.current = false;
+    const activeRecording = recordingRef.current;
+    recordingRef.current = null;
+    setIsRecording(false);
+    setIsPaused(false);
+    setRecordSeconds(0);
+
+    if (!activeRecording) return;
     try {
       await activeRecording.stopAndUnloadAsync();
       const uri = activeRecording.getURI();
-      if (uri) {
-        onSend([{ text: '', audio: uri }]);
-      }
+      if (uri) onSend([{ text: '', audio: uri }]);
     } catch (error) {
       console.error('Failed to stop recording', error);
       showAlert('Voice Note Failed', 'The recording could not be saved. Please try again.');
     } finally {
       const Audio = getAudioModule();
       if (Audio) {
-        try {
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-          });
-        } catch (error) {
-          console.warn('Failed to reset audio mode', error);
-        }
+        try { await Audio.setAudioModeAsync({ allowsRecordingIOS: false }); } catch (error) {}
       }
     }
   };
@@ -512,20 +587,10 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
   const pickDocument = async () => {
     if (isBlocked) return;
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-      });
-
+      const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
       if (!result.canceled && result.assets?.length > 0) {
         const asset = result.assets[0];
-        onSend([
-          {
-            text: '',
-            document: asset.uri,
-            documentName: asset.name,
-          },
-        ]);
+        onSend([{ text: '', document: asset.uri, documentName: asset.name }]);
       }
     } catch (err) {
       console.log('Error picking document', err);
@@ -534,7 +599,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
   };
 
   const handleLongPress = (context, message) => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== 'web' && !message.system) {
       setSelectedMessage(message);
       setKebabVisible(false);
     }
@@ -554,25 +619,18 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
       return updatedMessages;
     });
     setSelectedMessage(null);
-    setOpenMenuMessageId(null);
   };
 
   const handleCopyAction = text => {
-    if (text) {
-      try {
-        Clipboard.setString(text);
-      } catch (e) {}
-    }
+    if (text) { try { Clipboard.setString(text); } catch (e) {} }
     setKebabVisible(false);
     setSelectedMessage(null);
-    setOpenMenuMessageId(null);
   };
 
   const handleForwardAction = text => {
     showAlert('Forward Message', `Forwarding: "${text || 'Image/Document message'}"`);
     setKebabVisible(false);
     setSelectedMessage(null);
-    setOpenMenuMessageId(null);
   };
 
   const handleClearChatAction = () => {
@@ -580,37 +638,89 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     AsyncStorage.removeItem(chatStorageKey).catch(e => console.log(e));
     setSelectedMessage(null);
     setKebabVisible(false);
+    setShowBlockedActionsBar(false);
+  };
+
+  const handleHeaderBlockAction = async () => {
+    try {
+      if (!cleanUserId || !peerId) {
+        throw new Error('A valid user and contact are required.');
+      }
+      if (isBlocked) {
+        await unblockChatUser(cleanUserId, peerId);
+        await AsyncStorage.removeItem(`user_blocked_${peerId}`);
+        setIsBlocked(false);
+        setShowBlockedActionsBar(false);
+        showAlert('Unblocked', `${peerData?.name || 'This contact'} has been unblocked.`);
+      } else {
+        await blockChatUser(cleanUserId, peerId);
+        await AsyncStorage.setItem(`user_blocked_${peerId}`, 'true');
+        setIsBlocked(true);
+        showAlert('Blocked', `${peerData?.name || 'This contact'} has been blocked.`);
+      }
+    } catch (error) {
+      showAlert(
+          isBlocked ? 'Unable to unblock contact' : 'Unable to block contact',
+          error?.message || 'Please try again.',
+      );
+    }
+  };
+
+  const handleHeaderReportAction = async () => {
+    try {
+      if (!cleanUserId || !peerId) {
+        throw new Error('A valid user and contact are required.');
+      }
+      const result = await reportChatUser(
+          cleanUserId,
+          peerId,
+          'Harassment',
+          `Report submitted for ${peerData?.name || 'this contact'}.`,
+      );
+      showAlert(
+          'Reported',
+          result?.message || 'This contact has been reported.',
+      );
+    } catch (error) {
+      showAlert(
+          'Unable to report contact',
+          error?.message || 'Please try again.',
+      );
+    }
+  };
+
+  const handleHeaderDeleteChat = async () => {
+    try {
+      if (!cleanUserId || !peerId) {
+        throw new Error('A valid user and contact are required.');
+      }
+      await clearChat(cleanUserId, peerId);
+      await AsyncStorage.removeItem(chatStorageKey);
+      handleClearChatAction();
+      showAlert('Chat deleted', 'Your chat history has been deleted.');
+    } catch (error) {
+      showAlert(
+          'Unable to delete chat',
+          error?.message || 'Please try again.',
+      );
+    }
   };
 
   const onSend = async (messagesList = []) => {
     if (isBlocked) return;
     try {
       const msg = messagesList[0];
-
-      if (!msg?.text?.trim() && !msg?.image && !msg?.audio && !msg?.document) {
-        return;
-      }
+      if (!msg?.text?.trim() && !msg?.image && !msg?.audio && !msg?.document) return;
 
       const currentSyncId = (await getSynchronizedUserId()) || cleanUserId;
-      const textContent = msg.text
-          ? msg.text.trim()
-          : msg.audio
-              ? '🎤 Voice Note'
-              : msg.document
-                  ? `📄 ${msg.documentName || 'Document'}`
-                  : msg.image
-                      ? '📷 Sent an image' : '';
+      const textContent = msg.text ? msg.text.trim() : msg.audio ? '🎤 Voice Note' : msg.document ? `📄 ${msg.documentName || 'Document'}` : msg.image ? '📷 Sent an image' : '';
 
       const formattedMsg = {
         _id: String(Date.now()),
         text: textContent,
         createdAt: new Date(),
         senderRole: currentDashboardRole,
-        user: {
-          _id: cleanUserId,
-          name: 'Me',
-          avatar: myAvatar,
-        },
+        user: { _id: cleanUserId, name: 'Me', avatar: myAvatar },
         image: msg.image || '',
         audio: msg.audio || '',
         document: msg.document || '',
@@ -629,49 +739,20 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
       chatForm.append('message', textContent);
       chatForm.append('senderRole', currentDashboardRole);
 
-      if (msg.document && Platform.OS !== 'web') {
-        chatForm.append('file', {
-          uri: msg.document,
-          name: msg.documentName || `DOC_${Date.now()}`,
-          type: '*/*',
-        });
-      }
-
-      if (msg.image && Platform.OS !== 'web') {
-        chatForm.append('file', {
-          uri: msg.image,
-          name: `IMG_${Date.now()}.jpg`,
-          type: 'image/jpeg',
-        });
-      }
+      if (msg.document && Platform.OS !== 'web') chatForm.append('file', { uri: msg.document, name: msg.documentName || `DOC_${Date.now()}`, type: '*/*' });
+      if (msg.image && Platform.OS !== 'web') chatForm.append('file', { uri: msg.image, name: `IMG_${Date.now()}.jpg`, type: 'image/jpeg' });
 
       const notifyForm = new FormData();
       notifyForm.append('sender_id', currentSyncId);
       notifyForm.append('receiver_id', peerId);
       notifyForm.append('message', textContent || '📷 Sent a file');
 
-      const chatResponse = await fetch(`${BASIC_URL}firebase/chat.php`, {
-        method: 'POST',
-        body: chatForm,
-      });
-
-      if (!chatResponse.ok) {
-        throw new Error(`Message save failed (${chatResponse.status})`);
-      }
-
+      const chatResponse = await fetch(`${BASIC_URL}firebase/chat.php`, { method: 'POST', body: chatForm });
+      if (!chatResponse.ok) throw new Error(`Message save failed (${chatResponse.status})`);
       setText('');
 
       try {
-        const notificationResponse = await fetch(
-          `${BASIC_URL}firebase/send_notification.php`,
-          {
-            method: 'POST',
-            body: notifyForm,
-          }
-        );
-        if (!notificationResponse.ok) {
-          console.warn(`Message notification failed (${notificationResponse.status})`);
-        }
+        await fetch(`${BASIC_URL}firebase/send_notification.php`, { method: 'POST', body: notifyForm });
       } catch (notificationError) {
         console.warn('Message notification failed:', notificationError);
       }
@@ -689,11 +770,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         showAlert('Permission Required', 'Camera access is needed.');
         return;
       }
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ['images'],
-        quality: 0.8,
-      });
-
+      const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 });
       if (!result.canceled && result.assets?.length > 0) {
         setUploading(true);
         const asset = result.assets[0];
@@ -707,9 +784,18 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
   };
 
   const unblockUser = async () => {
-    await AsyncStorage.removeItem(`user_blocked_${peerId}`);
-    setIsBlocked(false);
-    Alert.alert('Unblocked', `You can now message ${peerData?.name || 'this user'}.`);
+    try {
+      await unblockChatUser(cleanUserId, peerId);
+      await AsyncStorage.removeItem(`user_blocked_${peerId}`);
+      setIsBlocked(false);
+      setShowBlockedActionsBar(false);
+      showAlert('Unblocked', `${peerData?.name || 'This contact'} has been unblocked.`);
+    } catch (error) {
+      showAlert(
+          'Unable to unblock contact',
+          error?.message || 'Please try again.',
+      );
+    }
   };
 
   if (!cleanUserId || !peerId || cleanUserId === 'undefined' || peerId === 'undefined') {
@@ -721,7 +807,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     );
   }
 
-  const displayedMessages = searchQuery.trim()
+  const finalMessages = searchQuery.trim()
       ? messages.filter(m => m.text && m.text.toLowerCase().includes(searchQuery.toLowerCase()))
       : messages;
 
@@ -730,12 +816,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         {selectedMessage ? (
             <View style={styles.contextualHeader}>
               <View style={styles.contextHeaderLeft}>
-                <TouchableOpacity
-                    onPress={() => {
-                      setSelectedMessage(null);
-                      setKebabVisible(false);
-                    }}
-                >
+                <TouchableOpacity onPress={() => { setSelectedMessage(null); setKebabVisible(false); }}>
                   <Icons.Feather name="arrow-left" size={24} color="#FFF" />
                 </TouchableOpacity>
                 <Text style={styles.contextHeaderText}>1</Text>
@@ -760,13 +841,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
             </View>
         ) : isSearchActive ? (
             <View style={styles.searchHeader}>
-              <TouchableOpacity
-                  onPress={() => {
-                    setIsSearchActive(false);
-                    setSearchQuery('');
-                    navigation.setParams({ startSearch: false });
-                  }}
-              >
+              <TouchableOpacity onPress={() => { setIsSearchActive(false); setSearchQuery(''); navigation.setParams({ startSearch: false }); }}>
                 <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
               </TouchableOpacity>
               <TextInput
@@ -792,22 +867,17 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                   userName={peerData?.name || 'Chat'}
                   userImage={livePeerAvatar}
                   onlineStatus={!isBlocked}
-                  onProfilePress={() => {
-                    navigation.navigate('UserProfile', {
-                      userId: peerId,
-                      userData: peerData,
-                    });
-                  }}
+                  onProfilePress={() => navigation.navigate('UserProfile', { userId: peerId, userData: peerData })}
                   onSearchPress={() => setIsSearchActive(true)}
+                  onVoiceCallPress={startVoiceCall}
+                  voiceCallLoading={voiceCallLoading}
+                  isBlocked={isBlocked}
+                  onBlockPress={handleHeaderBlockAction}
+                  onReportPress={handleHeaderReportAction}
+                  onDeleteChatPress={handleHeaderDeleteChat}
               />
             </View>
         )}
-
-        <Modal
-            visible={false}
-            transparent={true}
-            animationType="fade">
-        </Modal>
 
         <KeyboardAvoidingView
             style={{ flex: 1 }}
@@ -815,7 +885,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
             keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
         >
           <GiftedChat
-              messages={displayedMessages}
+              messages={finalMessages}
               text={text}
               textInputProps={{
                 onFocus: () => setShowEmojiPicker(false),
@@ -824,17 +894,15 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
               textInputRef={composerRef}
               extraData={{
                 selectedMessage,
-                hoveredMessageId,
-                openMenuMessageId,
                 searchQuery,
                 isBlocked,
-                recording,
+                isRecording,
+                isPaused,
+                recordSeconds,
               }}
               bottomOffset={Platform.OS === 'ios' ? insets.bottom : 10}
               onSend={messagesList => onSend(messagesList)}
-              user={{
-                _id: String(cleanUserId),
-              }}
+              user={{ _id: String(cleanUserId) }}
               isUserAvatarVisible={true}
               alignTop={false}
               scrollToBottom={true}
@@ -852,16 +920,20 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                 keyboardShouldPersistTaps: 'always',
                 keyboardDismissMode: Platform.OS === 'ios' ? 'interactive' : 'on-drag',
               }}
+              renderSystemMessage={(props) => {
+                return (
+                    <View style={styles.systemMessageContainer}>
+                      <Text style={styles.systemMessageText}>{props.currentMessage.text}</Text>
+                    </View>
+                );
+              }}
               renderCustomView={props => {
                 const { currentMessage, position } = props;
                 if (currentMessage.document) {
                   const isMe = position === 'right';
                   const textColor = isMe ? '#FFFFFF' : color.defalt;
                   return (
-                      <TouchableOpacity
-                          style={{ padding: 12, flexDirection: 'row', alignItems: 'center' }}
-                          onPress={() => Linking.openURL(currentMessage.document).catch(() => {})}
-                      >
+                      <TouchableOpacity style={{ padding: 12, flexDirection: 'row', alignItems: 'center' }} onPress={() => Linking.openURL(currentMessage.document).catch(() => {})}>
                         <Icons.Feather name="file-text" size={24} color={textColor} />
                         <Text style={{ color: textColor, marginLeft: 8, fontSize: 14, textDecorationLine: 'underline', maxWidth: 200 }} numberOfLines={1}>
                           {currentMessage.documentName || 'View Document'}
@@ -879,18 +951,8 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                 const { currentMessage } = props;
                 if (!currentMessage?.image) return null;
                 return (
-                    <TouchableOpacity
-                        activeOpacity={0.9}
-                        onPress={() => {
-                          setSelectedImage(currentMessage.image);
-                          setImageModalVisible(true);
-                        }}
-                    >
-                      <Image
-                          source={{ uri: currentMessage.image }}
-                          style={styles.chatMsgImage}
-                          resizeMode="cover"
-                      />
+                    <TouchableOpacity activeOpacity={0.9} onPress={() => { setSelectedImage(currentMessage.image); setImageModalVisible(true); }}>
+                      <Image source={{ uri: currentMessage.image }} style={styles.chatMsgImage} resizeMode="cover" />
                     </TouchableOpacity>
                 );
               }}
@@ -901,30 +963,85 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                     <MessageText
                         {...props}
                         textStyle={{
-                          left: {
-                            color: color.defalt,
-                            fontSize: 15.5,
-                            lineHeight: 22,
-                            ...(Platform.OS === 'web' && { wordBreak: 'break-word' })
-                          },
-                          right: {
-                            color: '#FFFFFF',
-                            fontSize: 15.5,
-                            lineHeight: 22,
-                            ...(Platform.OS === 'web' && { wordBreak: 'break-word' })
-                          },
+                          left: { color: color.defalt, fontSize: 15.5, lineHeight: 22, ...(Platform.OS === 'web' && { wordBreak: 'break-word' }) },
+                          right: { color: '#FFFFFF', fontSize: 15.5, lineHeight: 22, ...(Platform.OS === 'web' && { wordBreak: 'break-word' }) },
                         }}
                     />
                 );
               }}
               renderInputToolbar={props => {
                 if (isBlocked) {
+                  if (!showBlockedActionsBar) {
+                    return (
+                        <View style={styles.blockedPillWrapper}>
+                          <TouchableOpacity
+                              onPress={() => setShowBlockedActionsBar(true)}
+                              activeOpacity={0.8}
+                              style={styles.systemMessageContainer}
+                          >
+                            <Text style={styles.systemMessageText}>You blocked this person. Tap to unblock.</Text>
+                          </TouchableOpacity>
+                        </View>
+                    );
+                  }
                   return (
-                      <TouchableOpacity style={styles.blockedBannerContainer} onPress={unblockUser} activeOpacity={0.8}>
-                        <Text style={styles.blockedBannerTextBold}>You blocked this contact. Tap to unblock.</Text>
-                      </TouchableOpacity>
+                      <View style={styles.blockedActionsContainer}>
+                        <TouchableOpacity
+                            style={styles.blockedActionBtn}
+                            onPress={handleClearChatAction}
+                            activeOpacity={0.7}
+                        >
+                          <Icons.Feather name="trash-2" size={20} color="#EF4444" />
+                          <Text style={styles.deleteChatText}>Delete chat</Text>
+                        </TouchableOpacity>
+                        <View style={styles.blockedDivider} />
+                        <TouchableOpacity
+                            style={styles.blockedActionBtn}
+                            onPress={unblockUser}
+                            activeOpacity={0.7}
+                        >
+                          <Icons.Feather name="slash" size={20} color="#10B981" />
+                          <Text style={styles.unblockText}>Unblock</Text>
+                        </TouchableOpacity>
+                      </View>
                   );
                 }
+
+                // WhatsApp-style Recording Active View in Input Toolbar
+                if (isRecording) {
+                  return (
+                      <View style={styles.recordingToolbarContainer}>
+                        <TouchableOpacity
+                            style={styles.recordActionBtn}
+                            onPress={cancelRecording}
+                            activeOpacity={0.7}
+                        >
+                          <Icons.Feather name="trash-2" size={22} color="#EF4444" />
+                        </TouchableOpacity>
+
+                        <View style={styles.recordingStatusBox}>
+                          <View style={[styles.redDot, isPaused && { backgroundColor: '#F59E0B' }]} />
+                          <Text style={styles.recordingTimerText}>{formatRecordTime(recordSeconds)}</Text>
+                          <TouchableOpacity
+                              onPress={pauseRecording}
+                              style={styles.pauseResumeBtn}
+                              activeOpacity={0.7}
+                          >
+                            <Icons.Feather name={isPaused ? 'play' : 'pause'} size={18} color="#64748B" />
+                          </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.sendButton}
+                            onPress={stopAndSendRecording}
+                            activeOpacity={0.7}
+                        >
+                          <Icons.Feather name="send" size={16} color="#FFFFFF" style={{ marginLeft: -2 }} />
+                        </TouchableOpacity>
+                      </View>
+                  );
+                }
+
                 return (
                     <InputToolbar
                         {...props}
@@ -934,7 +1051,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                 );
               }}
               renderComposer={props => {
-                if (isBlocked) return null;
+                if (isBlocked || isRecording) return null;
                 const hasText = props.text && props.text.trim().length > 0;
                 return (
                     <View style={styles.composerWrapper}>
@@ -946,9 +1063,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                               composerRef.current?.focus();
                             } else {
                               Keyboard.dismiss();
-                              setTimeout(() => {
-                                setShowEmojiPicker(true);
-                              }, 100);
+                              setTimeout(() => setShowEmojiPicker(true), 100);
                             }
                           }}
                           activeOpacity={0.7}
@@ -979,26 +1094,21 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                 );
               }}
               renderSend={props => {
-                if (isBlocked) return null;
+                if (isBlocked || isRecording) return null;
                 const hasText = props.text && props.text.trim().length > 0;
                 return (
                     <View style={styles.sendComponentWrapper}>
                       {hasText ? (
                           <Send {...props} containerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
                             <View style={styles.sendButton}>
-                              {uploading ? (
-                                  <ActivityIndicator size="small" color="#FFFFFF" />
-                              ) : (
-                                  <Icons.Feather name="send" size={16} color="#FFFFFF" style={{ marginLeft: -2 }} />
-                              )}
+                              {uploading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Icons.Feather name="send" size={16} color="#FFFFFF" style={{ marginLeft: -2 }} />}
                             </View>
                           </Send>
                       ) : (
                           <TouchableOpacity
-                              onPressIn={startRecording}
-                              onPressOut={stopRecording}
+                              onPress={startRecording}
                               activeOpacity={0.7}
-                              style={[styles.sendButton, recording && { backgroundColor: '#EF4444' }]}
+                              style={styles.sendButton}
                           >
                             <Icons.Feather name="mic" size={18} color="#FFFFFF" />
                           </TouchableOpacity>
@@ -1049,14 +1159,11 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                 />
               </View>
           )}
-
         </KeyboardAvoidingView>
 
         <Modal visible={imageModalVisible} transparent={true} animationType="fade" onRequestClose={() => setImageModalVisible(false)}>
           <Pressable style={styles.modalContainer} onPress={() => setImageModalVisible(false)}>
-            {selectedImage && (
-                <Image source={{ uri: selectedImage }} style={styles.fullImage} resizeMode="contain" />
-            )}
+            {selectedImage && <Image source={{ uri: selectedImage }} style={styles.fullImage} resizeMode="contain" />}
           </Pressable>
         </Modal>
 
@@ -1080,75 +1187,29 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
 const EncryptionInfoScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-
   const { userName } = route.params || { userName: 'User' };
 
   return (
-      <SafeAreaView
-          style={styles.safeArea}
-          edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}
-      >
-        <StatusBar
-            barStyle="dark-content"
-            backgroundColor="#FFFFFF"
-        />
-
+      <SafeAreaView style={styles.safeArea} edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <View style={styles.headerBar}>
-          <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.iconBtn}
-          >
-            <Icons.Ionicons
-                name="arrow-back"
-                size={24}
-                color="#0F172A"
-            />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconBtn}>
+            <Icons.Ionicons name="arrow-back" size={24} color="#0F172A" />
           </TouchableOpacity>
-
-          <Text style={styles.fullScreenModalTitle}>
-            Encryption
-          </Text>
-
+          <Text style={styles.fullScreenModalTitle}>Encryption</Text>
           <View style={{ flex: 1 }} />
         </View>
-
         <ScrollView contentContainerStyle={styles.encryptionBody}>
           <View style={styles.lockBadgeBox}>
-            <Icons.Feather
-                name="lock"
-                size={48}
-                color={color.defalt}
-            />
+            <Icons.Feather name="lock" size={48} color={color.defalt} />
           </View>
-
-          <Text style={styles.encryptionMainTitle}>
-            End-to-end encryption
-          </Text>
-
-          <Text style={styles.encryptionDetailText}>
-            Messages and calls you share with {userName} are
-            end-to-end encrypted. This means WhatsApp and
-            third-party services cannot read or listen to them.
-          </Text>
-
+          <Text style={styles.encryptionMainTitle}>End-to-end encryption</Text>
+          <Text style={styles.encryptionDetailText}>Messages and calls you share with {userName} are end-to-end encrypted. This means WhatsApp and third-party services cannot read or listen to them.</Text>
           <View style={styles.qrPlaceholder}>
-            <Icons.Ionicons
-                name="qr-code-outline"
-                size={140}
-                color="#0F172A"
-            />
+            <Icons.Ionicons name="qr-code-outline" size={140} color="#0F172A" />
           </View>
-
-          <Text style={styles.securityCodeText}>
-            27189 45912 61234 88123{'\n'}
-            99120 45719 33412 11094{'\n'}
-            78213 54311 09843 66124
-          </Text>
-
-          <Text style={styles.encryptionInfo}>
-            Verify this code with {userName} by scanning
-            their QR code or comparing the numbers above.
-          </Text>
+          <Text style={styles.securityCodeText}>27189 45912 61234 88123{'\n'}99120 45719 33412 11094{'\n'}78213 54311 09843 66124</Text>
+          <Text style={styles.encryptionInfo}>Verify this code with {userName} by scanning their QR code or comparing the numbers above.</Text>
         </ScrollView>
       </SafeAreaView>
   );
@@ -1156,37 +1217,10 @@ const EncryptionInfoScreen = () => {
 
 const IndividualChat = () => {
   const route = useRoute();
-
-  const currentprovider =
-      route.params?.currentuser ||
-      route.params?.userData ||
-      route.params?.provider ||
-      route.params?.item ||
-      route.params?.user;
-
-  const peerId =
-      String(
-          route.params?.receiver_id ||
-          route.params?.userId ||
-          currentprovider?.id ||
-          currentprovider?.provider_id ||
-          currentprovider?.user_id ||
-          currentprovider?.uuid ||
-          ''
-      ).trim();
-
+  const currentprovider = route.params?.currentuser || route.params?.userData || route.params?.provider || route.params?.item || route.params?.user;
+  const peerId = String(route.params?.receiver_id || route.params?.userId || currentprovider?.id || currentprovider?.provider_id || currentprovider?.user_id || currentprovider?.uuid || '').trim();
   const [resolvedUserId, setResolvedUserId] = useState(null);
-
-  const [alertConfig, setAlertConfig] = useState({
-    visible: false,
-    title: '',
-    message: '',
-    onOk: () =>
-        setAlertConfig(prev => ({
-          ...prev,
-          visible: false,
-        })),
-  });
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', onOk: () => setAlertConfig(prev => ({ ...prev, visible: false })) });
 
   const showAlert = (title, message, onOk) => {
     setAlertConfig({
@@ -1194,13 +1228,8 @@ const IndividualChat = () => {
       title,
       message,
       onOk: () => {
-        setAlertConfig(prev => ({
-          ...prev,
-          visible: false,
-        }));
-        if (onOk) {
-          onOk();
-        }
+        setAlertConfig(prev => ({ ...prev, visible: false }));
+        if (onOk) onOk();
       },
     });
   };
@@ -1208,54 +1237,26 @@ const IndividualChat = () => {
   useEffect(() => {
     const syncUser = async () => {
       const userId = await getSynchronizedUserId();
-      if (userId) {
-        setResolvedUserId(userId);
-      } else if (global.id) {
-        setResolvedUserId(String(global.id));
-      }
+      if (userId) setResolvedUserId(userId);
+      else if (global.id) setResolvedUserId(String(global.id));
     };
-    if (!resolvedUserId) {
-      syncUser();
-    }
+    if (!resolvedUserId) syncUser();
   }, [resolvedUserId]);
 
   return (
-      <SafeAreaView
-          style={styles.safeArea}
-          edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}
-      >
-        <StatusBar
-            barStyle="dark-content"
-            backgroundColor="#F8FAFC"
-        />
-
+      <SafeAreaView style={styles.safeArea} edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
         <View style={styles.chatViewContainer}>
           {resolvedUserId && peerId ? (
-              <NewMessage
-                  userId={resolvedUserId}
-                  providerId={peerId}
-                  peerData={currentprovider}
-                  showAlert={showAlert}
-              />
+              <NewMessage userId={resolvedUserId} providerId={peerId} peerData={currentprovider} showAlert={showAlert} />
           ) : (
               <View style={styles.missingUserBox}>
-                <ActivityIndicator
-                    size="large"
-                    color={color.defalt}
-                />
-                <Text style={styles.missingUserText}>
-                  Connecting to conversation...
-                </Text>
+                <ActivityIndicator size="large" color={color.defalt} />
+                <Text style={styles.missingUserText}>Connecting to conversation...</Text>
               </View>
           )}
         </View>
-
-        <CustomAlert
-            visible={alertConfig.visible}
-            title={alertConfig.title}
-            message={alertConfig.message}
-            onOk={alertConfig.onOk}
-        />
+        <CustomAlert visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} onOk={alertConfig.onOk} />
       </SafeAreaView>
   );
 };
@@ -1264,308 +1265,96 @@ export { EncryptionInfoScreen };
 export default IndividualChat;
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
+  safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
+  chatWrapper: { flex: 1, backgroundColor: '#F0F2F5' },
+  chatViewContainer: { flex: 1, backgroundColor: '#F0F2F5' },
+  contextualHeader: { height: 60, backgroundColor: color.defalt, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, zIndex: 10, elevation: 4 },
+  contextHeaderLeft: { flexDirection: 'row', alignItems: 'center' },
+  contextHeaderText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold', marginLeft: 20 },
+  contextHeaderRight: { flexDirection: 'row', alignItems: 'center' },
+  searchHeader: { height: 60, backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, zIndex: 10, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1 },
+  searchHeaderInput: { flex: 1, height: 40, marginLeft: 12, fontSize: 16, color: '#0F172A', borderWidth: 0, ...(Platform.OS === 'web' && { outlineStyle: 'none' }) },
+  iconBtn: { marginLeft: 16, padding: 4 },
+  kebabMenu: { position: 'absolute', top: 55, right: 16, backgroundColor: '#FFFFFF', borderRadius: 8, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, paddingVertical: 4, zIndex: 1000 },
+  kebabMenuItem: { paddingHorizontal: 20, paddingVertical: 12 },
+  kebabMenuText: { fontSize: 15, color: '#0F172A', fontWeight: '500' },
+  chatMsgImage: { width: Math.min(Dimensions.get('window').width * 0.72, 240), height: 180, borderRadius: 12, margin: 4 },
+  inputToolbar: { backgroundColor: '#F0F2F5', borderTopWidth: 0, paddingHorizontal: 12, paddingVertical: 8, paddingBottom: Platform.OS === 'ios' ? 24 : 12 },
+  inputToolbarPrimary: { alignItems: 'flex-end', justifyContent: 'space-between' },
+  composerWrapper: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 24, paddingLeft: 4, paddingRight: 4, marginRight: 8, minHeight: 46, maxHeight: 120, borderWidth: 1, borderColor: '#E2E8F0' },
+  inputActionBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  composerRightIcons: { flexDirection: 'row', alignItems: 'center' },
+  composerInput: { flex: 1, color: '#0F172A', fontSize: 16, lineHeight: 21, paddingTop: Platform.OS === 'ios' ? 11 : 8, paddingBottom: Platform.OS === 'ios' ? 11 : 8, paddingHorizontal: 4, ...(Platform.OS === 'web' && { outlineWidth: 0 }) },
+  sendComponentWrapper: { justifyContent: 'center', alignItems: 'center', marginBottom: 2 },
+  sendButton: { backgroundColor: color.defalt, borderRadius: 22, width: 44, height: 44, justifyContent: 'center', alignItems: 'center', ...Platform.select({ ios: { shadowColor: color.defalt, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 }, android: { elevation: 2 }, web: { boxShadow: '0 2px 6px rgba(186, 104, 56, 0.25)' } }) },
+  modalContainer: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.95)', justifyContent: 'center', alignItems: 'center' },
+  fullImage: { width: Dimensions.get('window').width, height: Dimensions.get('window').height },
+  missingUserBox: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
+  missingUserText: { textAlign: 'center', color: '#64748B', fontSize: 15, fontWeight: '600', marginTop: 12 },
+
+  // WhatsApp Style Recording Toolbar Styles
+  recordingToolbarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-  },
-  chatWrapper: {
-    flex: 1,
-    backgroundColor: '#F0F2F5',
-  },
-  chatViewContainer: {
-    flex: 1,
-    backgroundColor: '#F0F2F5',
-  },
-  contextualHeader: {
-    height: 60,
-    backgroundColor: color.defalt,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    zIndex: 10,
-    elevation: 4,
-  },
-  contextHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  contextHeaderText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 20,
-  },
-  contextHeaderRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  searchHeader: {
-    height: 60,
-    backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    zIndex: 10,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-  },
-  searchHeaderInput: {
-    flex: 1,
-    height: 40,
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#0F172A',
-    borderWidth: 0,
-    ...(Platform.OS === 'web' && {
-      outlineStyle: 'none',
-    }),
-  },
-  iconBtn: {
-    marginLeft: 16,
-    padding: 4,
-  },
-  kebabMenu: {
-    position: 'absolute',
-    top: 55,
-    right: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    paddingVertical: 4,
-    zIndex: 1000,
-  },
-  kebabMenuItem: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  kebabMenuText: {
-    fontSize: 15,
-    color: '#0F172A',
-    fontWeight: '500',
-  },
-  chatMsgImage: {
-    width: Math.min(Dimensions.get('window').width * 0.72, 240),
-    height: 180,
-    borderRadius: 12,
-    margin: 4,
-  },
-  inputToolbar: {
-    backgroundColor: '#F0F2F5',
-    borderTopWidth: 0,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
-  },
-  inputToolbarPrimary: {
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-  },
-  composerWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    paddingLeft: 4,
-    paddingRight: 4,
-    marginRight: 8,
-    minHeight: 46,
-    maxHeight: 120,
+    marginHorizontal: 8,
+    marginBottom: Platform.OS === 'ios' ? 20 : 8,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    minHeight: 50,
   },
-  inputActionBtn: {
+  recordActionBtn: {
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  composerRightIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  composerInput: {
+  recordingStatusBox: {
     flex: 1,
-    color: '#0F172A',
-    fontSize: 16,
-    lineHeight: 21,
-    paddingTop: Platform.OS === 'ios' ? 11 : 8,
-    paddingBottom: Platform.OS === 'ios' ? 11 : 8,
-    paddingHorizontal: 4,
-    ...(Platform.OS === 'web' && {
-      outlineWidth: 0,
-    }),
-  },
-  sendComponentWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 2,
-  },
-  sendButton: {
-    backgroundColor: color.defalt,
-    borderRadius: 22,
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: color.defalt,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-      web: {
-        boxShadow: '0 2px 6px rgba(186, 104, 56, 0.25)',
-      },
-    }),
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fullImage: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-  },
-  missingUserBox: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  missingUserText: {
-    textAlign: 'center',
-    color: '#64748B',
-    fontSize: 15,
-    fontWeight: '600',
-    marginTop: 12,
-  },
-  blockedBannerContainer: {
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-  },
-  blockedBannerTextBold: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#EF4444',
-    textAlign: 'center',
-  },
-  webDropdownMenu: {
-    position: 'absolute',
-    top: 30,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingVertical: 8,
-    minWidth: 160,
-    zIndex: 9999,
-    ...Platform.select({
-      web: {
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      },
-    }),
-  },
-  webDropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  webDropdownText: {
-    fontSize: 15,
-    color: '#0F172A',
-    marginLeft: 12,
-    fontWeight: '400',
-  },
-  fullScreenModal: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  fullScreenModalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginLeft: 16,
-    flex: 2,
-  },
-  headerBar: {
-    height: 60,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
-  encryptionBody: {
-    padding: 24,
-    alignItems: 'center',
+  redDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#EF4444',
+    marginRight: 10,
   },
-  lockBadgeBox: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  encryptionMainTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  encryptionDetailText: {
-    fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  qrPlaceholder: {
-    marginVertical: 10,
-    padding: 15,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-  },
-  securityCodeText: {
-    fontSize: 16,
+  recordingTimerText: {
+    fontSize: 15,
     fontWeight: '600',
     color: '#0F172A',
-    textAlign: 'center',
-    letterSpacing: 1.5,
-    lineHeight: 26,
-    marginVertical: 16,
+    flex: 1,
   },
-  encryptionInfo: {
-    fontSize: 13,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 20,
+  pauseResumeBtn: {
+    padding: 8,
+    marginRight: 6,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 16,
   },
-  scanBtn: {
-    backgroundColor: color.defalt,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 24,
-  },
+
+  blockedPillWrapper: { width: '100%', alignItems: 'center', paddingVertical: 12, paddingBottom: Platform.OS === 'ios' ? 30 : 12, backgroundColor: 'transparent' },
+  blockedActionsContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0', paddingVertical: 16, paddingBottom: Platform.OS === 'ios' ? 30 : 16 },
+  blockedActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  blockedDivider: { width: 1, height: 24, backgroundColor: '#E2E8F0' },
+  deleteChatText: { fontSize: 16, fontWeight: '500', color: '#EF4444', marginLeft: 8 },
+  unblockText: { fontSize: 16, fontWeight: '500', color: '#10B981', marginLeft: 8 },
+  systemMessageContainer: { backgroundColor: '#F8FAFC', borderRadius: 16, paddingVertical: 8, paddingHorizontal: 16, alignSelf: 'center', marginVertical: 8, elevation: 1, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.1, shadowRadius: 2 },
+  systemMessageText: { color: '#64748B', fontSize: 13, textAlign: 'center', fontWeight: '500' },
+
+  headerBar: { height: 60, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  fullScreenModalTitle: { fontSize: 18, fontWeight: '600', color: '#0F172A', marginLeft: 16, flex: 2 },
+  encryptionBody: { padding: 24, alignItems: 'center' },
+  lockBadgeBox: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  encryptionMainTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A', marginBottom: 12, textAlign: 'center' },
+  encryptionDetailText: { fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  qrPlaceholder: { marginVertical: 10, padding: 15, backgroundColor: '#F8FAFC', borderRadius: 16 },
+  securityCodeText: { fontSize: 16, fontWeight: '600', color: '#0F172A', textAlign: 'center', letterSpacing: 1.5, lineHeight: 26, marginVertical: 16 },
+  encryptionInfo: { fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  scanBtn: { backgroundColor: color.defalt, paddingVertical: 12, paddingHorizontal: 32, borderRadius: 24 },
 });
