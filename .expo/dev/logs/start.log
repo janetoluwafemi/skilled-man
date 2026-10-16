@@ -58215,3 +58215,7 @@
 {"_e":"metro:bundling:started","_t":1792165382862,"id":"31","platform":"web","environment":null,"entry":"index.js"}
 {"_e":"metro:bundling:progress","_t":1792165382866,"id":"31","progress":0,"total":1,"current":0}
 {"_e":"metro:bundling:done","_t":1792165384938,"id":"31","total":1,"ms":2074.8559}
+{"_e":"metro:bundling:started","_t":1792165399478,"id":"32","platform":"web","environment":null,"entry":"index.js"}
+{"_e":"metro:client_log","_t":1792165429584,"level":"warn","data":["\"shadow*\" style props are deprecated. Use \"boxShadow\"."]}
+{"_e":"metro:client_log","_t":1792165429594,"level":"log","data":["Running application \"main\" with appParams:\n","{\"hydrate\": undefined, \"rootTag\": \"#root\"}","\nDevelopment-level warnings: ON.\nPerformance optimizations: OFF."]}
+{"_e":"metro:client_log","_t":1792165429594,"level":"warn","data":["props.pointerEvents is deprecated. Use style.pointerEvents"]}
