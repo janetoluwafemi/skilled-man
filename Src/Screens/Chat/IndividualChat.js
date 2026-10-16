@@ -60,6 +60,7 @@ import { BASIC_URL } from '../Signin/Signin';
 import {
   blockChatUser,
   clearChat,
+  deleteChatMessage,
   getBlockedChatUsers,
   reportChatUser,
   unblockChatUser,
@@ -137,6 +138,11 @@ const getProfilePhone = (...profiles) => {
     }
   }
   return '';
+};
+
+const DISAPPEARING_MESSAGE_AGES = {
+  '24 hours': 24 * 60 * 60 * 1000,
+  '7 days': 7 * 24 * 60 * 60 * 1000,
 };
 
 const AudioMessage = ({ audioUri, isMe }) => {
@@ -232,6 +238,129 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
   }
 
   const chatStorageKey = `chat_history_${cleanUserId}_${peerId}`;
+  const chatThemeStorageKey = `chat_theme_${cleanUserId}_${peerId}`;
+  const disappearingTimerStorageKey = `chat_disappearing_${cleanUserId}_${peerId}`;
+  const [chatTheme, setChatTheme] = useState('Default Light');
+  const [disappearingTimer, setDisappearingTimer] = useState('Off');
+  const expirationRequestsRef = useRef(new Set());
+  const isDarkTheme = chatTheme === 'Dark Mode';
+
+  const filterExpiredMessages = useCallback(
+    (candidateMessages, persist = true) => {
+      const maxAge = DISAPPEARING_MESSAGE_AGES[disappearingTimer];
+      if (!maxAge) {
+        return candidateMessages;
+      }
+
+      const now = Date.now();
+      const expiredMessages = [];
+      const remainingMessages = candidateMessages.filter(message => {
+        const createdAt = new Date(message.createdAt).getTime();
+        if (Number.isFinite(createdAt) && now - createdAt >= maxAge) {
+          expiredMessages.push(message);
+          return false;
+        }
+        return true;
+      });
+
+      expiredMessages.forEach(message => {
+        const serverMessageId =
+          message._serverId ||
+          (String(message.user?._id) !== cleanUserId
+            ? String(message._id)
+            : null);
+        if (!serverMessageId || expirationRequestsRef.current.has(String(serverMessageId))) {
+          return;
+        }
+
+        const requestKey = String(serverMessageId);
+        expirationRequestsRef.current.add(requestKey);
+        deleteChatMessage(cleanUserId, requestKey, 'me').catch(error => {
+          expirationRequestsRef.current.delete(requestKey);
+          console.error('Unable to delete an expired chat message:', error);
+        });
+      });
+
+      if (persist && expiredMessages.length > 0) {
+        AsyncStorage.setItem(chatStorageKey, JSON.stringify(remainingMessages)).catch(
+          error => console.error('Unable to save expired chat history:', error),
+        );
+      }
+      return remainingMessages;
+    },
+    [chatStorageKey, cleanUserId, disappearingTimer],
+  );
+
+  const handleThemeChange = useCallback(
+    async theme => {
+      setChatTheme(theme);
+      try {
+        await AsyncStorage.setItem(chatThemeStorageKey, theme);
+      } catch (error) {
+        console.error('Unable to save chat theme:', error);
+      }
+    },
+    [chatThemeStorageKey],
+  );
+
+  const handleDisappearingTimerChange = useCallback(
+    async timer => {
+      setDisappearingTimer(timer);
+      try {
+        await AsyncStorage.setItem(disappearingTimerStorageKey, timer);
+      } catch (error) {
+        console.error('Unable to save disappearing-message setting:', error);
+      }
+    },
+    [disappearingTimerStorageKey],
+  );
+
+  useEffect(() => {
+    let isCurrent = true;
+    const loadChatPreferences = async () => {
+      try {
+        const [storedTheme, storedTimer] = await Promise.all([
+          AsyncStorage.getItem(chatThemeStorageKey),
+          AsyncStorage.getItem(disappearingTimerStorageKey),
+        ]);
+        if (!isCurrent) {
+          return;
+        }
+        if (storedTheme === 'Default Light' || storedTheme === 'Dark Mode') {
+          setChatTheme(storedTheme);
+        }
+        if (
+          storedTimer === 'Off' ||
+          Object.prototype.hasOwnProperty.call(
+            DISAPPEARING_MESSAGE_AGES,
+            storedTimer,
+          )
+        ) {
+          setDisappearingTimer(storedTimer);
+        }
+      } catch (error) {
+        console.error('Unable to load chat preferences:', error);
+      }
+    };
+
+    loadChatPreferences();
+    return () => {
+      isCurrent = false;
+    };
+  }, [chatThemeStorageKey, disappearingTimerStorageKey]);
+
+  useEffect(() => {
+    if (disappearingTimer === 'Off') {
+      return undefined;
+    }
+
+    setMessages(previousMessages => filterExpiredMessages(previousMessages));
+    const expirationInterval = setInterval(() => {
+      setMessages(previousMessages => filterExpiredMessages(previousMessages));
+    }, 60 * 1000);
+
+    return () => clearInterval(expirationInterval);
+  }, [disappearingTimer, filterExpiredMessages]);
 
   // Dynamic User Avatar calculation supporting global profile updates
   const [myAvatar, setMyAvatar] = useState(
@@ -423,18 +552,32 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         const storedHistory = await AsyncStorage.getItem(chatStorageKey);
         if (storedHistory) {
           const parsedHistory = JSON.parse(storedHistory);
-          const alignedHistory = parsedHistory.filter(msg => msg.senderRole).map(msg => {
-            msg.user._id = msg.senderRole === currentDashboardRole ? cleanUserId : peerId;
-            return msg;
-          });
-          setMessages(alignedHistory);
+          const alignedHistory = parsedHistory
+            .filter(msg => msg.senderRole)
+            .map(msg => ({
+              ...msg,
+              user: {
+                ...msg.user,
+                _id:
+                  msg.senderRole === currentDashboardRole
+                    ? cleanUserId
+                    : peerId,
+              },
+            }));
+          setMessages(filterExpiredMessages(alignedHistory));
         }
       } catch (error) {
         console.log('Error loading local chat history', error);
       }
     };
     loadLocalHistory();
-  }, [chatStorageKey, currentDashboardRole, cleanUserId, peerId]);
+  }, [
+    chatStorageKey,
+    currentDashboardRole,
+    cleanUserId,
+    peerId,
+    filterExpiredMessages,
+  ]);
 
   const fetchApiMessages = useCallback(async () => {
     try {
@@ -458,9 +601,6 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         const stableId = String(specificChat.id || `${specificChat.created_at}_${specificChat.message}`);
 
         setMessages(previousMessages => {
-          const alreadySentByMe = previousMessages.some(m => m.text?.trim() === (specificChat.message || '').trim() && String(m.user?._id) === String(cleanUserId));
-          if (alreadySentByMe) return previousMessages;
-
           const rawSenderId = String(specificChat.sender_id || '');
           const isActuallyMe = rawSenderId === cleanUserId;
           const oppositeRole = currentDashboardRole === 'provider' ? 'customer' : 'provider';
@@ -468,6 +608,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
 
           const newIncomingMessage = {
             _id: stableId,
+            _serverId: specificChat.id ? String(specificChat.id) : undefined,
             text: specificChat.message || '',
             createdAt: parsedDate,
             senderRole: msgSenderRole,
@@ -478,10 +619,36 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
             },
           };
 
+          if (filterExpiredMessages([newIncomingMessage], false).length === 0) {
+            return filterExpiredMessages(previousMessages);
+          }
+
           const existingIds = new Set(previousMessages.map(m => String(m._id)));
+          const localMatchIndex = previousMessages.findIndex(
+            message =>
+              String(message.user?._id) === cleanUserId &&
+              !message._serverId &&
+              message.text?.trim() === (specificChat.message || '').trim(),
+          );
+          if (localMatchIndex >= 0) {
+            const updatedMessages = previousMessages.map((message, index) =>
+              index === localMatchIndex
+                ? {...message, _serverId: newIncomingMessage._serverId}
+                : message,
+            );
+            AsyncStorage.setItem(
+              chatStorageKey,
+              JSON.stringify(updatedMessages),
+            ).catch(error =>
+              console.error('Unable to save chat history:', error),
+            );
+            return updatedMessages;
+          }
           if (!existingIds.has(newIncomingMessage._id)) {
             const updatedMessages = GiftedChat.append(previousMessages, [newIncomingMessage]);
-            AsyncStorage.setItem(chatStorageKey, JSON.stringify(updatedMessages)).catch(e => console.log(e));
+            AsyncStorage.setItem(chatStorageKey, JSON.stringify(updatedMessages)).catch(error =>
+              console.error('Unable to save chat history:', error),
+            );
             return updatedMessages;
           }
           return previousMessages;
@@ -490,7 +657,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     } catch (error) {
       console.log('Error fetching chat messages:', error);
     }
-  }, [cleanUserId, peerId, peerData, chatStorageKey, myAvatar, livePeerAvatar, currentDashboardRole]);
+  }, [cleanUserId, peerId, peerData, chatStorageKey, myAvatar, livePeerAvatar, currentDashboardRole, filterExpiredMessages]);
 
   useEffect(() => {
     fetchApiMessages();
@@ -814,7 +981,15 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
       : messages;
 
   return (
-      <View style={styles.chatWrapper}>
+      <View
+        style={[
+          styles.chatWrapper,
+          isDarkTheme && {backgroundColor: '#0B1220'},
+        ]}>
+        <StatusBar
+          barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+          backgroundColor={isDarkTheme ? '#111827' : '#F8FAFC'}
+        />
         {selectedMessage ? (
             <View style={styles.contextualHeader}>
               <View style={styles.contextHeaderLeft}>
@@ -842,12 +1017,26 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
               </View>
             </View>
         ) : isSearchActive ? (
-            <View style={styles.searchHeader}>
+            <View
+              style={[
+                styles.searchHeader,
+                isDarkTheme && {
+                  backgroundColor: '#111827',
+                  borderBottomColor: '#334155',
+                },
+              ]}>
               <TouchableOpacity onPress={() => { setIsSearchActive(false); setSearchQuery(''); navigation.setParams({ startSearch: false }); }}>
-                <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
+                <Icons.Feather
+                  name="arrow-left"
+                  size={24}
+                  color={isDarkTheme ? '#F8FAFC' : '#0F172A'}
+                />
               </TouchableOpacity>
               <TextInput
-                  style={styles.searchHeaderInput}
+                  style={[
+                    styles.searchHeaderInput,
+                    isDarkTheme && {color: '#F8FAFC'},
+                  ]}
                   placeholder="Search..."
                   placeholderTextColor="#94A3B8"
                   value={searchQuery}
@@ -860,23 +1049,32 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                   </TouchableOpacity>
               )}
               <TouchableOpacity style={styles.iconBtn}>
-                <Icons.Feather name="calendar" size={22} color="#0F172A" />
+                <Icons.Feather
+                  name="calendar"
+                  size={22}
+                  color={isDarkTheme ? '#F8FAFC' : '#0F172A'}
+                />
               </TouchableOpacity>
             </View>
         ) : (
             <View style={{ zIndex: 10 }}>
               <ChatUsrHeader
-                  userName={peerData?.name || 'Chat'}
-                  userImage={livePeerAvatar}
-                  onlineStatus={!isBlocked}
-                  onProfilePress={() => navigation.navigate('UserProfile', { userId: peerId, userData: peerData })}
-                  onSearchPress={() => setIsSearchActive(true)}
-                  onVoiceCallPress={startVoiceCall}
-                  voiceCallLoading={voiceCallLoading}
-                  isBlocked={isBlocked}
-                  onBlockPress={handleHeaderBlockAction}
-                  onReportPress={handleHeaderReportAction}
-                  onDeleteChatPress={handleHeaderDeleteChat}
+                userName={peerData?.name || 'Chat'}
+                userImage={livePeerAvatar}
+                onlineStatus={!isBlocked}
+                onProfilePress={() => navigation.navigate('UserProfile', { userId: peerId, userData: peerData })}
+                onSearchPress={() => setIsSearchActive(true)}
+                onVoiceCallPress={startVoiceCall}
+                voiceCallLoading={voiceCallLoading}
+                isBlocked={isBlocked}
+                onBlockPress={handleHeaderBlockAction}
+                onReportPress={handleHeaderReportAction}
+                onDeleteChatPress={handleHeaderDeleteChat}
+                messages={messages}
+                chatTheme={chatTheme}
+                disappearingTimer={disappearingTimer}
+                onThemeChange={handleThemeChange}
+                onDisappearingTimerChange={handleDisappearingTimerChange}
               />
             </View>
         )}
@@ -914,7 +1112,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
               onLongPressMessage={handleLongPress}
               onPressMessage={handlePress}
               messagesContainerStyle={{
-                backgroundColor: '#F0F2F5',
+                backgroundColor: isDarkTheme ? '#0B1220' : '#F0F2F5',
                 paddingBottom: 10,
               }}
               listViewProps={{
@@ -924,8 +1122,18 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
               }}
               renderSystemMessage={(props) => {
                 return (
-                    <View style={styles.systemMessageContainer}>
-                      <Text style={styles.systemMessageText}>{props.currentMessage.text}</Text>
+                    <View
+                      style={[
+                        styles.systemMessageContainer,
+                        isDarkTheme && {backgroundColor: '#1F2937'},
+                      ]}>
+                      <Text
+                        style={[
+                          styles.systemMessageText,
+                          isDarkTheme && {color: '#CBD5E1'},
+                        ]}>
+                        {props.currentMessage.text}
+                      </Text>
                     </View>
                 );
               }}
@@ -965,7 +1173,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                     <MessageText
                         {...props}
                         textStyle={{
-                          left: { color: color.defalt, fontSize: 15.5, lineHeight: 22, ...(Platform.OS === 'web' && { wordBreak: 'break-word' }) },
+                          left: { color: isDarkTheme ? '#F8FAFC' : color.defalt, fontSize: 15.5, lineHeight: 22, ...(Platform.OS === 'web' && { wordBreak: 'break-word' }) },
                           right: { color: '#FFFFFF', fontSize: 15.5, lineHeight: 22, ...(Platform.OS === 'web' && { wordBreak: 'break-word' }) },
                         }}
                     />
@@ -1047,7 +1255,10 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                 return (
                     <InputToolbar
                         {...props}
-                        containerStyle={styles.inputToolbar}
+                        containerStyle={[
+                          styles.inputToolbar,
+                          isDarkTheme && {backgroundColor: '#111827'},
+                        ]}
                         primaryStyle={styles.inputToolbarPrimary}
                     />
                 );
@@ -1056,7 +1267,14 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                 if (isBlocked || isRecording) return null;
                 const hasText = props.text && props.text.trim().length > 0;
                 return (
-                    <View style={styles.composerWrapper}>
+                    <View
+                      style={[
+                        styles.composerWrapper,
+                        isDarkTheme && {
+                          backgroundColor: '#1F2937',
+                          borderColor: '#334155',
+                        },
+                      ]}>
                       <TouchableOpacity
                           style={styles.inputActionBtn}
                           onPress={() => {
@@ -1071,16 +1289,19 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                           activeOpacity={0.7}
                       >
                         {showEmojiPicker ? (
-                            <Icons.Ionicons name="keypad-outline" size={24} color="#64748B" />
+                            <Icons.Ionicons name="keypad-outline" size={24} color={isDarkTheme ? '#CBD5E1' : '#64748B'} />
                         ) : (
-                            <Icons.Feather name="smile" size={24} color="#64748B" />
+                            <Icons.Feather name="smile" size={24} color={isDarkTheme ? '#CBD5E1' : '#64748B'} />
                         )}
                       </TouchableOpacity>
                       <Composer
                           {...props}
                           placeholder="Message"
                           placeholderTextColor="#94A3B8"
-                          textInputStyle={[styles.composerInput, { color: '#0F172A' }]}
+                          textInputStyle={[
+                            styles.composerInput,
+                            {color: isDarkTheme ? '#F8FAFC' : '#0F172A'},
+                          ]}
                       />
                       <View style={styles.composerRightIcons}>
                         <TouchableOpacity style={styles.inputActionBtn} activeOpacity={0.7} onPress={pickDocument}>
@@ -1123,7 +1344,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                       {...props}
                       wrapperStyle={{
                         left: {
-                          backgroundColor: '#FFFFFF',
+                          backgroundColor: isDarkTheme ? '#1F2937' : '#FFFFFF',
                           borderRadius: 16,
                           borderBottomLeftRadius: 4,
                           borderBottomRightRadius: 16,
@@ -1142,7 +1363,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
                         },
                       }}
                       textStyle={{
-                        left: { color: color.defalt, fontSize: 15.5, lineHeight: 22 },
+                        left: { color: isDarkTheme ? '#F8FAFC' : color.defalt, fontSize: 15.5, lineHeight: 22 },
                         right: { color: '#FFFFFF', fontSize: 15.5, lineHeight: 22 },
                       }}
                   />
@@ -1150,7 +1371,11 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
           />
 
           {showEmojiPicker && (
-              <View style={{ height: 280, backgroundColor: '#FFFFFF' }}>
+              <View
+                style={{
+                  height: 280,
+                  backgroundColor: isDarkTheme ? '#111827' : '#FFFFFF',
+                }}>
                 <EmojiSelector
                     onEmojiSelected={emoji => setText(prev => prev + emoji)}
                     showSearchBar={false}

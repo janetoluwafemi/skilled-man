@@ -21,6 +21,17 @@
         }
       ],
       [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Skilledman to access photos shared in your chats.",
+          "savePhotosPermission": "Allow Skilledman to save photos shared in your chats.",
+          "granularPermissions": [
+            "photo",
+            "video"
+          ]
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "Allow Skilledman to use your location while selecting a service address."

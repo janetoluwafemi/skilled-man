@@ -18,6 +18,8 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library/legacy';
 
 import {Icons} from '../../Components/Icons';
 import color from '../../Assets/colors/colors';
@@ -25,12 +27,78 @@ import {BASIC_URL} from '../Signin/Signin';
 import {
   blockChatUser,
   clearChat,
+  getChatMessages,
+  getChatResultItems,
   getBlockedChatUsers,
   reportChatUser,
   unblockChatUser,
 } from '../../utilis/chatApi';
 
 const EMPTY_PROFILE = {};
+
+const extractChatMediaUris = messages => {
+  const mediaUris = [];
+  const mediaFields = [
+    'image',
+    'image_url',
+    'photo',
+    'photo_url',
+    'video',
+    'video_url',
+    'media_url',
+    'file_url',
+    'attachment',
+    'file',
+    'media',
+  ];
+
+  messages.forEach(message => {
+    if (!message || typeof message !== 'object') {
+      return;
+    }
+
+    mediaFields.forEach(field => {
+      const value = message[field];
+      const candidate =
+        typeof value === 'string'
+          ? value
+          : value && typeof value === 'object'
+            ? value.uri || value.url || value.path
+            : null;
+      if (typeof candidate !== 'string' || !candidate.trim()) {
+        return;
+      }
+
+      const mediaType = String(
+        value?.mimeType || value?.type || message.mimeType || message.type || '',
+      ).toLowerCase();
+      const isKnownMediaField = [
+        'image',
+        'image_url',
+        'photo',
+        'photo_url',
+        'video',
+        'video_url',
+      ].includes(field);
+      const isMediaMimeType =
+        mediaType.startsWith('image/') || mediaType.startsWith('video/');
+      const isMediaFile = /\.(jpe?g|png|gif|webp|heic|heif|mp4|mov|m4v|webm)(?:[?#]|$)/i.test(
+        candidate,
+      );
+      if (isKnownMediaField || isMediaMimeType || isMediaFile) {
+        mediaUris.push({
+          uri: candidate.trim(),
+          isVideo:
+            field === 'video' ||
+            field === 'video_url' ||
+            mediaType.startsWith('video/'),
+        });
+      }
+    });
+  });
+
+  return [...new Map(mediaUris.map(media => [media.uri, media])).values()];
+};
 
 const getProfilePhone = (...profiles) => {
   const phoneFields = [
@@ -106,6 +174,9 @@ const UserProfile = () => {
   const [muteSelection, setMuteSelection] = useState('Off');
   const [mediaSelection, setMediaSelection] = useState('Default (Yes)');
   const [disappearingSelection, setDisappearingSelection] = useState('Off');
+  const [chatTheme, setChatTheme] = useState('Default Light');
+  const [mediaSaving, setMediaSaving] = useState(false);
+  const isDarkTheme = chatTheme === 'Dark Mode';
 
   const [confirmModal, setConfirmModal] = useState({
     visible: false,
@@ -182,6 +253,36 @@ const UserProfile = () => {
     };
     if (peerId) loadPreferences();
   }, [peerId]);
+
+  useEffect(() => {
+    if (!currentUserId || !peerId) {
+      return undefined;
+    }
+
+    let isCurrent = true;
+    const loadTheme = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem(
+          `chat_theme_${currentUserId}_${peerId}`,
+        );
+        if (
+          isCurrent &&
+          (savedTheme === 'Default Light' || savedTheme === 'Dark Mode')
+        ) {
+          setChatTheme(savedTheme);
+        }
+      } catch (error) {
+        console.error('Unable to load chat theme:', error);
+      }
+    };
+
+    loadTheme();
+    const unsubscribe = navigation.addListener('focus', loadTheme);
+    return () => {
+      isCurrent = false;
+      unsubscribe();
+    };
+  }, [currentUserId, navigation, peerId]);
 
   useEffect(() => {
     if (!currentUserId || !peerId) return;
@@ -320,8 +421,142 @@ const UserProfile = () => {
   };
 
   const saveMediaVisibility = async () => {
-    await AsyncStorage.setItem(`media_pref_${peerId}`, mediaSelection);
-    setMediaVisible(false);
+    setMediaSaving(true);
+    try {
+      await AsyncStorage.setItem(`media_pref_${peerId}`, mediaSelection);
+
+      if (mediaSelection === 'No') {
+        setMediaVisible(false);
+        return;
+      }
+
+      if (Platform.OS === 'web') {
+        throw new Error('Saving chat media to your gallery is only supported in the mobile app.');
+      }
+      if (!currentUserId || !peerId) {
+        throw new Error('Unable to identify this chat.');
+      }
+
+      const permission = await MediaLibrary.requestPermissionsAsync(true);
+      if (!permission.granted) {
+        throw new Error('Photo library permission is required to save chat media.');
+      }
+
+      const historyKey = `chat_history_${currentUserId}_${peerId}`;
+      const savedMediaKey = `chat_gallery_saved_${currentUserId}_${peerId}`;
+      const [storedHistory, storedSavedMedia] = await Promise.all([
+        AsyncStorage.getItem(historyKey),
+        AsyncStorage.getItem(savedMediaKey),
+      ]);
+      const history = storedHistory ? JSON.parse(storedHistory) : [];
+      if (!Array.isArray(history)) {
+        throw new Error('Chat history is not in a valid format.');
+      }
+
+      let serverMessages = [];
+      try {
+        const result = await getChatMessages(
+          currentUserId,
+          peerId,
+          currentUserId,
+        );
+        serverMessages = getChatResultItems(result);
+      } catch (error) {
+        console.warn('Unable to load server chat media; using local history:', error);
+      }
+
+      const alreadySaved = new Set(
+        storedSavedMedia ? JSON.parse(storedSavedMedia) : [],
+      );
+      const mediaUris = extractChatMediaUris([...history, ...serverMessages]);
+      const mediaToSave = mediaUris.filter(media => !alreadySaved.has(media.uri));
+      if (mediaToSave.length === 0) {
+        setMediaVisible(false);
+        Alert.alert('Media visibility saved', 'There are no new chat photos or videos to save.');
+        return;
+      }
+
+      const savedUris = [];
+      const errors = [];
+      for (const [index, media] of mediaToSave.entries()) {
+        const {uri, isVideo} = media;
+        try {
+          let localUri = uri;
+          if (/^https?:\/\//i.test(uri)) {
+            const path = uri.split('?')[0].split('#')[0];
+            const extensionMatch = path.match(/\.([a-z0-9]{2,5})$/i);
+            const extension = extensionMatch
+              ? extensionMatch[1].toLowerCase()
+              : isVideo
+                ? 'mp4'
+                : 'jpg';
+            if (!FileSystem.cacheDirectory) {
+              throw new Error('A temporary folder is unavailable for media download.');
+            }
+            const fileUri = `${FileSystem.cacheDirectory}chat_media_${Date.now()}_${index}.${extension}`;
+            const download = await FileSystem.downloadAsync(uri, fileUri);
+            if (download.status < 200 || download.status >= 300) {
+              throw new Error(`Media download failed (${download.status}).`);
+            }
+            localUri = download.uri;
+          } else if (!/^(file|content):\/\//i.test(uri)) {
+            const relativeUri = uri.replace(/^\/+/, '');
+            const remoteUri = /^uploads\//i.test(relativeUri)
+              ? `${BASIC_URL}${relativeUri}`
+              : `${BASIC_URL}uploads/${relativeUri}`;
+            const path = remoteUri.split('?')[0].split('#')[0];
+            const extensionMatch = path.match(/\.([a-z0-9]{2,5})$/i);
+            const extension = extensionMatch
+              ? extensionMatch[1].toLowerCase()
+              : isVideo
+                ? 'mp4'
+                : 'jpg';
+            if (!FileSystem.cacheDirectory) {
+              throw new Error('A temporary folder is unavailable for media download.');
+            }
+            const fileUri = `${FileSystem.cacheDirectory}chat_media_${Date.now()}_${index}.${extension}`;
+            const download = await FileSystem.downloadAsync(remoteUri, fileUri);
+            if (download.status < 200 || download.status >= 300) {
+              throw new Error(`Media download failed (${download.status}).`);
+            }
+            localUri = download.uri;
+          }
+
+          await MediaLibrary.saveToLibraryAsync(localUri);
+          savedUris.push(uri);
+        } catch (error) {
+          console.error('Unable to save chat media:', error);
+          errors.push(uri);
+        }
+      }
+
+      if (savedUris.length > 0) {
+        await AsyncStorage.setItem(
+          savedMediaKey,
+          JSON.stringify([...alreadySaved, ...savedUris]),
+        );
+      }
+      setMediaVisible(false);
+      if (errors.length > 0) {
+        Alert.alert(
+          'Some media could not be saved',
+          `${savedUris.length} of ${mediaToSave.length} items were saved. Check your connection and try again for the remaining media.`,
+        );
+      } else {
+        Alert.alert(
+          'Media saved',
+          `${savedUris.length} ${savedUris.length === 1 ? 'item was' : 'items were'} saved to your gallery.`,
+        );
+      }
+    } catch (error) {
+      console.error('Unable to update media visibility:', error);
+      Alert.alert(
+        'Unable to save media',
+        error?.message || 'Please try again.',
+      );
+    } finally {
+      setMediaSaving(false);
+    }
   };
 
   const saveMutePreference = async () => {
@@ -438,19 +673,44 @@ const UserProfile = () => {
         size={24}
         color={currentSelection === label ? color.defalt : '#94A3B8'}
       />
-      <Text style={styles.radioText}>{label}</Text>
+      <Text
+        style={[
+          styles.radioText,
+          isDarkTheme && {color: '#F8FAFC'},
+        ]}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        isDarkTheme && {backgroundColor: '#0B1220'},
+      ]}
+      edges={['top', 'bottom']}>
+      <StatusBar
+        barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+        backgroundColor={isDarkTheme ? '#111827' : '#FFFFFF'}
+      />
 
-      <View style={styles.headerBar}>
+      <View
+        style={[
+          styles.headerBar,
+          isDarkTheme && {
+            backgroundColor: '#111827',
+            borderBottomColor: '#334155',
+          },
+        ]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.iconBtn}>
-          <Icons.Ionicons name="arrow-back" size={24} color="#0F172A" />
+          <Icons.Ionicons
+            name="arrow-back"
+            size={24}
+            color={isDarkTheme ? '#F8FAFC' : '#0F172A'}
+          />
         </TouchableOpacity>
 
         {isScrolled ? (
@@ -465,7 +725,12 @@ const UserProfile = () => {
                 style={styles.smallAvatar}
               />
             </View>
-            <Text style={styles.scrolledTitleText} numberOfLines={1}>
+            <Text
+              style={[
+                styles.scrolledTitleText,
+                isDarkTheme && {color: '#F8FAFC'},
+              ]}
+              numberOfLines={1}>
               {userName}
             </Text>
           </View>
@@ -476,7 +741,11 @@ const UserProfile = () => {
         <TouchableOpacity
           style={styles.iconBtn}
           onPress={() => setMenuVisible(true)}>
-          <Icons.Feather name="more-vertical" size={22} color="#0F172A" />
+          <Icons.Feather
+            name="more-vertical"
+            size={22}
+            color={isDarkTheme ? '#F8FAFC' : '#0F172A'}
+          />
         </TouchableOpacity>
       </View>
 
@@ -489,14 +758,24 @@ const UserProfile = () => {
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={closeMenu}>
-          <View style={styles.dropdownMenu}>
+          <View
+            style={[
+              styles.dropdownMenu,
+              isDarkTheme && {backgroundColor: '#1F2937'},
+            ]}>
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
                 closeMenu();
                 // Add Share functionality logic here if needed
               }}>
-              <Text style={styles.menuText}>Share</Text>
+              <Text
+                style={[
+                  styles.menuText,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
+                Share
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -505,7 +784,13 @@ const UserProfile = () => {
                 closeMenu();
                 // Add View in Address Book logic here if needed
               }}>
-              <Text style={styles.menuText}>View in address book</Text>
+              <Text
+                style={[
+                  styles.menuText,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
+                View in address book
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -514,7 +799,13 @@ const UserProfile = () => {
                 closeMenu();
                 setEncryptionVisible(true);
               }}>
-              <Text style={styles.menuText}>Verify security code</Text>
+              <Text
+                style={[
+                  styles.menuText,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
+                Verify security code
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -525,18 +816,40 @@ const UserProfile = () => {
         transparent={true}
         animationType="fade">
         <View style={styles.popupOverlay}>
-          <View style={styles.actionModalCard}>
-            <Text style={styles.actionModalTitle}>Mute notifications</Text>
+          <View
+            style={[
+              styles.actionModalCard,
+              isDarkTheme && {backgroundColor: '#1F2937'},
+            ]}>
+            <Text
+              style={[
+                styles.actionModalTitle,
+                isDarkTheme && {color: '#F8FAFC'},
+              ]}>
+              Mute notifications
+            </Text>
             {renderRadioOption('Off', muteSelection, setMuteSelection)}
             {renderRadioOption('8 hours', muteSelection, setMuteSelection)}
             {renderRadioOption('1 week', muteSelection, setMuteSelection)}
             {renderRadioOption('Always', muteSelection, setMuteSelection)}
             <View style={styles.actionModalFooter}>
               <TouchableOpacity onPress={() => setNotificationsVisible(false)}>
-                <Text style={styles.actionModalBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={saveMutePreference}>
-                <Text style={styles.actionModalBtnText}>OK</Text>
+                  <Text
+                    style={[
+                      styles.actionModalBtnText,
+                      isDarkTheme && {color: '#F8FAFC'},
+                    ]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={saveMutePreference}>
+                  <Text
+                    style={[
+                      styles.actionModalBtnText,
+                      isDarkTheme && {color: '#F8FAFC'},
+                    ]}>
+                    OK
+                  </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -545,10 +858,17 @@ const UserProfile = () => {
 
       <Modal visible={mediaVisible} transparent={true} animationType="fade">
         <View style={styles.popupOverlay}>
-          <View style={styles.actionModalCard}>
-            <Text style={styles.actionModalTitle}>
-              Show newly downloaded media from this chat in your device's
-              gallery?
+          <View
+            style={[
+              styles.actionModalCard,
+              isDarkTheme && {backgroundColor: '#1F2937'},
+            ]}>
+            <Text
+              style={[
+                styles.actionModalTitle,
+                isDarkTheme && {color: '#F8FAFC'},
+              ]}>
+              Save photos and videos from this chat to your device's gallery?
             </Text>
             {renderRadioOption(
               'Default (Yes)',
@@ -558,11 +878,31 @@ const UserProfile = () => {
             {renderRadioOption('Yes', mediaSelection, setMediaSelection)}
             {renderRadioOption('No', mediaSelection, setMediaSelection)}
             <View style={styles.actionModalFooter}>
-              <TouchableOpacity onPress={() => setMediaVisible(false)}>
-                <Text style={styles.actionModalBtnText}>Cancel</Text>
+              <TouchableOpacity
+                disabled={mediaSaving}
+                onPress={() => setMediaVisible(false)}>
+                <Text
+                  style={[
+                    styles.actionModalBtnText,
+                    isDarkTheme && {color: '#F8FAFC'},
+                  ]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={saveMediaVisibility}>
-                <Text style={styles.actionModalBtnText}>OK</Text>
+              <TouchableOpacity
+                disabled={mediaSaving}
+                onPress={saveMediaVisibility}>
+                {mediaSaving ? (
+                  <ActivityIndicator color={color.defalt} />
+                ) : (
+                  <Text
+                    style={[
+                      styles.actionModalBtnText,
+                      isDarkTheme && {color: '#F8FAFC'},
+                    ]}>
+                    OK
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -574,9 +914,23 @@ const UserProfile = () => {
         transparent={true}
         animationType="fade">
         <View style={styles.popupOverlay}>
-          <View style={styles.actionModalCard}>
-            <Text style={styles.actionModalTitle}>Message timer</Text>
-            <Text style={styles.actionModalSubtitle}>
+          <View
+            style={[
+              styles.actionModalCard,
+              isDarkTheme && {backgroundColor: '#1F2937'},
+            ]}>
+            <Text
+              style={[
+                styles.actionModalTitle,
+                isDarkTheme && {color: '#F8FAFC'},
+              ]}>
+              Message timer
+            </Text>
+            <Text
+              style={[
+                styles.actionModalSubtitle,
+                isDarkTheme && {color: '#CBD5E1'},
+              ]}>
               For more privacy, new messages will disappear for everyone after
               the selected duration.
             </Text>
@@ -602,10 +956,22 @@ const UserProfile = () => {
             )}
             <View style={styles.actionModalFooter}>
               <TouchableOpacity onPress={() => setDisappearingVisible(false)}>
-                <Text style={styles.actionModalBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setDisappearingVisible(false)}>
-                <Text style={styles.actionModalBtnText}>OK</Text>
+                  <Text
+                    style={[
+                      styles.actionModalBtnText,
+                      isDarkTheme && {color: '#F8FAFC'},
+                    ]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setDisappearingVisible(false)}>
+                  <Text
+                    style={[
+                      styles.actionModalBtnText,
+                      isDarkTheme && {color: '#F8FAFC'},
+                    ]}>
+                    OK
+                  </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -616,33 +982,72 @@ const UserProfile = () => {
         visible={encryptionVisible}
         transparent={true}
         animationType="slide">
-        <SafeAreaView style={styles.fullScreenModalSafe} edges={['top', 'bottom']}>
-          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-          <View style={styles.headerBar}>
+        <SafeAreaView
+          style={[
+            styles.fullScreenModalSafe,
+            isDarkTheme && {backgroundColor: '#0B1220'},
+          ]}
+          edges={['top', 'bottom']}>
+        <StatusBar
+          barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+          backgroundColor={isDarkTheme ? '#111827' : '#FFFFFF'}
+        />
+        <View
+          style={[
+            styles.headerBar,
+            isDarkTheme && {
+              backgroundColor: '#111827',
+              borderBottomColor: '#334155',
+            },
+          ]}>
             <TouchableOpacity
               onPress={() => setEncryptionVisible(false)}
               style={styles.iconBtn}>
-              <Icons.Ionicons name="arrow-back" size={24} color="#0F172A" />
+              <Icons.Ionicons
+                name="arrow-back"
+                size={24}
+                color={isDarkTheme ? '#F8FAFC' : '#0F172A'}
+              />
             </TouchableOpacity>
-            <Text style={styles.fullScreenModalTitle}>
+            <Text
+              style={[
+                styles.fullScreenModalTitle,
+                isDarkTheme && {color: '#F8FAFC'},
+              ]}>
               Verify security code
             </Text>
             <View style={{flex: 1}} />
           </View>
-          <ScrollView contentContainerStyle={styles.encryptionBody}>
-            <View style={styles.qrPlaceholder}>
+          <ScrollView
+            contentContainerStyle={[
+              styles.encryptionBody,
+              isDarkTheme && {backgroundColor: '#0B1220'},
+            ]}>
+            <View
+              style={[
+                styles.qrPlaceholder,
+                isDarkTheme && {backgroundColor: '#1F2937'},
+              ]}>
               <Icons.Ionicons
                 name="qr-code-outline"
                 size={150}
-                color="#0F172A"
+                color={isDarkTheme ? '#F8FAFC' : '#0F172A'}
               />
             </View>
-            <Text style={styles.securityCodeText}>
+            <Text
+              style={[
+                styles.securityCodeText,
+                isDarkTheme && {color: '#F8FAFC'},
+              ]}>
               27189 45912 61234 88123{'\n'}
               99120 45719 33412 11094{'\n'}
               78213 54311 09843 66124
             </Text>
-            <Text style={styles.encryptionInfo}>
+            <Text
+              style={[
+                styles.encryptionInfo,
+                isDarkTheme && {color: '#CBD5E1'},
+              ]}>
               To verify that messages and calls with {userName} are end-to-end
               encrypted, scan this code on their device. You can also compare
               the number above.
@@ -662,7 +1067,11 @@ const UserProfile = () => {
           setConfirmModal(prev => ({...prev, visible: false}))
         }>
         <View style={styles.popupOverlay}>
-          <View style={styles.popupCard}>
+          <View
+            style={[
+              styles.popupCard,
+              isDarkTheme && {backgroundColor: '#1F2937'},
+            ]}>
             <View style={styles.popupIconWrapper}>
               <Icons.Feather
                 name={confirmModal.iconName}
@@ -670,15 +1079,39 @@ const UserProfile = () => {
                 color={color.defalt}
               />
             </View>
-            <Text style={styles.popupTitle}>{confirmModal.title}</Text>
-            <Text style={styles.popupMessage}>{confirmModal.message}</Text>
+            <Text
+              style={[
+                styles.popupTitle,
+                isDarkTheme && {color: '#F8FAFC'},
+              ]}>
+              {confirmModal.title}
+            </Text>
+            <Text
+              style={[
+                styles.popupMessage,
+                isDarkTheme && {color: '#CBD5E1'},
+              ]}>
+              {confirmModal.message}
+            </Text>
             <View style={styles.popupButtonsRow}>
               <TouchableOpacity
-                style={styles.popupBtnWhite}
+                style={[
+                  styles.popupBtnWhite,
+                  isDarkTheme && {
+                    backgroundColor: '#1F2937',
+                    borderColor: '#475569',
+                  },
+                ]}
                 onPress={() =>
                   setConfirmModal(prev => ({...prev, visible: false}))
                 }>
-                <Text style={styles.popupBtnWhiteText}>No</Text>
+                <Text
+                  style={[
+                    styles.popupBtnWhiteText,
+                    isDarkTheme && {color: '#F8FAFC'},
+                  ]}>
+                  No
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.popupBtnPrimary}
@@ -691,11 +1124,21 @@ const UserProfile = () => {
       </Modal>
 
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[
+          styles.container,
+          isDarkTheme && {backgroundColor: '#0B1220'},
+        ]}
         showsVerticalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}>
-        <View style={styles.profileInfoSection}>
+        <View
+          style={[
+            styles.profileInfoSection,
+            isDarkTheme && {
+              backgroundColor: '#111827',
+              borderBottomColor: '#1F2937',
+            },
+          ]}>
           <View style={styles.avatarContainer}>
             <Image
               source={
@@ -706,14 +1149,30 @@ const UserProfile = () => {
               style={styles.avatar}
             />
           </View>
-          <Text style={styles.profileName}>{userName}</Text>
-          <Text style={styles.profileSubText}>
+          <Text
+            style={[
+              styles.profileName,
+              isDarkTheme && {color: '#F8FAFC'},
+            ]}>
+            {userName}
+          </Text>
+          <Text
+            style={[
+              styles.profileSubText,
+              isDarkTheme && {color: '#CBD5E1'},
+            ]}>
             {isBlocked ? 'Blocked contact' : 'Last seen today at 8:27 AM'}
           </Text>
 
           <View style={styles.actionButtonsRow}>
             <TouchableOpacity
-              style={styles.circleActionBtn}
+              style={[
+                styles.circleActionBtn,
+                isDarkTheme && {
+                  backgroundColor: '#1F2937',
+                  borderColor: '#334155',
+                },
+              ]}
               accessibilityRole="button"
               accessibilityLabel="Start voice call"
               accessibilityState={{disabled: voiceCallLoading}}
@@ -724,24 +1183,57 @@ const UserProfile = () => {
               ) : (
                 <Icons.Feather name="phone" size={20} color={color.defalt} />
               )}
-              <Text style={styles.actionButtonText}>
+              <Text
+                style={[
+                  styles.actionButtonText,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
                 {voiceCallLoading ? 'Calling...' : 'Audio'}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.circleActionBtn}>
+            <TouchableOpacity
+              style={[
+                styles.circleActionBtn,
+                isDarkTheme && {
+                  backgroundColor: '#1F2937',
+                  borderColor: '#334155',
+                },
+              ]}>
               <Icons.Feather name="video" size={20} color={color.defalt} />
-              <Text style={styles.actionButtonText}>Video</Text>
+              <Text
+                style={[
+                  styles.actionButtonText,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
+                Video
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.circleActionBtn}
+              style={[
+                styles.circleActionBtn,
+                isDarkTheme && {
+                  backgroundColor: '#1F2937',
+                  borderColor: '#334155',
+                },
+              ]}
               onPress={triggerChatSearch}>
               <Icons.Feather name="search" size={20} color={color.defalt} />
-              <Text style={styles.actionButtonText}>Search</Text>
+              <Text
+                style={[
+                  styles.actionButtonText,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
+                Search
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.optionsSection}>
+        <View
+          style={[
+            styles.optionsSection,
+            isDarkTheme && {backgroundColor: '#111827'},
+          ]}>
           <TouchableOpacity
             style={styles.optionItem}
             onPress={() => setNotificationsVisible(true)}>
@@ -752,8 +1244,18 @@ const UserProfile = () => {
               style={styles.optionIcon}
             />
             <View style={styles.optionTextContainer}>
-              <Text style={styles.optionTitle}>Mute notifications</Text>
-              <Text style={styles.optionSubtitle}>
+              <Text
+                style={[
+                  styles.optionTitle,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
+                Mute notifications
+              </Text>
+              <Text
+                style={[
+                  styles.optionSubtitle,
+                  isDarkTheme && {color: '#CBD5E1'},
+                ]}>
                 {muteSelection === 'Off' ? '' : muteSelection}
               </Text>
             </View>
@@ -769,14 +1271,29 @@ const UserProfile = () => {
               style={styles.optionIcon}
             />
             <View style={styles.optionTextContainer}>
-              <Text style={styles.optionTitle}>Media visibility</Text>
-              <Text style={styles.optionSubtitle}>
+              <Text
+                style={[
+                  styles.optionTitle,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
+                Media visibility
+              </Text>
+              <Text
+                style={[
+                  styles.optionSubtitle,
+                  isDarkTheme && {color: '#CBD5E1'},
+                ]}>
                 {mediaSelection === 'Default (Yes)' ? '' : mediaSelection}
               </Text>
             </View>
           </TouchableOpacity>
 
-          <View style={styles.divider} />
+          <View
+            style={[
+              styles.divider,
+              isDarkTheme && {backgroundColor: '#1F2937'},
+            ]}
+          />
 
           <TouchableOpacity
             style={styles.optionItem}
@@ -784,12 +1301,22 @@ const UserProfile = () => {
             <Icons.Feather
               name="lock"
               size={20}
-              color="#64748B"
+              color={isDarkTheme ? '#94A3B8' : '#64748B'}
               style={styles.optionIcon}
             />
             <View style={styles.optionTextContainer}>
-              <Text style={styles.optionTitle}>Encryption</Text>
-              <Text style={styles.optionSubtitle}>
+              <Text
+                style={[
+                  styles.optionTitle,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
+                Encryption
+              </Text>
+              <Text
+                style={[
+                  styles.optionSubtitle,
+                  isDarkTheme && {color: '#CBD5E1'},
+                ]}>
                 Messages and calls are end-to-end encrypted. Tap to verify.
               </Text>
             </View>
@@ -801,12 +1328,24 @@ const UserProfile = () => {
             <Icons.Feather
               name="clock"
               size={20}
-              color="#64748B"
+              color={isDarkTheme ? '#94A3B8' : '#64748B'}
               style={styles.optionIcon}
             />
             <View style={styles.optionTextContainer}>
-              <Text style={styles.optionTitle}>Disappearing messages</Text>
-              <Text style={styles.optionSubtitle}>{disappearingSelection}</Text>
+              <Text
+                style={[
+                  styles.optionTitle,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
+                Disappearing messages
+              </Text>
+              <Text
+                style={[
+                  styles.optionSubtitle,
+                  isDarkTheme && {color: '#CBD5E1'},
+                ]}>
+                {disappearingSelection}
+              </Text>
             </View>
           </TouchableOpacity>
 
@@ -814,12 +1353,22 @@ const UserProfile = () => {
             <Icons.Feather
               name="shield"
               size={20}
-              color="#64748B"
+              color={isDarkTheme ? '#94A3B8' : '#64748B'}
               style={styles.optionIcon}
             />
             <View style={styles.optionTextContainer}>
-              <Text style={styles.optionTitle}>Chat lock</Text>
-              <Text style={styles.optionSubtitle}>
+              <Text
+                style={[
+                  styles.optionTitle,
+                  isDarkTheme && {color: '#F8FAFC'},
+                ]}>
+                Chat lock
+              </Text>
+              <Text
+                style={[
+                  styles.optionSubtitle,
+                  isDarkTheme && {color: '#CBD5E1'},
+                ]}>
                 Lock and hide this chat on this device.
               </Text>
             </View>
@@ -831,7 +1380,12 @@ const UserProfile = () => {
             />
           </View>
 
-          <View style={styles.divider} />
+          <View
+            style={[
+              styles.divider,
+              isDarkTheme && {backgroundColor: '#1F2937'},
+            ]}
+          />
 
           {isBlocked ? (
             <TouchableOpacity
