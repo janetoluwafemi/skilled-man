@@ -525,6 +525,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
       setIsRecording(true);
     } catch (err) {
       console.error('Failed to start recording', err);
+      showAlert('Voice Note Failed', err?.message || 'The recording could not be started. Please try again.');
     } finally {
       isStartingRef.current = false;
     }
@@ -741,6 +742,7 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
 
       if (msg.document && Platform.OS !== 'web') chatForm.append('file', { uri: msg.document, name: msg.documentName || `DOC_${Date.now()}`, type: '*/*' });
       if (msg.image && Platform.OS !== 'web') chatForm.append('file', { uri: msg.image, name: `IMG_${Date.now()}.jpg`, type: 'image/jpeg' });
+      if (msg.audio && Platform.OS !== 'web') chatForm.append('file', { uri: msg.audio, name: `VOICE_${Date.now()}.m4a`, type: 'audio/mp4' });
 
       const notifyForm = new FormData();
       notifyForm.append('sender_id', currentSyncId);
