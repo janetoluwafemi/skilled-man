@@ -584,7 +584,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 24,
-    gap: 16,
   },
   dialogBtnText: {
     fontSize: 16,
@@ -592,7 +591,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingHorizontal: 8,
   },
-  dialogBtnPrimary: {color: '#3B82F6'},
+  dialogBtnPrimary: {
+    color: '#3B82F6',
+    marginLeft: 16,
+  },
 
   fullScreenModal: {flex: 1, backgroundColor: '#F8FAFC'},
   fullScreenHeader: {

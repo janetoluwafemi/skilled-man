@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 40,
+    flexGrow: 1,
   },
 
   // Custom Modern Chat Row

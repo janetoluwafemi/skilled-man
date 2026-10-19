@@ -47,6 +47,7 @@ import { Platform } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import MainNavigateHub from './Src/MainNavigation/MainNavigationHub';
@@ -87,11 +88,13 @@ const App = () => {
   return (
     <Provider store={Store}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <PaperProvider>
-          <AthProvidr>
-            <MainNavigateHub />
-          </AthProvidr>
-        </PaperProvider>
+        <SafeAreaProvider>
+          <PaperProvider>
+            <AthProvidr>
+              <MainNavigateHub />
+            </AthProvidr>
+          </PaperProvider>
+        </SafeAreaProvider>
       </GestureHandlerRootView>
     </Provider>
   );

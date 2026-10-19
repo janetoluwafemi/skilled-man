@@ -389,7 +389,7 @@ const FindExpert = props => {
                     </View>
 
                     <View style={styles.mediaUploadRow}>
-                      <TouchableOpacity style={styles.uploadOptionBtn} onPress={handleFilePick} disabled={isPending}>
+                      <TouchableOpacity style={[styles.uploadOptionBtn, styles.firstUploadOption]} onPress={handleFilePick} disabled={isPending}>
                         <Icons.Feather name="image" size={16} color={color.defalt} />
                         <Text style={styles.uploadOptionText}>Select Photo</Text>
                       </TouchableOpacity>
@@ -451,7 +451,8 @@ const styles = StyleSheet.create({
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, paddingHorizontal: 12 },
   inputIconLeft: { marginRight: 10 },
   inputStyle: { flex: 1, paddingVertical: 11, fontSize: 14, color: '#0F172A', fontWeight: '500' },
-  mediaUploadRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10, gap: 10 },
+  mediaUploadRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10 },
+  firstUploadOption: { marginRight: 10 },
   uploadOptionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, paddingVertical: 12 },
   uploadOptionText: { fontSize: 13, fontWeight: '600', color: '#0F172A', marginLeft: 6 },
   selectedMediaCard: { backgroundColor: '#F8FAFC', borderRadius: 14, padding: 10, marginVertical: 10, borderWidth: 1, borderColor: '#E2E8F0' },

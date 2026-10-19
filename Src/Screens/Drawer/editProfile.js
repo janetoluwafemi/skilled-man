@@ -583,6 +583,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 40,

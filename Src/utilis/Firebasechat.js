@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {View,
   Text,
   TextInput,
@@ -113,8 +114,10 @@ const ConversationScreen = () => {
   };
 
   return (
-    <View style={styles.mainWrapper}>
-      <ScrollView style={styles.scrollContainer}>
+    <SafeAreaView style={styles.mainWrapper}>
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}>
         {messages.map(message => {
           const isSender = message.userId === userId;
           return (
@@ -214,7 +217,7 @@ const ConversationScreen = () => {
           Attached: {attachment.name}
         </Text>
       ) : null}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -229,6 +232,9 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   msgRow: {
     flexDirection: 'row',

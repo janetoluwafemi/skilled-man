@@ -9,6 +9,7 @@ import {
   StatusBar,
   Modal,
 } from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import { normalize } from '../../utilis/responsive';
 import * as Location from 'expo-location';
 import * as Animatable from 'react-native-animatable';
@@ -142,7 +143,7 @@ const Mapltln = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
       <MapView
@@ -225,7 +226,7 @@ const Mapltln = () => {
           </Animatable.View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -241,7 +242,7 @@ const styles = StyleSheet.create({
   },
   topBar: {
     position: 'absolute',
-    top: Platform.OS === 'android' ? 45 : 55,
+    top: 12,
     left: 20,
     right: 20,
     flexDirection: 'row',
@@ -308,9 +309,9 @@ const styles = StyleSheet.create({
     bottom: 30,
     left: 20,
     right: 20,
-    gap: 10,
   },
   primaryBtn: {
+    marginBottom: 10,
     backgroundColor: color.defalt,
     flexDirection: 'row',
     alignItems: 'center',

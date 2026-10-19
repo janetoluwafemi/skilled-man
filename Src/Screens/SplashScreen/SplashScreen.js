@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
-import {StyleSheet, View, Image, StatusBar ,
-  Platform} from 'react-native';
+import {StyleSheet, Image, StatusBar} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
@@ -71,7 +71,7 @@ function SplashScreen({ navigation }) {
   }, [isFocused, checkUserAuthAndRole]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" translucent />
       <Animatable.View
         animation="fadeIn"
@@ -83,7 +83,7 @@ function SplashScreen({ navigation }) {
           resizeMode="cover"
         />
       </Animatable.View>
-    </View>
+    </SafeAreaView>
   );
 }
 

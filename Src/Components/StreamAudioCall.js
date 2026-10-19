@@ -215,15 +215,16 @@ const styles = StyleSheet.create({
   },
   callPanel: {
     alignItems: 'center',
-    gap: 16,
     padding: 24,
   },
   callTitle: {
     fontSize: 18,
     fontWeight: '600',
+    marginBottom: 16,
   },
   callStatus: {
     fontSize: 16,
+    marginBottom: 16,
   },
   hangupButton: {
     backgroundColor: '#C62828',

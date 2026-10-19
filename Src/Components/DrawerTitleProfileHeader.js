@@ -159,12 +159,12 @@ const styles = StyleSheet.create({
   rightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
   },
   iconBtn: {
     padding: 4,
   },
   avatarWrap: {
+    marginLeft: 12,
     width: 38,
     height: 38,
     borderRadius: 8,

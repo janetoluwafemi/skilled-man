@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   statusDisplayWrap: { marginTop: 10, paddingHorizontal: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   statusDisplayLabel: { fontSize: 14, color: '#64748B', fontWeight: '600' },
   statusDisplayText: { fontSize: 15, fontWeight: '800' },
-  btnActionRow: { flexDirection: 'row', gap: 12 },
+  btnActionRow: { flexDirection: 'row' },
   payBtn: { flex: 1, flexDirection: 'row', backgroundColor: '#10B981', borderRadius: 16, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   payBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 16 },
   disabledBtn: { flex: 1, backgroundColor: '#F1F5F9', borderRadius: 16, paddingVertical: 16, alignItems: 'center' },

@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 90,
+    flexGrow: 1,
   },
   emptyContainer: {
     flex: 1,

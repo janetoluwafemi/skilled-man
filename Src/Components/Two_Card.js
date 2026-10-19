@@ -42,7 +42,7 @@ const Two_Card = () => {
   return (
     <View style={styles.cardWrapper}>
       {/* Earned Balance Card */}
-      <View style={styles.balanceCard}>
+      <View style={[styles.balanceCard, styles.firstBalanceCard]}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.badgeRow}>
             <View style={styles.earnedDot} />
@@ -64,7 +64,7 @@ const Two_Card = () => {
       </View>
 
       {/* Cash Pending Card */}
-      <View style={styles.balanceCard}>
+      <View style={[styles.balanceCard, styles.secondBalanceCard]}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.badgeRow}>
             <View style={styles.pendingDot} />
@@ -95,8 +95,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    gap: 12,
     marginTop: 6,
+  },
+  firstBalanceCard: {
+    marginRight: 6,
+  },
+  secondBalanceCard: {
+    marginLeft: 6,
   },
   balanceCard: {
     flex: 1,

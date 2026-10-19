@@ -230,6 +230,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   content: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
     paddingBottom: 32,

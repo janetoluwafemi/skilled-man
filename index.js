@@ -6,8 +6,8 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.textContent = `
     html, body, #root, #root > div {
-      height: 100vh;
-      width: 100vw;
+      height: 100%;
+      width: 100%;
       display: flex;
       flex-direction: column;
       margin: 0;

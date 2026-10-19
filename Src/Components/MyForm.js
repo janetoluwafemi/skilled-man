@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { TextInput, TouchableOpacity, Text, View } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { socket } from '../Socket_io';
 
 export function MyFrm() {
@@ -15,26 +17,44 @@ export function MyFrm() {
   };
 
   return (
-    <View>
-      <TextInput
-        label="Value"
-        value={value}
-        onChangeText={(text) => setValue(text)}
-      />
+    <SafeAreaView style={styles.container}>
+      <View>
+        <TextInput
+          label="Value"
+          value={value}
+          onChangeText={text => setValue(text)}
+        />
 
-      <TouchableOpacity
-        style={{
-          backgroundColor: isLoading ? 'gray' : 'blue',
-          padding: 10,
-          borderRadius: 5,
-          marginTop: 10,
-          alignItems: 'center',
-        }}
-        onPress={onSubmit}
-        disabled={isLoading}
-      >
-        <Text style={{ color: 'white' }}>Submit</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          style={[
+            styles.submitButton,
+            isLoading && styles.submitButtonDisabled,
+          ]}
+          onPress={onSubmit}
+          disabled={isLoading}>
+          <Text style={styles.submitText}>Submit</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  submitButton: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    backgroundColor: 'gray',
+  },
+  submitText: {
+    color: 'white',
+  },
+});

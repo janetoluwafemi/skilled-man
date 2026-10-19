@@ -842,7 +842,9 @@ const UserProfile = () => {
                     Cancel
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={saveMutePreference}>
+                <TouchableOpacity
+                  onPress={saveMutePreference}
+                  style={styles.actionModalConfirmButton}>
                   <Text
                     style={[
                       styles.actionModalBtnText,
@@ -891,7 +893,8 @@ const UserProfile = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 disabled={mediaSaving}
-                onPress={saveMediaVisibility}>
+                onPress={saveMediaVisibility}
+                style={styles.actionModalConfirmButton}>
                 {mediaSaving ? (
                   <ActivityIndicator color={color.defalt} />
                 ) : (
@@ -955,7 +958,8 @@ const UserProfile = () => {
               setDisappearingSelection,
             )}
             <View style={styles.actionModalFooter}>
-              <TouchableOpacity onPress={() => setDisappearingVisible(false)}>
+              <TouchableOpacity
+                onPress={() => setDisappearingVisible(false)}>
                   <Text
                     style={[
                       styles.actionModalBtnText,
@@ -964,7 +968,9 @@ const UserProfile = () => {
                     Cancel
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setDisappearingVisible(false)}>
+                <TouchableOpacity
+                  onPress={() => setDisappearingVisible(false)}
+                  style={styles.actionModalConfirmButton}>
                   <Text
                     style={[
                       styles.actionModalBtnText,
@@ -1548,9 +1554,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 20,
   },
-  popupButtonsRow: {flexDirection: 'row', gap: 10, width: '100%'},
+  popupButtonsRow: {flexDirection: 'row', width: '100%'},
   popupBtnWhite: {
     flex: 1,
+    marginRight: 10,
     height: 38,
     borderRadius: 19,
     borderWidth: 1,
@@ -1569,7 +1576,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   popupBtnPrimaryText: {color: '#FFFFFF', fontSize: 14, fontWeight: '600'},
-  container: {paddingBottom: 40},
+  container: {flexGrow: 1, paddingBottom: 40},
   profileInfoSection: {
     alignItems: 'center',
     paddingVertical: 24,
@@ -1591,10 +1598,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   profileSubText: {fontSize: 13, color: '#64748B', marginBottom: 20},
-  actionButtonsRow: {flexDirection: 'row', justifyContent: 'center', gap: 16},
+  actionButtonsRow: {flexDirection: 'row', justifyContent: 'center'},
   circleActionBtn: {
     alignItems: 'center',
     justifyContent: 'center',
+    marginHorizontal: 8,
     backgroundColor: '#F1F5F9',
     width: 64,
     height: 64,
@@ -1682,7 +1690,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 20,
-    gap: 20,
+  },
+  actionModalConfirmButton: {
+    marginLeft: 20,
   },
   actionModalBtnText: {fontSize: 14, fontWeight: '600', color: color.defalt},
 });

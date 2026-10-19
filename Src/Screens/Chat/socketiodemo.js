@@ -187,7 +187,6 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
   },
   textInput: {
     flex: 1,
@@ -201,6 +200,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   sendBtn: {
+    marginLeft: 10,
     width: 48,
     height: 48,
     borderRadius: 14,

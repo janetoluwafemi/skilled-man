@@ -658,10 +658,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 18,
-    gap: 10,
   },
   actionPill: {
     flex: 1,
+    marginHorizontal: 5,
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     paddingVertical: 14,
@@ -955,10 +955,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     paddingTop: 10,
-    gap: 12,
   },
   saveSubmitBtn: {
     flex: 1,
+    marginRight: 6,
     backgroundColor: color.defalt,
     borderRadius: 14,
     paddingVertical: 15,
@@ -966,6 +966,7 @@ const styles = StyleSheet.create({
   },
   outlineAddBankBtn: {
     flex: 1,
+    marginLeft: 6,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',

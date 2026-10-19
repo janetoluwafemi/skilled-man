@@ -178,7 +178,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     elevation: 1,
-    boxShadow: '0px 1px 2px rgba(15, 23, 42, 0.05)',
   },
   scrollContent: {
     flexGrow: 1,
@@ -200,7 +199,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
-    boxShadow: '0px 2px 6px rgba(15, 23, 42, 0.06)',
   },
   welcomeTitle: {
     fontSize: 26,
@@ -223,7 +221,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 18,
     elevation: 2,
-    boxShadow: '0px 4px 10px rgba(15, 23, 42, 0.04)',
     marginBottom: 20,
   },
   fieldGroup: {
@@ -248,7 +245,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginTop: 6,
     elevation: 3,
-    boxShadow: '0px 3px 6px rgba(255, 107, 0, 0.25)',
   },
   footerRow: {
     flexDirection: 'row',

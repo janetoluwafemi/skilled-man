@@ -406,6 +406,7 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 16,
     paddingTop: 10,
+    flexGrow: 1,
   },
   chatRow: {
     flexDirection: 'row',
