@@ -1,22 +1,29 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "skilledman-firebase-app",
-    "storage_bucket": "skilledman-firebase-app.appspot.com"
+    "project_number": "1072235202464",
+    "project_id": "skileddev-a0194",
+    "storage_bucket": "skileddev-a0194.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:abcdef123456",
+        "mobilesdk_app_id": "1:1072235202464:android:42951d5a222d728cb7c6c5",
         "android_client_info": {
           "package_name": "com.intellitechltdng.skilledman"
         }
       },
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSy..."
+          "current_key": "AIzaSyBjVZhyrRR4xylteac0hkGQldjrv8Km-eg"
         }
-      ]
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
-  ]
+  ],
+  "configuration_version": "1"
 }

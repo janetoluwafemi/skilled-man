@@ -1,21 +1,22 @@
 import { Platform } from 'react-native';
-import {
-    getMessaging,
-    getToken as getMessagingToken,
-    isSupported,
-    onMessage,
-} from 'firebase/messaging';
 import { app } from '../../firebase-config';
 import NavigationService from '../MainNavigation/NavigationService';
 
 const VAPID_KEY = 'YOUR_PUBLIC_VAPID_KEY_HERE';
 
+const loadWebMessaging = () => {
+    if (Platform.OS !== 'web') return null;
+    return require('firebase/messaging');
+};
+
 const getWebMessaging = async () => {
     try {
         if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
-        const supported = await isSupported();
+        const messagingModule = loadWebMessaging();
+        if (!messagingModule) return null;
+        const supported = await messagingModule.isSupported();
         if (!supported) return null;
-        return getMessaging(app);
+        return messagingModule.getMessaging(app);
     } catch (error) {
         console.log('Firebase messaging support check failed:', error);
         return null;
@@ -55,6 +56,7 @@ export const getToken = async () => {
       }
     }
 
+    const { getToken: getMessagingToken } = loadWebMessaging();
     const token = await getMessagingToken(messaging, tokenOptions);
     console.log('FCM Token:', token);
     return token;
@@ -70,6 +72,7 @@ export const notificationListener = () => {
         .then(messaging => {
             if (!messaging) return;
 
+            const { onMessage } = loadWebMessaging();
             unsubscribe = onMessage(messaging, remoteMessage => {
                 console.log('Foreground notification received:', remoteMessage);
 
