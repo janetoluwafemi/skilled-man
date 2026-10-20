@@ -92,12 +92,11 @@ const StPaswrd = props => {
 
             if (result && !result.error) {
               global.id = result.id;
-              if (result.role === 0 || result.role === '0') {
-                navigation.navigate('AddBusiness');
-              } else if (result.role === 1 || result.role === '1') {
-                navigation.navigate('Congratulations');
+              const role = String(result.role ?? global.role ?? '0');
+              if (role === '1') {
+                navigation.replace('AddBusiness', { signupFlow: true });
               } else {
-                navigation.navigate('Congratulations');
+                navigation.replace('Congratulations', { signupFlow: true });
               }
             } else {
               Alert.alert('Registration Failed', result?.error || 'Something went wrong. Please try again.');

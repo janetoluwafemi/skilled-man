@@ -40,12 +40,6 @@ const Mapltln = () => {
     onPress: null,
   });
 
-  useEffect(() => {
-    // requestPermission is created during this render before the effect runs.
-    // It should run once when this screen is mounted, not after every location update.
-    requestPermission();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const showAlert = (title, message, onPress = null) => {
     setCustomAlert({
       visible: true,
@@ -55,26 +49,29 @@ const Mapltln = () => {
     });
   };
 
-  const requestPermission = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === Location.PermissionStatus.GRANTED) {
-        getCurrentLocation();
-      } else {
-        showAlert('Permission Denied', 'Location permission is required.');
-      }
-    } catch (err) {
-      console.warn(err);
-    }
-  };
-
   const getCurrentLocation = async () => {
     if (loading) return;
     setLoading(true);
 
     try {
+      let permission = await Location.getForegroundPermissionsAsync();
+      if (permission.status !== Location.PermissionStatus.GRANTED) {
+        permission = await Location.requestForegroundPermissionsAsync();
+      }
+      if (permission.status !== Location.PermissionStatus.GRANTED) {
+        showAlert('Permission Denied', 'Location permission is required.');
+        return;
+      }
+
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+      if (!servicesEnabled) {
+        showAlert('Location Services Disabled', 'Turn on location services and try again.');
+        return;
+      }
+
       const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.Balanced,
+        mayShowUserSettingsDialog: true,
       });
       const newLoc = {
         latitude: loc.coords.latitude,
@@ -96,11 +93,27 @@ const Mapltln = () => {
     } catch (err) {
       showAlert(
         'Location Failed',
-        err.message || 'Unable to fetch location.'
+        err?.message || 'Unable to fetch location. Check that location services are enabled and try again.'
       );
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    getCurrentLocation();
+    // Load the device location once when this screen opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const updateSelectedLocation = coordinate => {
+    const nextLocation = {
+      latitude: coordinate.latitude,
+      longitude: coordinate.longitude,
+    };
+    setLocation(nextLocation);
+    global.lat = nextLocation.latitude;
+    global.long = nextLocation.longitude;
   };
 
   const handleConfirmLocation = () => {
@@ -149,15 +162,20 @@ const Mapltln = () => {
       <MapView
         ref={mapRef}
         style={styles.map}
-        region={{
+        initialRegion={{
           latitude: location.latitude,
           longitude: location.longitude,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
+        onRegionChangeComplete={updateSelectedLocation}
         showsUserLocation
         showsMyLocationButton={false}>
-        <Marker coordinate={location} />
+        <Marker
+          coordinate={location}
+          draggable
+          onDragEnd={({ nativeEvent }) => updateSelectedLocation(nativeEvent.coordinate)}
+        />
       </MapView>
 
       <View style={styles.topBar}>

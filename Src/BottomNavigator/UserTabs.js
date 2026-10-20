@@ -4,9 +4,8 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
-  PixelRatio,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,13 +18,6 @@ import BokngScren from '../Screens/Booking/BookingScreen';
 import SavScren from '../Screens/Save/SaveScreen';
 import ChatScreen from '../Screens/Chat/ChatScreen';
 import { BASIC_URL } from '../Screens/Signin/Signin';
-
-const { width, height } = Dimensions.get('window');
-const scale = width / 375;
-
-function normalize(size) {
-  return Math.round(PixelRatio.roundToNearestPixel(size * scale));
-}
 
 const TabArr = [
   {
@@ -60,7 +52,15 @@ const TabArr = [
 
 const Tab = createBottomTabNavigator();
 
-const TabButton = ({ item, onPress, accessibilityState }) => {
+const TabButton = ({
+  item,
+  onPress,
+  onLongPress,
+  accessibilityLabel,
+  accessibilityState,
+  testID,
+  style,
+}) => {
   const focused = accessibilityState?.selected;
   const viewRef = useRef(null);
   const textViewRef = useRef(null);
@@ -108,8 +108,13 @@ const TabButton = ({ item, onPress, accessibilityState }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
+      onLongPress={onLongPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
+      testID={testID}
       activeOpacity={0.9}
-      style={styles.container}>
+      style={[styles.container, style]}>
       <View style={styles.tabContent}>
         <Animatable.View ref={viewRef} style={StyleSheet.absoluteFillObject} />
         <View style={[styles.btnStyle, focused && styles.activeTabBorder]}>
@@ -123,7 +128,7 @@ const TabButton = ({ item, onPress, accessibilityState }) => {
             type={item.type}
             name={item.icon}
             color={color.wite}
-            size={normalize(24)}
+            size={24}
           />
           <Animatable.Text ref={textViewRef} style={styles.labelStyle}>
             {item.label}
@@ -136,7 +141,8 @@ const TabButton = ({ item, onPress, accessibilityState }) => {
 
 export default function UserTabs() {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = height * 0.085;
+  const { height } = useWindowDimensions();
+  const tabBarHeight = Math.min(Math.max(height * 0.085, 56), 72);
   const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0);
   const totalTabHeight = tabBarHeight + bottomPadding;
 
@@ -193,8 +199,8 @@ const styles = StyleSheet.create({
   },
   btnStyle: {
     alignItems: 'center',
-    paddingVertical: height * 0.005,
-    marginTop: height * 0.005,
+    paddingVertical: 3,
+    marginTop: 3,
     borderBottomWidth: 0,
     borderBottomColor: 'transparent',
   },
@@ -205,23 +211,23 @@ const styles = StyleSheet.create({
   labelStyle: {
     fontWeight: '500',
     color: color.wite,
-    fontSize: normalize(11),
+    fontSize: 11,
   },
   noOfMsg: {
     position: 'absolute',
     top: -6,
     right: -10,
     backgroundColor: 'red',
-    width: normalize(16),
-    height: normalize(16),
-    borderRadius: normalize(8),
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 99,
   },
   noOfMsgText: {
     color: 'white',
-    fontSize: normalize(9),
+    fontSize: 9,
     fontWeight: '600',
   },
   gradientFlex: {

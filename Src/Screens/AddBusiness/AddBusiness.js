@@ -117,7 +117,7 @@ const AddBusiness = props => {
       setLoad(false);
 
       if (result?.status) {
-        navigation.navigate('AddBank');
+        navigation.navigate('AddBank', { signupFlow: true });
       } else if (result?.error) {
         Alert.alert('Error', result.error);
       }

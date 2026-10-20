@@ -7,9 +7,9 @@ import {
   StatusBar,
   Dimensions,
   Image,
-  FlatList } from 'react-native';
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import color from '../../Assets/colors/colors';
 import BotonComp from '../../Components/BtnComp';
@@ -17,8 +17,17 @@ import { Icons } from '../../Components/Icons';
 
 const { width, height } = Dimensions.get('window');
 
-const Congratulations = props => {
+const Congratulations = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const isSignupFlow = route.params?.signupFlow === true;
+  const returnToPreviousScreen = () => {
+    if (isSignupFlow) {
+      navigation.replace('Signin');
+    } else {
+      navigation.goBack();
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -27,7 +36,7 @@ const Congratulations = props => {
       <View style={styles.headerBar}>
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => props.navigation.goBack()}
+          onPress={returnToPreviousScreen}
           style={styles.backArrowBtn}>
           <Icons.Feather name="arrow-left" size={24} color="#0F172A" />
         </TouchableOpacity>
@@ -55,7 +64,7 @@ const Congratulations = props => {
           <BotonComp
             BtnStyle={styles.BtnStyle}
             btnText="Get Started"
-            onPressFunc={() => navigation.navigate('Signin')}
+            onPressFunc={returnToPreviousScreen}
           />
         </Animatable.View>
       </View>

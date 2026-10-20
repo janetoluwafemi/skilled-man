@@ -44,6 +44,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as LocalAuthentication from 'expo-local-authentication';
+import { Audio } from 'expo-av';
 
 import {
   useNavigation,
@@ -65,23 +66,6 @@ import {
   reportChatUser,
   unblockChatUser,
 } from '../../utilis/chatApi';
-
-let cachedAudioModule;
-let didResolveAudioModule = false;
-
-const getAudioModule = () => {
-  if (didResolveAudioModule) {
-    return cachedAudioModule;
-  }
-  didResolveAudioModule = true;
-  try {
-    cachedAudioModule = require('expo-av').Audio;
-  } catch (error) {
-    cachedAudioModule = null;
-    console.warn('Voice notes are unavailable because this app build does not include expo-av.');
-  }
-  return cachedAudioModule;
-};
 
 const getSynchronizedUserId = async () => {
   try {
@@ -155,8 +139,6 @@ const AudioMessage = ({ audioUri, isMe }) => {
   }, [sound]);
 
   const playAudio = async () => {
-    const Audio = getAudioModule();
-    if (!Audio) return;
     try {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
@@ -431,6 +413,18 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     return () => clearInterval(timerRef.current);
   }, [isRecording, isPaused]);
 
+  useEffect(() => {
+    return () => {
+      const activeRecording = recordingRef.current;
+      recordingRef.current = null;
+      if (activeRecording) {
+        activeRecording.stopAndUnloadAsync().catch(error =>
+          console.warn('Unable to stop voice recording after leaving chat:', error)
+        );
+      }
+    };
+  }, []);
+
   const formatRecordTime = (totalSecs) => {
     const mins = Math.floor(totalSecs / 60);
     const secs = totalSecs % 60;
@@ -667,11 +661,6 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
 
   const startRecording = async () => {
     if (isBlocked || recordingRef.current || isStartingRef.current) return;
-    const Audio = getAudioModule();
-    if (!Audio) {
-      showAlert('Voice Notes Unavailable', 'Update the app to a build that includes voice note support.');
-      return;
-    }
     try {
       isStartingRef.current = true;
       const permission = await Audio.requestPermissionsAsync();
@@ -680,7 +669,12 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
         isStartingRef.current = false;
         return;
       }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
       const { recording: newRecording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       if (!isStartingRef.current) {
         await newRecording.stopAndUnloadAsync();
@@ -693,6 +687,16 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     } catch (err) {
       console.error('Failed to start recording', err);
       showAlert('Voice Note Failed', err?.message || 'The recording could not be started. Please try again.');
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      } catch (modeError) {
+        console.warn('Unable to restore audio mode after recording failed:', modeError);
+      }
     } finally {
       isStartingRef.current = false;
     }
@@ -724,7 +728,19 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
     if (activeRecording) {
       try {
         await activeRecording.stopAndUnloadAsync();
-      } catch (e) {}
+      } catch (error) {
+        console.warn('Unable to cancel voice recording:', error);
+      }
+    }
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+    } catch (error) {
+      console.warn('Unable to restore audio mode after cancelling recording:', error);
     }
   };
 
@@ -745,9 +761,15 @@ const NewMessage = ({ userId, providerId, peerData, showAlert }) => {
       console.error('Failed to stop recording', error);
       showAlert('Voice Note Failed', 'The recording could not be saved. Please try again.');
     } finally {
-      const Audio = getAudioModule();
-      if (Audio) {
-        try { await Audio.setAudioModeAsync({ allowsRecordingIOS: false }); } catch (error) {}
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      } catch (error) {
+        console.warn('Unable to restore audio mode after sending recording:', error);
       }
     }
   };

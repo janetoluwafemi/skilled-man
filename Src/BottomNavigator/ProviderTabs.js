@@ -4,8 +4,8 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,8 +17,6 @@ import MyWrk from '../Screens/MyWork/MyWork';
 import ReqestScren from '../Screens/Request/Request';
 import ChatScreen from '../Screens/Chat/ChatScreen';
 import { BASIC_URL } from '../Screens/Signin/Signin';
-
-const { height } = Dimensions.get('window');
 
 const TabArr = [
   {
@@ -53,7 +51,15 @@ const TabArr = [
 
 const Tab = createBottomTabNavigator();
 
-const TabBtn = ({ item, onPress, accessibilityState }) => {
+const TabBtn = ({
+  item,
+  onPress,
+  onLongPress,
+  accessibilityLabel,
+  accessibilityState,
+  testID,
+  style,
+}) => {
   const focused = accessibilityState?.selected;
   const viewRef = useRef(null);
   const textViewRef = useRef(null);
@@ -101,8 +107,13 @@ const TabBtn = ({ item, onPress, accessibilityState }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
+      onLongPress={onLongPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
+      testID={testID}
       activeOpacity={0.9}
-      style={styles.container}>
+      style={[styles.container, style]}>
       <View style={styles.tabContent}>
         <Animatable.View ref={viewRef} style={StyleSheet.absoluteFillObject} />
         <View style={[styles.btnStyle, focused && styles.activeTabBorder]}>
@@ -129,7 +140,8 @@ const TabBtn = ({ item, onPress, accessibilityState }) => {
 
 export default function ProviderTabs() {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = height * 0.085;
+  const { height } = useWindowDimensions();
+  const tabBarHeight = Math.min(Math.max(height * 0.085, 56), 72);
   const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0);
   const totalTabHeight = tabBarHeight + bottomPadding;
 

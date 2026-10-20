@@ -288,7 +288,9 @@ const AddBank = props => {
 
       if (result) {
         showToast('Bank details added successfully.');
-        navigation.navigate('Congratulations');
+        navigation.navigate('Congratulations', {
+          signupFlow: props.route?.params?.signupFlow === true,
+        });
       }
     } catch (error) {
       setLoad(false);
@@ -746,4 +748,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-

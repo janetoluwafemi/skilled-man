@@ -25,6 +25,7 @@ import * as WebBrowser from 'expo-web-browser';
 
 import color from '../../Assets/colors/colors';
 import C_TxtInput from '../../Components/C_TextInput';
+import C_Dropdwn from '../../Components/C_Dropdown';
 import BotonComp from '../../Components/BtnComp';
 import { signInWGoogle } from '../../utilis/firbase';
 import { BASIC_URL } from '../Signin/Signin';
@@ -56,6 +57,14 @@ const SignupValidationSchema = yup.object().shape({
     .max(500, 'Address is too long')
     .required('Street Address is required'),
 });
+
+const associationOptions = [
+  'Artisan Association',
+  'Trade Union',
+  'Professional Association',
+  'Cooperative Society',
+  'Not affiliated',
+];
 
 const SignUp = props => {
   const navigation = useNavigation();
@@ -230,7 +239,10 @@ const SignUp = props => {
                 formdata.append('country', selectedCountry ? selectedCountry.name : 'Nigeria');
                 formdata.append('account', 'VERIFIED');
                 formdata.append('role', String(role));
-                formdata.append('association', value.association || (role === 1 ? 'Artisan' : 'User'));
+                formdata.append(
+                  'association',
+                  value.association || (role === 1 ? 'Artisan Association' : 'User')
+                );
                 formdata.append('latitude', global.lat ? String(global.lat) : '33.5595769');
                 formdata.append('longitude', global.long ? String(global.long) : '73.1249139');
                 const apiUrl = `${BASIC_URL}otp_register.php?role=${role}`;
@@ -268,6 +280,7 @@ const SignUp = props => {
                 handleChange,
                 handleBlur,
                 handleSubmit,
+                setFieldValue,
                 values,
                 errors,
                 touched,
@@ -436,17 +449,18 @@ const SignUp = props => {
                 {role === 1 && (
                   <View style={styles.fieldGroup}>
                     <Text style={styles.fieldLabel}>Association / Trade Group</Text>
-                    <C_TxtInput
-                      placeholder="Enter association name"
-                      onChangeText={handleChange('association')}
-                      onBlur={handleBlur('association')}
-                      value={values.association}
+                    <C_Dropdwn
+                      titleText="Select Association / Trade Group"
+                      selectedValue={values.association}
+                      options={associationOptions}
+                      onValueChange={value => setFieldValue('association', value)}
                     />
                   </View>
                 )}
 
                 <TouchableOpacity
                   activeOpacity={0.8}
+                  onPress={() => navigation.navigate('Maplatln')}
                   style={StyleSheet.flatten([
                     styles.locationBtnCard,
                     isLocationSet && styles.locationBtnCardActive,
@@ -1060,4 +1074,3 @@ const styles = StyleSheet.create({
     color: color.defalt,
   },
 });
-
