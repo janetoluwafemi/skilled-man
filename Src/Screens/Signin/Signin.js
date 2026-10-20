@@ -116,7 +116,7 @@ const SignIn = () => {
           setLoad(false);
         }
       },
-      [dispatch, navigation]
+      [dispatch]
   );
 
   useEffect(() => {
